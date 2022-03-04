@@ -39,9 +39,15 @@ const HEADERS = new Headers({
 });
 
 const CustomView: React.FC<React.HTMLAttributes<HTMLElement>> = () => {
-	const [{isViewOnly, objectView, objectViewId}, dispatch] = useContext(
-		ViewContext
-	);
+	const [
+		{
+			isFFObjectViewSortColumnConfigurationEnabled,
+			isViewOnly,
+			objectView,
+			objectViewId,
+		},
+		dispatch,
+	] = useContext(ViewContext);
 
 	const [activeIndex, setActiveIndex] = useState<number>(0);
 	const [loading, setLoading] = useState<boolean>(true);
@@ -227,16 +233,24 @@ const CustomView: React.FC<React.HTMLAttributes<HTMLElement>> = () => {
 	);
 };
 interface ICustonViewWrapperProps extends React.HTMLAttributes<HTMLElement> {
+	isFFObjectViewSortColumnConfigurationEnabled: boolean;
 	isViewOnly: boolean;
 	objectViewId: string;
 }
 
 const CustomViewWrapper: React.FC<ICustonViewWrapperProps> = ({
+	isFFObjectViewSortColumnConfigurationEnabled,
 	isViewOnly,
 	objectViewId,
 }) => {
 	return (
-		<ViewContextProvider value={{isViewOnly, objectViewId}}>
+		<ViewContextProvider
+			value={{
+				isFFObjectViewSortColumnConfigurationEnabled,
+				isViewOnly,
+				objectViewId,
+			}}
+		>
 			<CustomView />
 		</ViewContextProvider>
 	);
