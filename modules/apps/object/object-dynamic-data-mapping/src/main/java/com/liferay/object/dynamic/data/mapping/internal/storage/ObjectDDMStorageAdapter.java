@@ -393,7 +393,7 @@ public class ObjectDDMStorageAdapter implements DDMStorageAdapter {
 		throws JSONException, ParseException {
 
 		DDMFormField ddmFormField = ddmFormFieldsMap.get(
-			ddmFormFieldValue.getName());
+			ddmFormFieldValue.getFieldReference());
 
 		DDMFormFieldOptions ddmFormFieldOptions =
 			(DDMFormFieldOptions)ddmFormField.getProperty("options");
