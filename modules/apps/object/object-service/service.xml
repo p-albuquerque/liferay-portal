@@ -526,6 +526,7 @@
 
 		<column name="objectViewId" type="long" />
 		<column name="objectFieldName" type="String" />
+		<column localized="true" name="label" type="String" />
 		<column name="priority" type="int" />
 
 		<!-- Finder methods -->
