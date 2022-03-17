@@ -234,6 +234,7 @@ create table ObjectViewColumn (
 	modifiedDate DATE null,
 	objectViewId LONG,
 	objectFieldName VARCHAR(75) null,
+	label STRING null,
 	priority INTEGER
 );
 

@@ -232,6 +232,7 @@
 		<field name="modifiedDate" type="Date" />
 		<field name="objectViewId" type="long" />
 		<field name="objectFieldName" type="String" />
+		<field localized="true" name="label" type="String" />
 		<field name="priority" type="int" />
 	</model>
 	<model name="com.liferay.object.model.ObjectViewSortColumn">
