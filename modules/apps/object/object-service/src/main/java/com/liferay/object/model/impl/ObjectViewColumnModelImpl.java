@@ -21,6 +21,7 @@ import com.liferay.object.model.ObjectViewColumn;
 import com.liferay.object.model.ObjectViewColumnModel;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.bean.AutoEscapeBeanHandler;
+import com.liferay.portal.kernel.exception.LocaleException;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.json.JSON;
 import com.liferay.portal.kernel.model.CacheModel;
@@ -30,9 +31,12 @@ import com.liferay.portal.kernel.model.impl.BaseModelImpl;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.UserLocalServiceUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
+import com.liferay.portal.kernel.util.LocaleUtil;
+import com.liferay.portal.kernel.util.LocalizationUtil;
 import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.ProxyUtil;
 import com.liferay.portal.kernel.util.StringUtil;
+import com.liferay.portal.kernel.util.Validator;
 
 import java.io.Serializable;
 
@@ -46,8 +50,11 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
@@ -79,7 +86,7 @@ public class ObjectViewColumnModelImpl
 		{"userId", Types.BIGINT}, {"userName", Types.VARCHAR},
 		{"createDate", Types.TIMESTAMP}, {"modifiedDate", Types.TIMESTAMP},
 		{"objectViewId", Types.BIGINT}, {"objectFieldName", Types.VARCHAR},
-		{"priority", Types.INTEGER}
+		{"label", Types.VARCHAR}, {"priority", Types.INTEGER}
 	};
 
 	public static final Map<String, Integer> TABLE_COLUMNS_MAP =
@@ -96,11 +103,12 @@ public class ObjectViewColumnModelImpl
 		TABLE_COLUMNS_MAP.put("modifiedDate", Types.TIMESTAMP);
 		TABLE_COLUMNS_MAP.put("objectViewId", Types.BIGINT);
 		TABLE_COLUMNS_MAP.put("objectFieldName", Types.VARCHAR);
+		TABLE_COLUMNS_MAP.put("label", Types.VARCHAR);
 		TABLE_COLUMNS_MAP.put("priority", Types.INTEGER);
 	}
 
 	public static final String TABLE_SQL_CREATE =
-		"create table ObjectViewColumn (mvccVersion LONG default 0 not null,uuid_ VARCHAR(75) null,objectViewColumnId LONG not null primary key,companyId LONG,userId LONG,userName VARCHAR(75) null,createDate DATE null,modifiedDate DATE null,objectViewId LONG,objectFieldName VARCHAR(75) null,priority INTEGER)";
+		"create table ObjectViewColumn (mvccVersion LONG default 0 not null,uuid_ VARCHAR(75) null,objectViewColumnId LONG not null primary key,companyId LONG,userId LONG,userName VARCHAR(75) null,createDate DATE null,modifiedDate DATE null,objectViewId LONG,objectFieldName VARCHAR(75) null,label STRING null,priority INTEGER)";
 
 	public static final String TABLE_SQL_DROP = "drop table ObjectViewColumn";
 
@@ -341,6 +349,10 @@ public class ObjectViewColumnModelImpl
 			"objectFieldName",
 			(BiConsumer<ObjectViewColumn, String>)
 				ObjectViewColumn::setObjectFieldName);
+		attributeGetterFunctions.put("label", ObjectViewColumn::getLabel);
+		attributeSetterBiConsumers.put(
+			"label",
+			(BiConsumer<ObjectViewColumn, String>)ObjectViewColumn::setLabel);
 		attributeGetterFunctions.put("priority", ObjectViewColumn::getPriority);
 		attributeSetterBiConsumers.put(
 			"priority",
@@ -580,6 +592,115 @@ public class ObjectViewColumnModelImpl
 
 	@JSON
 	@Override
+	public String getLabel() {
+		if (_label == null) {
+			return "";
+		}
+		else {
+			return _label;
+		}
+	}
+
+	@Override
+	public String getLabel(Locale locale) {
+		String languageId = LocaleUtil.toLanguageId(locale);
+
+		return getLabel(languageId);
+	}
+
+	@Override
+	public String getLabel(Locale locale, boolean useDefault) {
+		String languageId = LocaleUtil.toLanguageId(locale);
+
+		return getLabel(languageId, useDefault);
+	}
+
+	@Override
+	public String getLabel(String languageId) {
+		return LocalizationUtil.getLocalization(getLabel(), languageId);
+	}
+
+	@Override
+	public String getLabel(String languageId, boolean useDefault) {
+		return LocalizationUtil.getLocalization(
+			getLabel(), languageId, useDefault);
+	}
+
+	@Override
+	public String getLabelCurrentLanguageId() {
+		return _labelCurrentLanguageId;
+	}
+
+	@JSON
+	@Override
+	public String getLabelCurrentValue() {
+		Locale locale = getLocale(_labelCurrentLanguageId);
+
+		return getLabel(locale);
+	}
+
+	@Override
+	public Map<Locale, String> getLabelMap() {
+		return LocalizationUtil.getLocalizationMap(getLabel());
+	}
+
+	@Override
+	public void setLabel(String label) {
+		if (_columnOriginalValues == Collections.EMPTY_MAP) {
+			_setColumnOriginalValues();
+		}
+
+		_label = label;
+	}
+
+	@Override
+	public void setLabel(String label, Locale locale) {
+		setLabel(label, locale, LocaleUtil.getDefault());
+	}
+
+	@Override
+	public void setLabel(String label, Locale locale, Locale defaultLocale) {
+		String languageId = LocaleUtil.toLanguageId(locale);
+		String defaultLanguageId = LocaleUtil.toLanguageId(defaultLocale);
+
+		if (Validator.isNotNull(label)) {
+			setLabel(
+				LocalizationUtil.updateLocalization(
+					getLabel(), "Label", label, languageId, defaultLanguageId));
+		}
+		else {
+			setLabel(
+				LocalizationUtil.removeLocalization(
+					getLabel(), "Label", languageId));
+		}
+	}
+
+	@Override
+	public void setLabelCurrentLanguageId(String languageId) {
+		_labelCurrentLanguageId = languageId;
+	}
+
+	@Override
+	public void setLabelMap(Map<Locale, String> labelMap) {
+		setLabelMap(labelMap, LocaleUtil.getDefault());
+	}
+
+	@Override
+	public void setLabelMap(
+		Map<Locale, String> labelMap, Locale defaultLocale) {
+
+		if (labelMap == null) {
+			return;
+		}
+
+		setLabel(
+			LocalizationUtil.updateLocalization(
+				labelMap, getLabel(), "Label",
+				LocaleUtil.toLanguageId(defaultLocale)));
+	}
+
+	@JSON
+	@Override
 	public int getPriority() {
 		return _priority;
 	}
@@ -637,6 +758,72 @@ public class ObjectViewColumnModelImpl
 	}
 
 	@Override
+	public String[] getAvailableLanguageIds() {
+		Set<String> availableLanguageIds = new TreeSet<String>();
+
+		Map<Locale, String> labelMap = getLabelMap();
+
+		for (Map.Entry<Locale, String> entry : labelMap.entrySet()) {
+			Locale locale = entry.getKey();
+			String value = entry.getValue();
+
+			if (Validator.isNotNull(value)) {
+				availableLanguageIds.add(LocaleUtil.toLanguageId(locale));
+			}
+		}
+
+		return availableLanguageIds.toArray(
+			new String[availableLanguageIds.size()]);
+	}
+
+	@Override
+	public String getDefaultLanguageId() {
+		String xml = getLabel();
+
+		if (xml == null) {
+			return "";
+		}
+
+		Locale defaultLocale = LocaleUtil.getDefault();
+
+		return LocalizationUtil.getDefaultLanguageId(xml, defaultLocale);
+	}
+
+	@Override
+	public void prepareLocalizedFieldsForImport() throws LocaleException {
+		Locale defaultLocale = LocaleUtil.fromLanguageId(
+			getDefaultLanguageId());
+
+		Locale[] availableLocales = LocaleUtil.fromLanguageIds(
+			getAvailableLanguageIds());
+
+		Locale defaultImportLocale = LocalizationUtil.getDefaultImportLocale(
+			ObjectViewColumn.class.getName(), getPrimaryKey(), defaultLocale,
+			availableLocales);
+
+		prepareLocalizedFieldsForImport(defaultImportLocale);
+	}
+
+	@Override
+	@SuppressWarnings("unused")
+	public void prepareLocalizedFieldsForImport(Locale defaultImportLocale)
+		throws LocaleException {
+
+		Locale defaultLocale = LocaleUtil.getDefault();
+
+		String modelDefaultLanguageId = getDefaultLanguageId();
+
+		String label = getLabel(defaultLocale);
+
+		if (Validator.isNull(label)) {
+			setLabel(getLabel(modelDefaultLanguageId), defaultLocale);
+		}
+		else {
+			setLabel(getLabel(defaultLocale), defaultLocale, defaultLocale);
+		}
+	}
+
+	@Override
 	public ObjectViewColumn toEscapedModel() {
 		if (_escapedModel == null) {
 			Function<InvocationHandler, ObjectViewColumn>
@@ -665,6 +852,7 @@ public class ObjectViewColumnModelImpl
 		objectViewColumnImpl.setModifiedDate(getModifiedDate());
 		objectViewColumnImpl.setObjectViewId(getObjectViewId());
 		objectViewColumnImpl.setObjectFieldName(getObjectFieldName());
+		objectViewColumnImpl.setLabel(getLabel());
 		objectViewColumnImpl.setPriority(getPriority());
 
 		objectViewColumnImpl.resetOriginalValues();
@@ -696,6 +884,8 @@ public class ObjectViewColumnModelImpl
 			this.<Long>getColumnOriginalValue("objectViewId"));
 		objectViewColumnImpl.setObjectFieldName(
 			this.<String>getColumnOriginalValue("objectFieldName"));
+		objectViewColumnImpl.setLabel(
+			this.<String>getColumnOriginalValue("label"));
 		objectViewColumnImpl.setPriority(
 			this.<Integer>getColumnOriginalValue("priority"));
 
@@ -828,6 +1018,14 @@ public class ObjectViewColumnModelImpl
 			objectViewColumnCacheModel.objectFieldName = null;
 		}
 
+		objectViewColumnCacheModel.label = getLabel();
+
+		String label = objectViewColumnCacheModel.label;
+
+		if ((label != null) && (label.length() == 0)) {
+			objectViewColumnCacheModel.label = null;
+		}
+
 		objectViewColumnCacheModel.priority = getPriority();
 
 		return objectViewColumnCacheModel;
@@ -932,6 +1130,8 @@ public class ObjectViewColumnModelImpl
 	private boolean _setModifiedDate;
 	private long _objectViewId;
 	private String _objectFieldName;
+	private String _label;
+	private String _labelCurrentLanguageId;
 	private int _priority;
 
 	public <T> T getColumnValue(String columnName) {
@@ -973,6 +1173,7 @@ public class ObjectViewColumnModelImpl
 		_columnOriginalValues.put("modifiedDate", _modifiedDate);
 		_columnOriginalValues.put("objectViewId", _objectViewId);
 		_columnOriginalValues.put("objectFieldName", _objectFieldName);
+		_columnOriginalValues.put("label", _label);
 		_columnOriginalValues.put("priority", _priority);
 	}
 
@@ -1017,7 +1218,9 @@ public class ObjectViewColumnModelImpl
 
 		columnBitmasks.put("objectFieldName", 512L);
 
-		columnBitmasks.put("priority", 1024L);
+		columnBitmasks.put("label", 1024L);
+
+		columnBitmasks.put("priority", 2048L);
 
 		_columnBitmasks = Collections.unmodifiableMap(columnBitmasks);
 	}
