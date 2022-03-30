@@ -290,15 +290,7 @@ public class ObjectViewLocalServiceImpl extends ObjectViewLocalServiceBaseImpl {
 			List<ObjectViewSortColumn> objectViewSortColumns)
 		throws ObjectViewSortColumnException {
 
-		List<String> objectFieldNames = new ArrayList<String>() {
-			{
-				add("creator");
-				add("dateCreated");
-				add("dateModified");
-				add("id");
-				add("status");
-			}
-		};
+		List<String> objectFieldNames = new ArrayList<>();
 
 		for (ObjectViewColumn objectViewColumn : objectViewColumns) {
 			objectFieldNames.add(objectViewColumn.getObjectFieldName());
