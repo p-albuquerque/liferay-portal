@@ -78,6 +78,8 @@ public class ObjectEntryItemSelectorView
 		ObjectScopeProviderRegistry objectScopeProviderRegistry,
 		Portal portal) {
 
+		System.out.println("ObjectEntryItemSelectorView - HERE");
+
 		_itemSelectorViewDescriptorRenderer =
 			itemSelectorViewDescriptorRenderer;
 		_objectDefinition = objectDefinition;

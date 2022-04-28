@@ -337,6 +337,13 @@ public class ObjectDefinitionLocalServiceUtil {
 		return getService().getObjectDefinition(objectDefinitionId);
 	}
 
+	public static ObjectDefinition getObjectDefinition(
+			long companyId, String className)
+		throws PortalException {
+
+		return getService().getObjectDefinition(companyId, className);
+	}
+
 	/**
 	 * Returns the object definition with the matching UUID and company.
 	 *

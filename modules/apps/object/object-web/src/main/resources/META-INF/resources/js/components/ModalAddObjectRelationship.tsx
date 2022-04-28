@@ -183,13 +183,13 @@ const ModalAddObjectRelationship: React.FC<IProps> = ({
 				setObjectDefinitions(objectDefinitions);
 			}
 			else {
-				const objectDefinitions = items
-					.map(({id, name, system}: TObjectDefinition) => ({
+				const objectDefinitions = items.map(
+					({id, name, system}: TObjectDefinition) => ({
 						id,
 						name,
 						system,
-					}))
-					.filter(({system}: TObjectDefinition) => !system);
+					})
+				);
 
 				const manyToManyObjectDefinitions = objectDefinitions.filter(
 					(objectDefinition) =>
