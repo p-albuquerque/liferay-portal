@@ -140,24 +140,17 @@ public class ObjectRelationshipLocalServiceTest {
 
 	@Test
 	public void testAddSystemObjectRelationship() throws Exception {
-		try {
+		ObjectRelationship objectRelationship =
 			_testAddSystemObjectRelationship(
 				ObjectRelationshipConstants.TYPE_MANY_TO_MANY);
 
-			Assert.fail();
-		}
-		catch (ObjectRelationshipTypeException
-					objectRelationshipTypeException) {
+		Assert.assertNotNull(objectRelationship);
 
-			String message = objectRelationshipTypeException.getMessage();
+		_objectRelationshipLocalService.deleteObjectRelationship(
+			objectRelationship);
 
-			Assert.assertTrue(
-				message.contains("Invalid type for system object definition"));
-		}
-
-		ObjectRelationship objectRelationship =
-			_testAddSystemObjectRelationship(
-				ObjectRelationshipConstants.TYPE_ONE_TO_MANY);
+		objectRelationship = _testAddSystemObjectRelationship(
+			ObjectRelationshipConstants.TYPE_ONE_TO_MANY);
 
 		Assert.assertNotNull(objectRelationship);
 
@@ -178,6 +171,8 @@ public class ObjectRelationshipLocalServiceTest {
 			Assert.assertTrue(
 				message.contains("Invalid type for system object definition"));
 		}
+
+		_testSystemObjectRelationshipManyToMany();
 	}
 
 	@Test
@@ -274,6 +269,119 @@ public class ObjectRelationshipLocalServiceTest {
 			ObjectRelationshipConstants.DELETION_TYPE_PREVENT,
 			LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString()),
 			StringUtil.randomId(), type);
+	}
+
+	private void _testInverseObjectRelationshipManyToMany() throws Exception {
+		ObjectRelationship objectRelationship =
+			_objectRelationshipLocalService.addObjectRelationship(
+				TestPropsValues.getUserId(),
+				_objectDefinition2.getObjectDefinitionId(),
+				_systemObjectDefinition.getObjectDefinitionId(),
+				ObjectRelationshipConstants.DELETION_TYPE_PREVENT,
+				LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString()),
+				"aaa", ObjectRelationshipConstants.TYPE_MANY_TO_MANY);
+
+		try {
+			ObjectRelationship objectRelationship1 =
+				_objectRelationshipLocalService.addObjectRelationship(
+					TestPropsValues.getUserId(),
+					_systemObjectDefinition.getObjectDefinitionId(),
+					_objectDefinition2.getObjectDefinitionId(),
+					ObjectRelationshipConstants.DELETION_TYPE_PREVENT,
+					LocalizedMapUtil.getLocalizedMap(
+						RandomTestUtil.randomString()),
+					"bbb", ObjectRelationshipConstants.TYPE_MANY_TO_MANY);
+		}
+		catch (ObjectRelationshipTypeException
+					objectRelationshipTypeException) {
+
+			Assert.assertEquals(
+				"Inverse type already exists",
+				objectRelationshipTypeException.getMessage());
+		}
+	}
+
+	private void _testSystemObjectRelationshipManyToMany() throws Exception {
+		ObjectRelationship objectRelationship;
+
+		String relationshipName = StringUtil.randomId();
+
+		for (String deletionType :
+				Arrays.asList(
+					ObjectRelationshipConstants.DELETION_TYPE_PREVENT,
+					ObjectRelationshipConstants.DELETION_TYPE_CASCADE,
+					ObjectRelationshipConstants.DELETION_TYPE_DISASSOCIATE)) {
+
+			objectRelationship =
+				_objectRelationshipLocalService.addObjectRelationship(
+					TestPropsValues.getUserId(),
+					_objectDefinition1.getObjectDefinitionId(),
+					_systemObjectDefinition.getObjectDefinitionId(),
+					deletionType,
+					LocalizedMapUtil.getLocalizedMap(
+						RandomTestUtil.randomString()),
+					relationshipName,
+					ObjectRelationshipConstants.TYPE_MANY_TO_MANY);
+
+			Assert.assertEquals(
+				StringBundler.concat(
+					"R_", objectRelationship.getCompanyId(),
+					_objectDefinition1.getShortName(), "_",
+					_systemObjectDefinition.getShortName(), "_",
+					relationshipName),
+				objectRelationship.getDBTableName());
+			Assert.assertTrue(
+				_hasColumn(
+					objectRelationship.getDBTableName(),
+					_objectDefinition1.getPKObjectFieldDBColumnName()));
+			Assert.assertTrue(
+				_hasColumn(
+					objectRelationship.getDBTableName(),
+					_systemObjectDefinition.getPKObjectFieldDBColumnName()));
+
+			_objectRelationshipLocalService.deleteObjectRelationship(
+				objectRelationship);
+
+			Assert.assertFalse(_hasTable(objectRelationship.getDBTableName()));
+		}
+
+		try {
+			_objectRelationshipLocalService.addObjectRelationship(
+				TestPropsValues.getUserId(),
+				_systemObjectDefinition.getObjectDefinitionId(),
+				_systemObjectDefinition.getObjectDefinitionId(),
+				ObjectRelationshipConstants.DELETION_TYPE_PREVENT,
+				LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString()),
+				StringUtil.randomId(),
+				ObjectRelationshipConstants.TYPE_MANY_TO_MANY);
+		}
+		catch (ObjectRelationshipTypeException
+					objectRelationshipTypeException) {
+
+			Assert.assertEquals(
+				"Many to many self relationships are not allowed",
+				objectRelationshipTypeException.getMessage());
+		}
+
+		try {
+			_objectRelationshipLocalService.addObjectRelationship(
+				TestPropsValues.getUserId(),
+				_objectDefinition1.getObjectDefinitionId(),
+				_objectDefinition1.getObjectDefinitionId(),
+				ObjectRelationshipConstants.DELETION_TYPE_PREVENT,
+				LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString()),
+				StringUtil.randomId(),
+				ObjectRelationshipConstants.TYPE_MANY_TO_MANY);
+		}
+		catch (ObjectRelationshipTypeException
+					objectRelationshipTypeException) {
+
+			Assert.assertEquals(
+				"Many to many self relationships are not allowed",
+				objectRelationshipTypeException.getMessage());
+		}
+
+		//		_testInverseObjectRelationshipManyToMany();
 	}
 
 	@DeleteAfterTestRun
