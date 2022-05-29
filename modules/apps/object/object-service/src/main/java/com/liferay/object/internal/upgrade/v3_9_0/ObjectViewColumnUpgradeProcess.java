@@ -39,8 +39,8 @@ public class ObjectViewColumnUpgradeProcess extends UpgradeProcess {
 		Locale defaultLocale;
 
 		try (PreparedStatement preparedStatement1 = connection.prepareStatement(
-				"select objectViewColumnId, companyId, objectFieldName from" +
-					" ObjectViewColumn where label is null");
+				"select objectViewColumnId, companyId, objectFieldName from " +
+					"ObjectViewColumn where label is null");
 			PreparedStatement preparedStatement2 =
 				AutoBatchPreparedStatementUtil.concurrentAutoBatch(
 					connection,
