@@ -54,9 +54,9 @@ public class ObjectViewColumnUpgradeProcess extends UpgradeProcess {
 				defaultLocale = LocaleUtil.fromLanguageId(
 					UpgradeProcessUtil.getDefaultLanguageId(companyId));
 
-				String fieldName = resultSet.getString("objectFieldName");
+				String objectFieldName = resultSet.getString("objectFieldName");
 
-				String labelKey = _labelKeys.get(fieldName);
+				String labelKey = _labelKeys.get(objectFieldName);
 
 				preparedStatement2.setString(
 					1,
