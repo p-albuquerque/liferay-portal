@@ -172,6 +172,11 @@ public class ObjectServiceUpgradeStepRegistrator
 			"3.19.1", "3.19.2",
 			new com.liferay.object.internal.upgrade.v3_19_2.
 				ObjectFieldUpgradeProcess());
+
+		registry.register(
+			"3.19.2", "3.20.0",
+			new com.liferay.object.internal.upgrade.v3_20_0.
+				ObjectFieldUpgradeProcess(_portalUUID));
 	}
 
 	@Reference
