@@ -977,6 +977,8 @@ public class ObjectEntryLocalServiceImpl
 				objectEntry.getObjectDefinitionId()),
 			objectEntryId, values);
 
+		objectEntry = _updateMetadataFields(objectEntry, values);
+
 		objectEntry.setModifiedDate(serviceContext.getModifiedDate(null));
 		objectEntry.setValues(null);
 
@@ -2036,6 +2038,19 @@ public class ObjectEntryLocalServiceImpl
 			objectEntry.getCompanyId(), objectEntry.getNonzeroGroupId(), userId,
 			objectDefinition.getClassName(), objectEntry.getObjectEntryId(),
 			objectEntry, serviceContext);
+	}
+
+	private ObjectEntry _updateMetadataFields(
+		ObjectEntry objectEntry, Map<String, Serializable> values) {
+
+		for (Map.Entry<String, Serializable> entry : values.entrySet()) {
+			if (StringUtil.equals(entry.getKey(), "externalReferenceCode")) {
+				objectEntry.setExternalReferenceCode(
+					GetterUtil.getString(entry.getValue()));
+			}
+		}
+
+		return objectEntry;
 	}
 
 	private void _updateTable(
