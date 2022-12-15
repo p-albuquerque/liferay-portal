@@ -30,6 +30,12 @@ import com.liferay.portal.configuration.metatype.annotations.ExtendedObjectClass
 public interface WorkflowTaskWebConfiguration {
 
 	@Meta.AD(
+		deflt = "com/liferay/blogs/web/portlet/display/template/dependencies/portlet-display-templates.xml",
+		name = "display-templates-config", required = false
+	)
+	public String displayTemplatesConfig();
+
+	@Meta.AD(
 		deflt = "list", name = "default-display-view",
 		optionLabels = {"%list", "%table"},
 		optionValues = {"descriptive", "list"}, required = false

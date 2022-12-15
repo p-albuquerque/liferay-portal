@@ -54,7 +54,7 @@ public class MyWorkflowTaskPortletDisplayTemplateHandler
 
 	@Override
 	public String getClassName() {
-		return "";
+		return WorkflowTaskWebConfiguration.class.getName();
 	}
 
 	@Override
@@ -142,10 +142,10 @@ public class MyWorkflowTaskPortletDisplayTemplateHandler
 
 	@Override
 	protected String getTemplatesConfigPath() {
-		return _workflowTaskWebConfiguration.defaultDisplayView();
+		return _workflowTaskWebConfiguration.displayTemplatesConfig();
 	}
 
-	private volatile WorkflowTaskWebConfiguration _workflowTaskWebConfiguration;
+	private volatile WorkflowTaskWebConfiguration _workflowTaskWebConTemplateHandlerRegistryUtilTemplateHandlerRegistryUtilTemplateHandlerRegistryUtilfiguration;
 
 	@Reference
 	private WorkflowTaskPortletUtil _workflowTaskPortletUtil;
