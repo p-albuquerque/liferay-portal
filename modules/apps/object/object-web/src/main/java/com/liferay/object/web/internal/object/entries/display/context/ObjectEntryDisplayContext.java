@@ -150,6 +150,8 @@ public class ObjectEntryDisplayContext {
 		_objectScopeProviderRegistry = objectScopeProviderRegistry;
 		_readOnly = readOnly;
 
+		_setRelationshipValueMap(httpServletRequest);
+
 		_objectRequestHelper = new ObjectRequestHelper(httpServletRequest);
 		_themeDisplay = (ThemeDisplay)httpServletRequest.getAttribute(
 			WebKeys.THEME_DISPLAY);
@@ -382,6 +384,34 @@ public class ObjectEntryDisplayContext {
 						).setParameter(
 							"objectDefinitionId",
 							objectDefinition2.getObjectDefinitionId()
+						).setParameter(
+							"parentObjectEntryId",
+							() -> {
+								ObjectEntry objectEntry = getObjectEntry();
+
+								return String.valueOf(objectEntry.getId());
+							}
+						).setParameter(
+							"relationshipObjectFieldName",
+							() -> {
+								Map<String, String> relationshipContextParams =
+									getRelationshipContextParams();
+
+								long objectRelationshipId = GetterUtil.getLong(
+									relationshipContextParams.get(
+										"objectRelationshipId"));
+
+								ObjectRelationship objectRelationship =
+									_objectRelationshipLocalService.
+										getObjectRelationship(
+											objectRelationshipId);
+
+								ObjectField objectField =
+									_objectFieldLocalService.getObjectField(
+										objectRelationship.getObjectFieldId2());
+
+								return objectField.getName();
+							}
 						).setWindowState(
 							WindowState.MAXIMIZED
 						).buildString());
@@ -486,6 +516,10 @@ public class ObjectEntryDisplayContext {
 		).put(
 			"readOnly", String.valueOf(_readOnly || isDefaultUser())
 		).build();
+	}
+
+	public Map<String, Object> getRelationshipValueMap() {
+		return _relationshipValueMap;
 	}
 
 	public boolean isDefaultUser() {
@@ -1184,6 +1218,15 @@ public class ObjectEntryDisplayContext {
 		}
 	}
 
+	private void _setRelationshipValueMap(
+		HttpServletRequest httpServletRequest) {
+
+		_relationshipValueMap = HashMapBuilder.<String, Object>put(
+			httpServletRequest.getParameter("relationshipObjectFieldName"),
+			httpServletRequest.getParameter("parentObjectEntryId")
+		).build();
+	}
+
 	private static final Log _log = LogFactoryUtil.getLog(
 		ObjectEntryDisplayContext.class);
 
@@ -1203,6 +1246,7 @@ public class ObjectEntryDisplayContext {
 	private final ObjectRequestHelper _objectRequestHelper;
 	private final ObjectScopeProviderRegistry _objectScopeProviderRegistry;
 	private final boolean _readOnly;
+	private Map<String, Object> _relationshipValueMap;
 	private final ThemeDisplay _themeDisplay;
 
 }
