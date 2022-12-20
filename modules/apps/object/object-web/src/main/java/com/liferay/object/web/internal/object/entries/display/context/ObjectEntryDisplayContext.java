@@ -41,6 +41,7 @@ import com.liferay.item.selector.criteria.info.item.criterion.InfoItemItemSelect
 import com.liferay.object.constants.ObjectActionKeys;
 import com.liferay.object.constants.ObjectDefinitionConstants;
 import com.liferay.object.constants.ObjectFieldConstants;
+import com.liferay.object.constants.ObjectRelationshipConstants;
 import com.liferay.object.exception.NoSuchObjectLayoutException;
 import com.liferay.object.field.business.type.ObjectFieldBusinessType;
 import com.liferay.object.field.business.type.ObjectFieldBusinessTypeRegistry;
@@ -150,7 +151,7 @@ public class ObjectEntryDisplayContext {
 		_objectScopeProviderRegistry = objectScopeProviderRegistry;
 		_readOnly = readOnly;
 
-		_setRelationshipValueMap(httpServletRequest);
+		_setRelationshipValuesMap(httpServletRequest);
 
 		_objectRequestHelper = new ObjectRequestHelper(httpServletRequest);
 		_themeDisplay = (ThemeDisplay)httpServletRequest.getAttribute(
@@ -385,14 +386,14 @@ public class ObjectEntryDisplayContext {
 							"objectDefinitionId",
 							objectDefinition2.getObjectDefinitionId()
 						).setParameter(
-							"parentObjectEntryId",
+							"relatedObjectEntryId",
 							() -> {
 								ObjectEntry objectEntry = getObjectEntry();
 
 								return String.valueOf(objectEntry.getId());
 							}
 						).setParameter(
-							"relationshipObjectFieldName",
+							"relationshipReference",
 							() -> {
 								Map<String, String> relationshipContextParams =
 									getRelationshipContextParams();
@@ -406,11 +407,45 @@ public class ObjectEntryDisplayContext {
 										getObjectRelationship(
 											objectRelationshipId);
 
-								ObjectField objectField =
-									_objectFieldLocalService.getObjectField(
-										objectRelationship.getObjectFieldId2());
+								if (StringUtil.equals(
+										objectRelationship.getType(),
+										ObjectRelationshipConstants.
+											TYPE_MANY_TO_MANY)) {
 
-								return objectField.getName();
+									return objectRelationship.getName();
+								}
+
+								if (StringUtil.equals(
+										objectRelationship.getType(),
+										ObjectRelationshipConstants.
+											TYPE_ONE_TO_MANY)) {
+
+									ObjectField objectField =
+										_objectFieldLocalService.getObjectField(
+											objectRelationship.
+												getObjectFieldId2());
+
+									return objectField.getName();
+								}
+
+								return StringPool.BLANK;
+							}
+						).setParameter(
+							"relationshipType",
+							() -> {
+								Map<String, String> relationshipContextParams =
+									getRelationshipContextParams();
+
+								long objectRelationshipId = GetterUtil.getLong(
+									relationshipContextParams.get(
+										"objectRelationshipId"));
+
+								ObjectRelationship objectRelationship =
+									_objectRelationshipLocalService.
+										getObjectRelationship(
+											objectRelationshipId);
+
+								return objectRelationship.getType();
 							}
 						).setWindowState(
 							WindowState.MAXIMIZED
@@ -518,8 +553,8 @@ public class ObjectEntryDisplayContext {
 		).build();
 	}
 
-	public Map<String, Object> getRelationshipValueMap() {
-		return _relationshipValueMap;
+	public Map<String, Object> getRelationshipValuesMap() {
+		return _relationshipValuesMap;
 	}
 
 	public boolean isDefaultUser() {
@@ -1126,7 +1161,7 @@ public class ObjectEntryDisplayContext {
 	private boolean _isActive(ObjectField objectField) throws PortalException {
 		if (Validator.isNotNull(objectField.getRelationshipType())) {
 			if (Validator.isNotNull(
-					_relationshipValueMap.get(objectField.getName()))) {
+					_relationshipValuesMap.get(objectField.getName()))) {
 
 				return false;
 			}
@@ -1224,12 +1259,15 @@ public class ObjectEntryDisplayContext {
 		}
 	}
 
-	private void _setRelationshipValueMap(
+	private void _setRelationshipValuesMap(
 		HttpServletRequest httpServletRequest) {
 
-		_relationshipValueMap = HashMapBuilder.<String, Object>put(
-			httpServletRequest.getParameter("relationshipObjectFieldName"),
-			httpServletRequest.getParameter("parentObjectEntryId")
+		_relationshipValuesMap = HashMapBuilder.<String, Object>put(
+			httpServletRequest.getParameter("relationshipReference"),
+			httpServletRequest.getParameter("relatedObjectEntryId")
+		).put(
+			"relationshipType",
+			httpServletRequest.getParameter("relationshipType")
 		).build();
 	}
 
@@ -1252,7 +1290,7 @@ public class ObjectEntryDisplayContext {
 	private final ObjectRequestHelper _objectRequestHelper;
 	private final ObjectScopeProviderRegistry _objectScopeProviderRegistry;
 	private final boolean _readOnly;
-	private Map<String, Object> _relationshipValueMap;
+	private Map<String, Object> _relationshipValuesMap;
 	private final ThemeDisplay _themeDisplay;
 
 }
