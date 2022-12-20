@@ -1125,6 +1125,12 @@ public class ObjectEntryDisplayContext {
 
 	private boolean _isActive(ObjectField objectField) throws PortalException {
 		if (Validator.isNotNull(objectField.getRelationshipType())) {
+			if (Validator.isNotNull(
+					_relationshipValueMap.get(objectField.getName()))) {
+
+				return false;
+			}
+
 			ObjectRelationship objectRelationship =
 				_objectRelationshipLocalService.
 					fetchObjectRelationshipByObjectFieldId2(
