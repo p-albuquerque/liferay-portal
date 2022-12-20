@@ -171,20 +171,31 @@ portletDisplay.setURLBack(backURL);
 								);
 							}
 
-							let relationshipValueMap =
-								'<%= objectEntryDisplayContext.getRelationshipValueMap() %>';
+							let relationshipValuesMap =
+								'<%= objectEntryDisplayContext.getRelationshipValuesMap() %>';
 
-							relationshipValueMap = relationshipValueMap.substring(
+							relationshipValuesMap = relationshipValuesMap.substring(
 								1,
-								relationshipValueMap.length - 1
+								relationshipValuesMap.length - 1
 							);
 
-							if (!relationshipValueMap.includes('null')) {
-								const [field, fieldValue] = relationshipValueMap.split(
-									'='
-								);
+							if (!relationshipValuesMap.includes('null')) {
+								const [
+									referenceMap,
+									typeMap,
+								] = relationshipValuesMap.split(', ');
 
-								values = Object.assign(values, {[field]: fieldValue});
+								const [
+									relationshipReference,
+									relatedObjectEntryId,
+								] = referenceMap.split('=');
+								const [typeLabel, type] = typeMap.split('=');
+
+								values = Object.assign(
+									values,
+									{[relationshipReference]: relatedObjectEntryId},
+									{[typeLabel]: type}
+								);
 							}
 
 							Liferay.Util.fetch(path, {

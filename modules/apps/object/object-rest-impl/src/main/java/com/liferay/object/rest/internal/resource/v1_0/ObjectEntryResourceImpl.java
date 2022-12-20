@@ -16,6 +16,7 @@ package com.liferay.object.rest.internal.resource.v1_0;
 
 import com.liferay.object.action.engine.ObjectActionEngine;
 import com.liferay.object.constants.ObjectActionTriggerConstants;
+import com.liferay.object.constants.ObjectRelationshipConstants;
 import com.liferay.object.entry.util.ObjectEntryNameUtil;
 import com.liferay.object.model.ObjectDefinition;
 import com.liferay.object.model.ObjectRelationship;
@@ -42,6 +43,7 @@ import com.liferay.portal.kernel.search.Sort;
 import com.liferay.portal.kernel.search.filter.Filter;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
+import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.kernel.util.StringUtil;
@@ -54,6 +56,8 @@ import com.liferay.portal.vulcan.pagination.Pagination;
 import java.io.Serializable;
 
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import javax.ws.rs.NotFoundException;
@@ -284,6 +288,46 @@ public class ObjectEntryResourceImpl extends BaseObjectEntryResourceImpl {
 		ObjectEntryManager objectEntryManager =
 			_objectEntryManagerRegistry.getObjectEntryManager(
 				_objectDefinition.getStorageType());
+
+		HashMap<String, Object> values =
+			(HashMap<String, Object>)objectEntry.getProperties();
+
+		if (values.containsKey("relationshipType")) {
+			String objectRelationshipType = String.valueOf(
+				values.remove("relationshipType"));
+
+			if (StringUtil.equals(
+					objectRelationshipType,
+					ObjectRelationshipConstants.TYPE_MANY_TO_MANY)) {
+
+				List<String> keyList = ListUtil.fromCollection(values.keySet());
+
+				String objectRelationshipName = keyList.get(keyList.size() - 1);
+
+				long relatedObjectEntryId = GetterUtil.getLong(
+					values.remove(objectRelationshipName));
+
+				objectEntry.setProperties(values);
+
+				ObjectEntry persistedObjectEntry =
+					objectEntryManager.addObjectEntry(
+						_getDTOConverterContext(null), _objectDefinition,
+						objectEntry, null);
+
+				ObjectRelationship objectRelationship =
+					_objectRelationshipService.getObjectRelationship(
+						_objectDefinition.getObjectDefinitionId(),
+						objectRelationshipName);
+
+				objectEntryManager.addObjectRelationshipMappingTableValues(
+					_getDTOConverterContext(null),
+					objectRelationship,
+					persistedObjectEntry.getId(),
+					relatedObjectEntryId);
+
+				return persistedObjectEntry;
+			}
+		}
 
 		return objectEntryManager.addObjectEntry(
 			_getDTOConverterContext(null), _objectDefinition, objectEntry,
