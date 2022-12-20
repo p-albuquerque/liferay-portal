@@ -171,6 +171,22 @@ portletDisplay.setURLBack(backURL);
 								);
 							}
 
+							let relationshipValueMap =
+								'<%= objectEntryDisplayContext.getRelationshipValueMap() %>';
+
+							relationshipValueMap = relationshipValueMap.substring(
+								1,
+								relationshipValueMap.length - 1
+							);
+
+							if (!relationshipValueMap.includes('null')) {
+								const [field, fieldValue] = relationshipValueMap.split(
+									'='
+								);
+
+								values = Object.assign(values, {[field]: fieldValue});
+							}
+
 							Liferay.Util.fetch(path, {
 								body: JSON.stringify(values),
 								headers: new Headers({
