@@ -14,9 +14,14 @@
 
 package com.liferay.portal.workflow.task.web.internal.util;
 
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.portlet.PortalPreferences;
 import com.liferay.portal.kernel.portlet.PortletPreferencesFactoryUtil;
+import com.liferay.portal.kernel.template.TemplateHandler;
+import com.liferay.portal.kernel.template.TemplateHandlerRegistryUtil;
 import com.liferay.portal.kernel.util.ArrayUtil;
+import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.OrderByComparator;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.PortletKeys;
@@ -25,6 +30,7 @@ import com.liferay.portal.kernel.workflow.WorkflowTask;
 import com.liferay.portal.kernel.workflow.comparator.WorkflowComparatorFactoryUtil;
 import com.liferay.portal.workflow.task.web.internal.configuration.WorkflowTaskWebConfiguration;
 
+import javax.portlet.PortletPreferences;
 import javax.portlet.PortletRequest;
 
 /**
@@ -88,4 +94,50 @@ public class WorkflowTaskPortletUtil {
 		return orderByComparator;
 	}
 
+
+	public static String getDisplayStyle(
+		PortletPreferences portletPreferences) {
+
+		try {
+			TemplateHandler templateHandler =
+				TemplateHandlerRegistryUtil.getTemplateHandler(
+					WorkflowTaskWebConfiguration.class.getName());
+
+			if (templateHandler != null) {
+				return portletPreferences.getValue("displayStyle", null);
+			}
+		}
+		catch (Exception exception) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(exception);
+			}
+		}
+
+		return null;
+	}
+
+	public static long getDisplayStyleGroupId(
+		PortletPreferences portletPreferences) {
+
+		try {
+			TemplateHandler templateHandler =
+				TemplateHandlerRegistryUtil.getTemplateHandler(
+					WorkflowTaskWebConfiguration.class.getName());
+
+			if (templateHandler != null) {
+				return GetterUtil.getLong(
+					portletPreferences.getValue("displayStyleGroupId", null));
+			}
+		}
+		catch (Exception exception) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(exception);
+			}
+		}
+
+		return 0;
+	}
+
+	private static final Log _log = LogFactoryUtil.getLog(
+		WorkflowTaskPortletUtil.class);
 }
