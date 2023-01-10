@@ -42,7 +42,6 @@ import com.liferay.portal.kernel.model.UserGroupRole;
 import com.liferay.portal.kernel.security.auth.PrincipalException;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.security.permission.PermissionChecker;
-import com.liferay.portal.kernel.security.permission.PermissionCheckerFactory;
 import com.liferay.portal.kernel.security.permission.resource.ModelResourcePermission;
 import com.liferay.portal.kernel.security.permission.resource.ModelResourcePermissionRegistryUtil;
 import com.liferay.portal.kernel.security.permission.resource.PortletResourcePermission;
@@ -291,29 +290,6 @@ public class ObjectEntryServiceImpl extends ObjectEntryServiceBaseImpl {
 
 		return modelResourcePermission.contains(
 			getPermissionChecker(), objectEntry, actionId);
-	}
-
-	@Override
-	public boolean hasModelResourcePermission(
-			User user, long objectEntryId, String actionId)
-		throws PortalException {
-
-		ObjectEntry objectEntry = objectEntryLocalService.getObjectEntry(
-			objectEntryId);
-
-		ObjectDefinition objectDefinition =
-			_objectDefinitionPersistence.findByPrimaryKey(
-				objectEntry.getObjectDefinitionId());
-
-		ModelResourcePermission<ObjectEntry> modelResourcePermission =
-			_modelResourcePermissionsServiceTrackerMap.getService(
-				objectDefinition.getClassName());
-
-		PermissionChecker permissionChecker = _permissionCheckerFactory.create(
-			user);
-
-		return modelResourcePermission.contains(
-			permissionChecker, objectEntryId, actionId);
 	}
 
 	@Override
@@ -567,9 +543,6 @@ public class ObjectEntryServiceImpl extends ObjectEntryServiceBaseImpl {
 
 	@Reference
 	private ObjectFieldLocalService _objectFieldLocalService;
-
-	@Reference
-	private PermissionCheckerFactory _permissionCheckerFactory;
 
 	private volatile ServiceTrackerMap<String, PortletResourcePermission>
 		_portletResourcePermissionsServiceTrackerMap;
