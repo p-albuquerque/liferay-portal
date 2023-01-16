@@ -172,6 +172,9 @@ public class DDMExpressionEvaluatorVisitor
 		DDMExpressionFunction ddmExpressionFunction =
 			ddmExpressionFunctionFactory.create();
 
+		ddmExpressionFunction.
+
+
 		if (ddmExpressionFunction instanceof DDMExpressionObserverAware) {
 			DDMExpressionObserverAware ddmExpressionObserverAware =
 				(DDMExpressionObserverAware)ddmExpressionFunction;
@@ -222,7 +225,10 @@ public class DDMExpressionEvaluatorVisitor
 				_log.debug(noSuchMethodException);
 			}
 
-			return null;
+			if(!StringUtil.equals(
+				ddmExpressionFunction.getName(), "oldValue")){
+				return null;
+			}
 		}
 
 		method.setAccessible(true);
@@ -244,6 +250,15 @@ public class DDMExpressionEvaluatorVisitor
 
 				return method.invoke(
 					ddmExpressionFunction, new Object[] {functionParameters});
+			}
+
+			if (StringUtil.equals(
+					ddmExpressionFunction.getName(), "oldValue")) {
+
+				String fieldName = "field1"; //Use the context to get it?
+
+				return method.invoke(
+					ddmExpressionFunction, fieldName, _variables);
 			}
 
 			return method.invoke(ddmExpressionFunction, functionParameters);

@@ -231,6 +231,8 @@ public class DDMFormEvaluatorHelper {
 				expression
 			).withDDMExpressionActionHandler(
 				ddmFormEvaluatorExpressionActionHandler
+			).withDDMExpressionActionHandler(
+				ddmFormEvaluatorExpressionActionHandler
 			).withDDMExpressionFieldAccessor(
 				ddmFormEvaluatorDDMExpressionFieldAccessor
 			).withDDMExpressionObserver(

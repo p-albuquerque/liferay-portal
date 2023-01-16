@@ -25,6 +25,7 @@ import com.liferay.object.service.ObjectFieldLocalServiceUtil;
 import com.liferay.object.system.JaxRsApplicationDescriptor;
 import com.liferay.object.system.SystemObjectDefinitionMetadata;
 import com.liferay.object.system.SystemObjectDefinitionMetadataRegistry;
+import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.json.JSONArray;
 import com.liferay.portal.kernel.json.JSONFactoryUtil;
@@ -304,6 +305,16 @@ public class ObjectEntryVariablesUtil {
 					variables.get(objectField.getName()));
 			}
 		}
+
+		Map<String, Object> oldVariables = new HashMap<>(
+			(Map)payloadJSONObject.get("originalObjectEntry"));
+
+		oldVariables.putAll((Map<String, Object>)oldVariables.get("values"));
+
+		oldVariables.remove("values");
+
+		oldVariables.forEach(
+			(key, value) -> allowedVariables.put(StringPool.POUND + key, value));
 
 		return allowedVariables;
 	}

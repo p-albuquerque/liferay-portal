@@ -14,6 +14,8 @@
 
 package com.liferay.dynamic.data.mapping.expression;
 
+import java.util.Map;
+
 /**
  * @author Leonardo Barros
  */
