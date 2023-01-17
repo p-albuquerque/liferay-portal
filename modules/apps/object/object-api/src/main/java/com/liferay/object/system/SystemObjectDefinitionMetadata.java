@@ -17,6 +17,8 @@ package com.liferay.object.system;
 import com.liferay.object.model.ObjectField;
 import com.liferay.petra.sql.dsl.Column;
 import com.liferay.petra.sql.dsl.Table;
+import com.liferay.petra.sql.dsl.expression.Expression;
+import com.liferay.petra.sql.dsl.query.JoinStep;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.model.BaseModel;
 
@@ -37,8 +39,12 @@ public interface SystemObjectDefinitionMetadata {
 			String externalReferenceCode, long companyId)
 		throws PortalException;
 
+	public Expression<?>[] getExpressions();
+
 	public String getExternalReferenceCode(long primaryKey)
 		throws PortalException;
+
+	public JoinStep getInnerJoinStep(JoinStep joinStep);
 
 	public JaxRsApplicationDescriptor getJaxRsApplicationDescriptor();
 

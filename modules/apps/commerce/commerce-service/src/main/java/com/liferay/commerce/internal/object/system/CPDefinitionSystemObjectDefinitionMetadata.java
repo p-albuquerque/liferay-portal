@@ -15,6 +15,7 @@
 package com.liferay.commerce.internal.object.system;
 
 import com.liferay.commerce.product.model.CPDefinition;
+import com.liferay.commerce.product.model.CPDefinitionLocalizationTable;
 import com.liferay.commerce.product.model.CPDefinitionTable;
 import com.liferay.commerce.product.model.CProduct;
 import com.liferay.commerce.product.service.CPDefinitionLocalService;
@@ -25,15 +26,21 @@ import com.liferay.object.system.BaseSystemObjectDefinitionMetadata;
 import com.liferay.object.system.JaxRsApplicationDescriptor;
 import com.liferay.object.system.SystemObjectDefinitionMetadata;
 import com.liferay.petra.sql.dsl.Column;
+import com.liferay.petra.sql.dsl.DSLQueryFactoryUtil;
 import com.liferay.petra.sql.dsl.Table;
+import com.liferay.petra.sql.dsl.expression.Expression;
+import com.liferay.petra.sql.dsl.query.FromStep;
+import com.liferay.petra.sql.dsl.query.JoinStep;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.model.BaseModel;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
+import com.liferay.portal.kernel.util.ArrayUtil;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 
@@ -50,6 +57,33 @@ public class CPDefinitionSystemObjectDefinitionMetadata
 
 		return _cpDefinitionLocalService.deleteCPDefinition(
 			(CPDefinition)baseModel);
+	}
+
+	@Override
+	public Expression<?>[] getExpressions() {
+		List<Expression<?>> selectExpressions = new ArrayList<>();
+
+		for (Column<CPDefinitionLocalizationTable, ?> column :
+			CPDefinitionLocalizationTable.INSTANCE.getColumns()) {
+
+			selectExpressions.add(column);
+		}
+
+		return ArrayUtil.append(
+			super.getExpressions(),
+			ArrayUtil.remove(
+				selectExpressions.toArray(new Expression<?>[0]),
+				CPDefinitionLocalizationTable.INSTANCE.CPDefinitionId));
+	}
+
+	@Override
+	public JoinStep getInnerJoinStep(JoinStep joinStep){
+		return joinStep.innerJoinON(
+			CPDefinitionLocalizationTable.INSTANCE,
+			CPDefinitionLocalizationTable.INSTANCE.CPDefinitionId.eq(
+				CPDefinitionTable.INSTANCE.CPDefinitionId
+			)
+		);
 	}
 
 	@Override

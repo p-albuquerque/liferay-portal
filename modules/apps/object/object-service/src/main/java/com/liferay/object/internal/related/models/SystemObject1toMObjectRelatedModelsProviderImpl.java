@@ -34,6 +34,7 @@ import com.liferay.petra.sql.dsl.Table;
 import com.liferay.petra.sql.dsl.query.DSLQuery;
 import com.liferay.petra.sql.dsl.query.FromStep;
 import com.liferay.petra.sql.dsl.query.GroupByStep;
+import com.liferay.petra.sql.dsl.query.JoinStep;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.exception.PortalException;
@@ -187,7 +188,7 @@ public class SystemObject1toMObjectRelatedModelsProviderImpl
 
 		DSLQuery dslQuery = _getGroupByStep(
 			_getDynamicObjectDefinitionTable(), groupId, objectRelationshipId,
-			primaryKey, DSLQueryFactoryUtil.selectDistinct(_table)
+			primaryKey, DSLQueryFactoryUtil.selectDistinct(_systemObjectDefinitionMetadata.getExpressions())
 		).limit(
 			start, end
 		);
@@ -335,15 +336,18 @@ public class SystemObject1toMObjectRelatedModelsProviderImpl
 						objectField.getDBColumnName());
 		}
 
-		return fromStep.from(
-			_table
-		).innerJoinON(
-			dynamicObjectDefinitionTable,
-			dynamicObjectDefinitionTable.getPrimaryKeyColumn(
-			).eq(
-				_systemObjectDefinitionMetadata.getPrimaryKeyColumn()
-			)
-		).where(
+		JoinStep joinStep = _systemObjectDefinitionMetadata.getInnerJoinStep(
+			fromStep.from(
+				_table
+			).innerJoinON(
+				dynamicObjectDefinitionTable,
+				dynamicObjectDefinitionTable.getPrimaryKeyColumn(
+				).eq(
+					_systemObjectDefinitionMetadata.getPrimaryKeyColumn()
+				)
+			));
+
+		return joinStep.where(
 			primaryKeyColumn.eq(
 				primaryKey
 			).and(
