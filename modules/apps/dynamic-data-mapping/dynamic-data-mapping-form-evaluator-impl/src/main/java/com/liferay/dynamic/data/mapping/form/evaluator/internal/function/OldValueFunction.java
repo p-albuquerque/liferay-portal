@@ -14,6 +14,8 @@
 
 package com.liferay.dynamic.data.mapping.form.evaluator.internal.function;
 
+import com.liferay.dynamic.data.mapping.expression.DDMExpressionFieldAccessor;
+import com.liferay.dynamic.data.mapping.expression.DDMExpressionFieldAccessorAware;
 import com.liferay.dynamic.data.mapping.expression.DDMExpressionFunction;
 import com.liferay.petra.string.StringPool;
 
@@ -23,10 +25,11 @@ import java.util.Map;
  * @author Paulo Albuquerque
  */
 public class OldValueFunction
-	implements DDMExpressionFunction.Function1
+	implements DDMExpressionFieldAccessorAware, DDMExpressionFunction.Function1
 		<Object, Object> {
 
 	public static final String NAME = "oldValue";
+	private DDMExpressionFieldAccessor _ddmExpressionFieldAccessor;
 
 	@Override
 	public Object apply(Object fieldName) {
@@ -34,6 +37,7 @@ public class OldValueFunction
 		// handle the fieldName to shape with the oldValue reference pattern
 
 		String oldValueFieldName = StringPool.POUND + fieldName;
+		Map<Object> _ddmExpressionFieldAccessor.getVariables();
 	}
 
 	@Override
@@ -41,4 +45,10 @@ public class OldValueFunction
 		return NAME;
 	}
 
+	@Override
+	public void setDDMExpressionFieldAccessor(
+		DDMExpressionFieldAccessor ddmExpressionFieldAccessor) {
+
+		_ddmExpressionFieldAccessor = ddmExpressionFieldAccessor;
+	}
 }

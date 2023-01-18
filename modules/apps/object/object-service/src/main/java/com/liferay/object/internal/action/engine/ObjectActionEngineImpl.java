@@ -155,6 +155,8 @@ public class ObjectActionEngineImpl implements ObjectActionEngine {
 			_ddmExpressionFactory.createExpression(
 				CreateExpressionRequest.Builder.newBuilder(
 					conditionExpression
+				).withDDMExpressionParameterAccessor(
+					new objectDDM...(variables)
 				).build());
 
 		ddmExpression.setVariables(variables);

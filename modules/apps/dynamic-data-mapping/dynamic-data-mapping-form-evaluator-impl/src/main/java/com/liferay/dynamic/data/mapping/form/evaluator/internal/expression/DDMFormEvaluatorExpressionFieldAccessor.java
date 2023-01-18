@@ -43,19 +43,28 @@ import java.util.Set;
 public class DDMFormEvaluatorExpressionFieldAccessor
 	implements DDMExpressionFieldAccessor {
 
+	private final Map<String, Object> _variables;
+
 	public DDMFormEvaluatorExpressionFieldAccessor(
 		DDMFormEvaluatorFormValuesHelper ddmFormEvaluatorFormValuesHelper,
 		Map<String, DDMFormField> ddmFormFieldsMap,
 		Map<DDMFormEvaluatorFieldContextKey, Map<String, Object>>
 			ddmFormFieldsPropertyChanges,
 		DDMFormFieldTypeServicesRegistry ddmFormFieldTypeServicesRegistry,
-		Locale locale) {
+		Locale locale,
+		Map<String, Object> variables) {
 
 		_ddmFormEvaluatorFormValuesHelper = ddmFormEvaluatorFormValuesHelper;
 		_ddmFormFieldsMap = ddmFormFieldsMap;
 		_ddmFormFieldsPropertyChanges = ddmFormFieldsPropertyChanges;
 		_ddmFormFieldTypeServicesRegistry = ddmFormFieldTypeServicesRegistry;
 		_locale = locale;
+		_variables = variables;
+	}
+
+	@Override
+	public Map<String, Object> getVariables() {
+		return _variables;
 	}
 
 	@Override
