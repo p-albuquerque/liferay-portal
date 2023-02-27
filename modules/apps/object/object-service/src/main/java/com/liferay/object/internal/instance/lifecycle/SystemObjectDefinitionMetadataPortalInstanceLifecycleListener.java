@@ -19,6 +19,7 @@ import com.liferay.item.selector.ItemSelectorViewDescriptorRenderer;
 import com.liferay.item.selector.criteria.info.item.criterion.InfoItemItemSelectorCriterion;
 import com.liferay.notification.handler.NotificationHandler;
 import com.liferay.notification.term.evaluator.NotificationTermEvaluator;
+import com.liferay.object.admin.rest.resource.v1_0.ObjectDefinitionResource;
 import com.liferay.object.constants.ObjectSAPConstants;
 import com.liferay.object.internal.item.selector.SystemObjectEntryItemSelectorView;
 import com.liferay.object.internal.notification.handler.ObjectDefinitionNotificationHandler;
@@ -46,11 +47,19 @@ import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.instance.lifecycle.BasePortalInstanceLifecycleListener;
 import com.liferay.portal.instance.lifecycle.PortalInstanceLifecycleListener;
 import com.liferay.portal.kernel.dao.orm.ArgumentsResolver;
+import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.json.JSONFactory;
+import com.liferay.portal.kernel.json.JSONObject;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.Company;
 import com.liferay.portal.kernel.model.Release;
+import com.liferay.portal.kernel.model.User;
+import com.liferay.portal.kernel.security.auth.PrincipalThreadLocal;
+import com.liferay.portal.kernel.security.permission.PermissionCheckerFactory;
+import com.liferay.portal.kernel.security.permission.PermissionThreadLocal;
 import com.liferay.portal.kernel.service.CompanyLocalService;
 import com.liferay.portal.kernel.service.PersistedModelLocalServiceRegistry;
 import com.liferay.portal.kernel.service.ServiceContext;
@@ -58,16 +67,19 @@ import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.util.HashMapDictionaryBuilder;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.ResourceBundleUtil;
+import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.language.LanguageResources;
 import com.liferay.portal.security.service.access.policy.model.SAPEntry;
 import com.liferay.portal.security.service.access.policy.service.SAPEntryLocalService;
-
+import com.liferay.portal.vulcan.pagination.Page;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceReference;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Deactivate;
 import org.osgi.service.component.annotations.Reference;
+
+import java.util.List;
 
 /**
  * @author Marco Leo
@@ -98,6 +110,8 @@ public class SystemObjectDefinitionMetadataPortalInstanceLifecycleListener
 
 			_apply(company.getCompanyId(), systemObjectDefinitionMetadata);
 		}
+
+		_importJSONObjectDefinition(company);
 	}
 
 	@Activate
@@ -273,6 +287,64 @@ public class SystemObjectDefinitionMetadataPortalInstanceLifecycleListener
 		}
 	}
 
+	private void _importJSONObjectDefinition(Company company) {
+		try {
+			JSONObject objectDefinitionJSONObject =
+				_jsonFactory.createJSONObject(
+					StringUtil.read(getClass(), "dependencies/bookmarks.json"));
+
+			com.liferay.object.admin.rest.dto.v1_0.ObjectDefinition
+				objectDefinition =
+					com.liferay.object.admin.rest.dto.v1_0.ObjectDefinition.
+						toDTO(objectDefinitionJSONObject.toString());
+
+			ObjectDefinitionResource.Builder objectDefinitionResourceBuilder =
+				_objectDefinitionResourceFactory.create();
+
+			List<User> users = _userLocalService.getCompanyUsers(
+				company.getCompanyId(), QueryUtil.ALL_POS, QueryUtil.ALL_POS);
+
+			User currentUser = users.get(0);
+
+			PermissionThreadLocal.setPermissionChecker(
+				_defaultPermissionCheckerFactory.create(currentUser));
+
+			PrincipalThreadLocal.setName(currentUser.getUserId());
+
+			ObjectDefinitionResource objectDefinitionResource =
+				objectDefinitionResourceBuilder.user(
+					currentUser
+				).build();
+
+			Page<com.liferay.object.admin.rest.dto.v1_0.ObjectDefinition>
+				objectDefinitionsPage =
+					objectDefinitionResource.getObjectDefinitionsPage(
+						null, null,
+						objectDefinitionResource.toFilter(
+							StringBundler.concat(
+								"name eq '", objectDefinition.getName(), "'")),
+						null, null);
+
+			com.liferay.object.admin.rest.dto.v1_0.ObjectDefinition
+				existingObjectDefinition =
+					objectDefinitionsPage.fetchFirstItem();
+
+			if (existingObjectDefinition == null) {
+				objectDefinitionResource.postObjectDefinition(objectDefinition);
+
+				objectDefinitionResource.postObjectDefinitionPublish(
+					objectDefinition.getId());
+			}
+			else {
+				objectDefinitionResource.patchObjectDefinition(
+					existingObjectDefinition.getId(), objectDefinition);
+			}
+		}
+		catch (Exception exception) {
+			throw new RuntimeException(exception);
+		}
+	}
+
 	private static final Log _log = LogFactoryUtil.getLog(
 		SystemObjectDefinitionMetadataPortalInstanceLifecycleListener.class);
 
@@ -282,11 +354,23 @@ public class SystemObjectDefinitionMetadataPortalInstanceLifecycleListener
 	private CompanyLocalService _companyLocalService;
 
 	@Reference
+	private PermissionCheckerFactory _defaultPermissionCheckerFactory;
+
+	@Reference
 	private ItemSelectorViewDescriptorRenderer<InfoItemItemSelectorCriterion>
 		_itemSelectorViewDescriptorRenderer;
 
 	@Reference
+	private JSONFactory _jsonFactory;
+
+	@Reference
+	private Language _language;
+
+	@Reference
 	private ObjectDefinitionLocalService _objectDefinitionLocalService;
+
+	@Reference
+	private ObjectDefinitionResource.Factory _objectDefinitionResourceFactory;
 
 	@Reference
 	private ObjectEntryLocalService _objectEntryLocalService;
