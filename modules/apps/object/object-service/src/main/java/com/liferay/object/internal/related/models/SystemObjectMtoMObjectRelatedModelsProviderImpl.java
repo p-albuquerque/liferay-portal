@@ -32,6 +32,7 @@ import com.liferay.petra.sql.dsl.DSLQueryFactoryUtil;
 import com.liferay.petra.sql.dsl.Table;
 import com.liferay.petra.sql.dsl.query.FromStep;
 import com.liferay.petra.sql.dsl.query.GroupByStep;
+import com.liferay.petra.sql.dsl.query.JoinStep;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.exception.PortalException;
@@ -156,7 +157,8 @@ public class SystemObjectMtoMObjectRelatedModelsProviderImpl
 		return persistedModelLocalService.dslQuery(
 			_getGroupByStep(
 				groupId, objectRelationshipId, primaryKey,
-				DSLQueryFactoryUtil.selectDistinct(_table)
+				DSLQueryFactoryUtil.selectDistinct(
+					_systemObjectDefinitionMetadata.getExpressions())
 			).limit(
 				start, end
 			));
@@ -207,12 +209,15 @@ public class SystemObjectMtoMObjectRelatedModelsProviderImpl
 			_persistedModelLocalServiceRegistry.getPersistedModelLocalService(
 				objectDefinition.getClassName());
 
-		return persistedModelLocalService.dslQuery(
+		JoinStep joinStep = _systemObjectDefinitionMetadata.getInnerJoinStep(
 			DSLQueryFactoryUtil.select(
-				_table
+				_systemObjectDefinitionMetadata.getExpressions()
 			).from(
 				_table
-			).where(
+			));
+
+		return persistedModelLocalService.dslQuery(
+			joinStep.where(
 				companyIdColumn.eq(
 					companyId
 				).and(
@@ -260,8 +265,7 @@ public class SystemObjectMtoMObjectRelatedModelsProviderImpl
 								primaryKeyColumn1.eq(objectEntryId)
 							));
 					}
-				)
-			));
+				)));
 	}
 
 	private GroupByStep _getGroupByStep(
@@ -298,16 +302,20 @@ public class SystemObjectMtoMObjectRelatedModelsProviderImpl
 
 		Column<DynamicObjectRelationshipMappingTable, Long> primaryKeyColumn1 =
 			dynamicObjectRelationshipMappingTable.getPrimaryKeyColumn1();
+
 		Column<DynamicObjectRelationshipMappingTable, Long> primaryKeyColumn2 =
 			dynamicObjectRelationshipMappingTable.getPrimaryKeyColumn2();
 
-		return fromStep.from(
-			dynamicObjectDefinitionTable
-		).innerJoinON(
-			dynamicObjectRelationshipMappingTable,
-			primaryKeyColumn2.eq(
-				dynamicObjectDefinitionTable.getPrimaryKeyColumn())
-		).where(
+		JoinStep joinStep = _systemObjectDefinitionMetadata.getInnerJoinStep(
+			fromStep.from(
+				dynamicObjectDefinitionTable
+			).innerJoinON(
+				dynamicObjectRelationshipMappingTable,
+				primaryKeyColumn2.eq(
+					dynamicObjectDefinitionTable.getPrimaryKeyColumn())
+			));
+
+		return joinStep.where(
 			primaryKeyColumn1.eq(
 				primaryKey
 			).and(
@@ -336,8 +344,7 @@ public class SystemObjectMtoMObjectRelatedModelsProviderImpl
 					return companyIdColumn.eq(
 						objectRelationship.getCompanyId());
 				}
-			)
-		);
+			));
 	}
 
 	private final ObjectDefinition _objectDefinition;

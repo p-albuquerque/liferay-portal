@@ -17,10 +17,14 @@ package com.liferay.object.system;
 import com.liferay.object.field.util.ObjectFieldUtil;
 import com.liferay.object.model.ObjectField;
 import com.liferay.petra.sql.dsl.Table;
+import com.liferay.petra.sql.dsl.expression.Expression;
+import com.liferay.petra.sql.dsl.query.JoinStep;
 import com.liferay.portal.kernel.language.LanguageUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.vulcan.util.LocalizedMapUtil;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
@@ -30,6 +34,21 @@ import java.util.Map;
  */
 public abstract class BaseSystemObjectDefinitionMetadata
 	implements SystemObjectDefinitionMetadata {
+
+	public Expression<?>[] getExpressions() {
+		Table table = getTable();
+
+		List<Object> selectExpressions = new ArrayList<>();
+
+		selectExpressions.addAll(table.getColumns());
+
+		return selectExpressions.toArray(new Expression<?>[0]);
+	}
+
+	@Override
+	public JoinStep getInnerJoinStep(JoinStep joinStep) {
+		return joinStep;
+	}
 
 	@Override
 	public String getModelClassName() {
