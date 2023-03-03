@@ -15,6 +15,7 @@
 package com.liferay.notification.web.internal.portlet.action;
 
 import com.liferay.notification.constants.NotificationPortletKeys;
+import com.liferay.object.definition.notification.term.ObjectDefinitionNotificationCurrentUserTerm;
 import com.liferay.portal.kernel.portlet.bridges.mvc.MVCResourceCommand;
 
 import java.util.LinkedHashMap;
@@ -36,36 +37,14 @@ import org.osgi.service.component.annotations.Component;
 public class GeneralNotificationTemplateTermsMVCResourceCommand
 	extends BaseNotificationTemplateTermsMVCResourceCommand {
 
-	public enum CurrentUserTerm {
-
-		CURRENT_USER_EMAIL(
-			"current-user-email-address", "[%CURRENT_USER_EMAIL%]"),
-		CURRENT_USER_FIRST_NAME(
-			"current-user-first-name", "[%CURRENT_USER_FIRSTNAME%]"),
-		CURRENT_USER_ID("current-user-id", "[%CURRENT_USER_ID%]"),
-		CURRENT_USER_LAST_NAME(
-			"current-user-last-name", "[%CURRENT_USER_LASTNAME%]"),
-		CURRENT_USER_MIDDLE_NAME(
-			"current-user-middle-name", "[%CURRENT_USER_MIDDLENAME%]"),
-		CURRENT_USER_PREFIX("current-user-prefix", "[%CURRENT_USER_PREFIX%]"),
-		CURRENT_USER_SUFFIX("current-user-suffix", "[%CURRENT_USER_SUFFIX%]");
-
-		private CurrentUserTerm(String key, String termName) {
-			_key = key;
-			_termName = termName;
-		}
-
-		private final String _key;
-		private final String _termName;
-
-	}
-
 	@Override
 	protected Set<Map.Entry<String, String>> getEntrySet() {
 		Map<String, String> map = new LinkedHashMap<>();
 
-		for (CurrentUserTerm currentUserTerm : CurrentUserTerm.values()) {
-			map.put(currentUserTerm._key, currentUserTerm._termName);
+		for (ObjectDefinitionNotificationCurrentUserTerm currentUserTerm :
+				ObjectDefinitionNotificationCurrentUserTerm.values()) {
+
+			map.put(currentUserTerm.getKey(), currentUserTerm.getTermName());
 		}
 
 		return map.entrySet();

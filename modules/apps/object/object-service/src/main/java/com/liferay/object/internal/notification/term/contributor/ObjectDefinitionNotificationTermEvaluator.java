@@ -15,6 +15,7 @@
 package com.liferay.object.internal.notification.term.contributor;
 
 import com.liferay.notification.term.evaluator.NotificationTermEvaluator;
+import com.liferay.object.definition.notification.term.ObjectDefinitionNotificationCurrentUserTerm;
 import com.liferay.object.definition.notification.term.util.ObjectDefinitionNotificationTermUtil;
 import com.liferay.object.model.ObjectDefinition;
 import com.liferay.object.model.ObjectField;
@@ -95,7 +96,7 @@ public class ObjectDefinitionNotificationTermEvaluator
 				GetterUtil.getLong(termValues.get("creator")));
 		}
 
-		if (_currentUserTermName.contains(termName)) {
+		if (ObjectDefinitionNotificationCurrentUserTerm.contains(termName)) {
 			user = _userLocalService.getUser(
 				GetterUtil.getLong(termValues.get("currentUserId")));
 		}
@@ -215,14 +216,6 @@ public class ObjectDefinitionNotificationTermEvaluator
 			"SUFFIX", _getListTypeName(false, user)
 		).build();
 	}
-
-	private static final Set<String> _currentUserTermName =
-		Collections.unmodifiableSet(
-			SetUtil.fromArray(
-				"[%CURRENT_USER_EMAIL%]", "[%CURRENT_USER_FIRSTNAME%]",
-				"[%CURRENT_USER_ID%]", "[%CURRENT_USER_LASTNAME%]",
-				"[%CURRENT_USER_MIDDLENAME%]", "[%CURRENT_USER_PREFIX%]",
-				"[%CURRENT_USER_SUFFIX%]"));
 
 	private final ObjectDefinition _objectDefinition;
 	private volatile Map<String, Long> _objectFieldIds;
