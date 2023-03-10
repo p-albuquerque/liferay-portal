@@ -22,6 +22,16 @@ export interface Item {
 	name: string;
 	term: string;
 }
+export interface termContext {
+	objectRelationshipContext?: [
+		{
+			objectDefinition1ShortName: string;
+			id: number;
+			label: string;
+		}
+	];
+	terms: Item[];
+}
 export declare function DefinitionOfTerms({
 	baseResourceURL,
 	objectDefinitions,

@@ -21,7 +21,7 @@ import {
 import {createResourceURL, fetch} from 'frontend-js-web';
 import React, {useEffect, useState} from 'react';
 
-import {Item} from './DefinitionOfTerms';
+import {Item, termContext} from './DefinitionOfTerms';
 
 interface GeneralTermsProps {
 	baseResourceURL: string;
@@ -56,9 +56,9 @@ export function GeneralTerms({baseResourceURL}: GeneralTermsProps) {
 				}).toString()
 			);
 
-			const responseJSON = (await response.json()) as Item[];
+			const responseJSON = (await response.json()) as termContext;
 
-			setGeneralTermsItems(responseJSON);
+			setGeneralTermsItems(responseJSON.terms);
 		};
 
 		makeFetch();
