@@ -28,12 +28,22 @@ interface DefinitionOfTermsProps {
 	baseResourceURL: string;
 	objectDefinitions: ObjectDefinition[];
 }
-
 export interface Item {
 	name: string;
 	term: string;
 }
 
+
+
+export interface TermContext {
+	objectRelationshipContext?: [
+		{
+			id: number;
+			label: string;
+			objectDefinition1ShortName: string;
+		}];
+	terms:Item[]
+}
 export function DefinitionOfTerms({
 	baseResourceURL,
 	objectDefinitions,
@@ -62,9 +72,9 @@ export function DefinitionOfTerms({
 			}).toString()
 		);
 
-		const responseJSON = (await response.json()) as Item[];
+		const responseJSON = (await response.json()) as TermContext;
 
-		setObjectFieldTerms(responseJSON);
+		setObjectFieldTerms(responseJSON.terms);
 	};
 
 	const copyObjectFieldTerm = ({itemData}: {itemData: Item}) => {
