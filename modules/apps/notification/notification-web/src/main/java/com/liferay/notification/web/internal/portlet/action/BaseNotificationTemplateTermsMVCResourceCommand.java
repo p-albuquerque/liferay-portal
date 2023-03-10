@@ -16,6 +16,7 @@ package com.liferay.notification.web.internal.portlet.action;
 
 import com.liferay.portal.kernel.json.JSONArray;
 import com.liferay.portal.kernel.json.JSONFactory;
+import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.model.User;
@@ -38,6 +39,10 @@ import org.osgi.service.component.annotations.Reference;
 public abstract class BaseNotificationTemplateTermsMVCResourceCommand
 	extends BaseMVCResourceCommand {
 
+	protected JSONObject buildJSONObject(JSONArray jsonArray) {
+		return JSONUtil.put("terms", jsonArray);
+	}
+
 	@Override
 	protected void doServeResource(
 			ResourceRequest resourceRequest, ResourceResponse resourceResponse)
@@ -57,7 +62,7 @@ public abstract class BaseNotificationTemplateTermsMVCResourceCommand
 		}
 
 		JSONPortletResponseUtil.writeJSON(
-			resourceRequest, resourceResponse, jsonArray);
+			resourceRequest, resourceResponse, buildJSONObject(jsonArray));
 	}
 
 	protected abstract Set<Map.Entry<String, String>> getTermNamesEntries();

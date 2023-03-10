@@ -15,12 +15,18 @@
 package com.liferay.notification.web.internal.portlet.action;
 
 import com.liferay.notification.constants.NotificationPortletKeys;
+import com.liferay.object.constants.ObjectFieldSettingConstants;
 import com.liferay.object.definition.notification.term.util.ObjectDefinitionNotificationTermUtil;
 import com.liferay.object.model.ObjectDefinition;
 import com.liferay.object.model.ObjectField;
+import com.liferay.object.model.ObjectRelationship;
 import com.liferay.object.service.ObjectDefinitionLocalService;
 import com.liferay.object.service.ObjectFieldLocalService;
+import com.liferay.object.service.ObjectRelationshipLocalService;
 import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
+import com.liferay.portal.kernel.json.JSONArray;
+import com.liferay.portal.kernel.json.JSONObject;
+import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.portlet.bridges.mvc.MVCResourceCommand;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.ParamUtil;
@@ -49,6 +55,47 @@ import org.osgi.service.component.annotations.Reference;
 )
 public class GetObjectFieldNotificationTemplateTermsMVCResourceCommand
 	extends BaseNotificationTemplateTermsMVCResourceCommand {
+
+	@Override
+	protected JSONObject buildJSONObject(JSONArray jsonArray) {
+		List<ObjectRelationship> objectRelationships =
+			_objectRelationshipLocalService.
+				getObjectRelationshipsByObjectDefinitionId2(
+					_objectDefinition.getObjectDefinitionId());
+
+		JSONArray objectRelationshipContextsJSONArray =
+			jsonFactory.createJSONArray();
+
+		for (ObjectRelationship objectRelationship : objectRelationships) {
+			JSONObject objectRelationshipContextJSONObject =
+				jsonFactory.createJSONObject();
+
+			objectRelationshipContextJSONObject.put(
+				ObjectFieldSettingConstants.NAME_OBJECT_DEFINITION_1_SHORT_NAME,
+				() -> {
+					ObjectDefinition objectDefinition =
+						_objectDefinitionLocalService.getObjectDefinition(
+							objectRelationship.getObjectDefinitionId1());
+
+					return objectDefinition.getShortName();
+				}
+			).put(
+				"id",
+				String.valueOf(objectRelationship.getObjectRelationshipId())
+			).put(
+				"label", objectRelationship.getLabel(user.getLocale())
+			);
+
+			objectRelationshipContextsJSONArray.put(
+				objectRelationshipContextJSONObject);
+		}
+
+		return JSONUtil.put(
+			"relationshipContexts", objectRelationshipContextsJSONArray
+		).put(
+			"terms", jsonArray
+		);
+	}
 
 	@Override
 	protected void doServeResource(
@@ -119,5 +166,8 @@ public class GetObjectFieldNotificationTemplateTermsMVCResourceCommand
 	).put(
 		"author-suffix", "AUTHOR_SUFFIX"
 	).build();
+
+	@Reference
+	private ObjectRelationshipLocalService _objectRelationshipLocalService;
 
 }
