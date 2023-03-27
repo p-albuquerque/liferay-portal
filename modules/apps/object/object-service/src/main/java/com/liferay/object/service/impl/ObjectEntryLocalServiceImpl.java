@@ -3041,8 +3041,16 @@ public class ObjectEntryLocalServiceImpl
 				String externalReferenceCode = String.valueOf(entry.getValue());
 
 				if (Validator.isNull(externalReferenceCode)) {
-					externalReferenceCode = String.valueOf(
-						objectEntry.getObjectEntryId());
+					if (Validator.isNotNull(
+							objectEntry.getExternalReferenceCode())) {
+
+						return;
+					}
+
+					objectEntry.setExternalReferenceCode(
+						String.valueOf(objectEntry.getUuid()));
+
+					return;
 				}
 
 				_validateExternalReferenceCode(
@@ -3051,6 +3059,8 @@ public class ObjectEntryLocalServiceImpl
 					objectEntry.getObjectEntryId());
 
 				objectEntry.setExternalReferenceCode(externalReferenceCode);
+
+				return;
 			}
 		}
 	}
