@@ -15,21 +15,22 @@
 package com.liferay.notification.web.internal.portlet.action;
 
 import com.liferay.notification.constants.NotificationPortletKeys;
-import com.liferay.object.model.ObjectField;
+import com.liferay.object.model.ObjectDefinition;
+import com.liferay.object.model.ObjectRelationship;
+import com.liferay.object.service.ObjectDefinitionLocalService;
+import com.liferay.object.service.ObjectFieldLocalService;
+import com.liferay.object.service.ObjectRelationshipLocalService;
 import com.liferay.portal.kernel.portlet.JSONPortletResponseUtil;
 import com.liferay.portal.kernel.portlet.bridges.mvc.MVCResourceCommand;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
-import com.liferay.portal.kernel.util.HashMapBuilder;
+import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.WebKeys;
-
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 import javax.portlet.ResourceRequest;
 import javax.portlet.ResourceResponse;
 
 import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 
 /**
  * @author Paulo Albuquerque
@@ -37,11 +38,11 @@ import org.osgi.service.component.annotations.Component;
 @Component(
 	property = {
 		"javax.portlet.name=" + NotificationPortletKeys.NOTIFICATION_TEMPLATES,
-		"mvc.command.name=/notification_templates/get_general_notification_template_terms"
+		"mvc.command.name=/notification_templates/get_parent_object_field_notification_template_terms"
 	},
 	service = MVCResourceCommand.class
 )
-public class GetGeneralNotificationTemplateTermsMVCResourceCommand
+public class GetParentObjectFieldNotificationTemplateTermsMVCResourceCommand
 	extends BaseNotificationTemplateTermsMVCResourceCommand {
 
 	@Override
@@ -49,36 +50,39 @@ public class GetGeneralNotificationTemplateTermsMVCResourceCommand
 			ResourceRequest resourceRequest, ResourceResponse resourceResponse)
 		throws Exception {
 
+		ObjectRelationship objectRelationship =
+			_objectRelationshipLocalService.fetchObjectRelationship(
+				ParamUtil.getLong(resourceRequest, "objectRelationshipId"));
+
+		if (objectRelationship == null) {
+			return;
+		}
+
+		ObjectDefinition objectDefinition =
+			_objectDefinitionLocalService.fetchObjectDefinition(
+				objectRelationship.getObjectDefinitionId1());
+
+		if (objectDefinition == null) {
+			return;
+		}
+
 		JSONPortletResponseUtil.writeJSON(
 			resourceRequest, resourceResponse,
 			getTermsJSONArray(
-				null, null,
+				_objectFieldLocalService.getObjectFields(
+					objectDefinition.getObjectDefinitionId()),
+				objectRelationship.getName(),
 				(ThemeDisplay)resourceRequest.getAttribute(
 					WebKeys.THEME_DISPLAY)));
 	}
 
-	@Override
-	protected Set<Map.Entry<String, String>> getTermNamesEntries(
-		List<ObjectField> objectFields, String partialTermName,
-		ThemeDisplay themeDisplay) {
+	@Reference
+	private ObjectDefinitionLocalService _objectDefinitionLocalService;
 
-		return _termNames.entrySet();
-	}
+	@Reference
+	private ObjectFieldLocalService _objectFieldLocalService;
 
-	private final Map<String, String> _termNames = HashMapBuilder.put(
-		"current-user-email-address", "[%CURRENT_USER_EMAIL_ADDRESS%]"
-	).put(
-		"current-user-first-name", "[%CURRENT_USER_FIRST_NAME%]"
-	).put(
-		"current-user-id", "[%CURRENT_USER_ID%]"
-	).put(
-		"current-user-last-name", "[%CURRENT_USER_LAST_NAME%]"
-	).put(
-		"current-user-middle-name", "[%CURRENT_USER_MIDDLE_NAME%]"
-	).put(
-		"current-user-prefix", "[%CURRENT_USER_PREFIX%]"
-	).put(
-		"current-user-suffix", "[%CURRENT_USER_SUFFIX%]"
-	).build();
+	@Reference
+	private ObjectRelationshipLocalService _objectRelationshipLocalService;
 
 }
