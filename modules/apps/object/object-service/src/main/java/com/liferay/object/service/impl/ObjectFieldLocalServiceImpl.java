@@ -68,6 +68,7 @@ import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.systemevent.SystemEvent;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
+import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.SetUtil;
 import com.liferay.portal.kernel.util.StringUtil;
@@ -547,6 +548,18 @@ public class ObjectFieldLocalServiceImpl
 			objectFieldLocalService.getObjectFields(
 				objectDefinitionId, objectDefinition.getExtensionDBTableName()),
 			objectDefinition.getExtensionDBTableName());
+	}
+
+	@Override
+	public boolean hasEncryptedObjectField(long objectDefinitionId)
+		throws PortalException {
+
+		List<ObjectField> objectFields = ListUtil.filter(
+			getObjectFields(objectDefinitionId),
+			objectField -> objectField.compareBusinessType(
+				ObjectFieldConstants.BUSINESS_TYPE_ENCRYPTED));
+
+		return !objectFields.isEmpty();
 	}
 
 	@Indexable(type = IndexableType.REINDEX)
