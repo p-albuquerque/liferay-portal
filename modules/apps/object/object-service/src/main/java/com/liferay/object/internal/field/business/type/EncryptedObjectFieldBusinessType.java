@@ -17,6 +17,7 @@ package com.liferay.object.internal.field.business.type;
 import com.liferay.dynamic.data.mapping.form.field.type.constants.DDMFormFieldTypeConstants;
 import com.liferay.object.constants.ObjectFieldConstants;
 import com.liferay.object.field.business.type.ObjectFieldBusinessType;
+import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
 import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.vulcan.extension.PropertyDefinition;
 
@@ -64,6 +65,11 @@ public class EncryptedObjectFieldBusinessType
 	@Override
 	public PropertyDefinition.PropertyType getPropertyType() {
 		return PropertyDefinition.PropertyType.TEXT;
+	}
+
+	@Override
+	public boolean isVisible() {
+		return FeatureFlagManagerUtil.isEnabled("LPS-178057");
 	}
 
 	@Reference
