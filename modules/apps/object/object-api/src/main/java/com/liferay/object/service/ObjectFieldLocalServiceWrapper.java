@@ -545,6 +545,14 @@ public class ObjectFieldLocalServiceWrapper
 	}
 
 	@Override
+	public boolean hasEncryptedObjectField(long objectDefinitionId)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _objectFieldLocalService.hasEncryptedObjectField(
+			objectDefinitionId);
+	}
+
+	@Override
 	public com.liferay.object.model.ObjectField updateCustomObjectField(
 			String externalReferenceCode, long objectFieldId,
 			long listTypeDefinitionId, String businessType, String dbType,

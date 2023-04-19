@@ -388,6 +388,10 @@ public interface ObjectFieldLocalService
 	public Table getTable(long objectDefinitionId, String name)
 		throws PortalException;
 
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public boolean hasEncryptedObjectField(long objectDefinitionId)
+		throws PortalException;
+
 	@Indexable(type = IndexableType.REINDEX)
 	public ObjectField updateCustomObjectField(
 			String externalReferenceCode, long objectFieldId,
