@@ -472,6 +472,12 @@ public class ObjectFieldLocalServiceUtil {
 		return getService().getTable(objectDefinitionId, name);
 	}
 
+	public static boolean hasEncryptedObjectField(long objectDefinitionId)
+		throws PortalException {
+
+		return getService().hasEncryptedObjectField(objectDefinitionId);
+	}
+
 	public static ObjectField updateCustomObjectField(
 			String externalReferenceCode, long objectFieldId,
 			long listTypeDefinitionId, String businessType, String dbType,
