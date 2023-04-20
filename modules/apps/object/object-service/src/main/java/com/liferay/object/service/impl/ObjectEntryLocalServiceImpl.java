@@ -1778,6 +1778,18 @@ public class ObjectEntryLocalServiceImpl
 		return objectFieldBusinessType.getDBType();
 	}
 
+	private String _getDecryptedValue(Object object) {
+		try {
+			Company company = _companyLocalService.getCompany(
+				CompanyThreadLocal.getCompanyId());
+
+			return _encryptor.decrypt(company.getKeyObj(), (String)object);
+		}
+		catch (Exception exception) {
+			throw new RuntimeException(exception);
+		}
+	}
+
 	private DLFolder _getDLFolder(
 		long companyId, long groupId, String portletId,
 		ServiceContext serviceContext, boolean showFilesInDocumentsAndMedia,
@@ -2590,6 +2602,10 @@ public class ObjectEntryLocalServiceImpl
 
 		Map<String, Serializable> values = new HashMap<>();
 
+		boolean hasEncryptedValue =
+			_objectFieldLocalService.hasEncryptedObjectField(
+				objectDefinitionId);
+
 		for (int i = 0; i < selectExpressions.length; i++) {
 			Expression<?> selectExpression = selectExpressions[i];
 
@@ -2620,6 +2636,19 @@ public class ObjectEntryLocalServiceImpl
 
 			if (columnName.endsWith(StringPool.UNDERLINE)) {
 				columnName = columnName.substring(0, columnName.length() - 1);
+
+				if (hasEncryptedValue) {
+					ObjectField objectField =
+						_objectFieldLocalService.fetchObjectField(
+							objectDefinitionId, columnName);
+
+					if ((objectField != null) &&
+						objectField.compareBusinessType(
+							ObjectFieldConstants.BUSINESS_TYPE_ENCRYPTED)) {
+
+						objects[i] = _getDecryptedValue(objects[i]);
+					}
+				}
 			}
 
 			_putValue(javaTypeClass, columnName, objects[i], values);
