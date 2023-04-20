@@ -106,6 +106,7 @@ import com.liferay.portal.kernel.dao.db.DBManagerUtil;
 import com.liferay.portal.kernel.dao.db.DBType;
 import com.liferay.portal.kernel.dao.jdbc.CurrentConnection;
 import com.liferay.portal.kernel.dao.orm.FinderCacheUtil;
+import com.liferay.portal.kernel.encryptor.Encryptor;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.json.JSONArray;
@@ -116,6 +117,7 @@ import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.BaseModel;
+import com.liferay.portal.kernel.model.Company;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.ModelWrapper;
 import com.liferay.portal.kernel.model.OrganizationTable;
@@ -132,11 +134,13 @@ import com.liferay.portal.kernel.search.BaseModelSearchResult;
 import com.liferay.portal.kernel.search.Field;
 import com.liferay.portal.kernel.search.Indexer;
 import com.liferay.portal.kernel.search.IndexerRegistryUtil;
+import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
 import com.liferay.portal.kernel.security.auth.PrincipalException;
 import com.liferay.portal.kernel.security.auth.PrincipalThreadLocal;
 import com.liferay.portal.kernel.security.permission.InlineSQLHelper;
 import com.liferay.portal.kernel.security.permission.PermissionChecker;
 import com.liferay.portal.kernel.security.permission.PermissionThreadLocal;
+import com.liferay.portal.kernel.service.CompanyLocalService;
 import com.liferay.portal.kernel.service.GroupLocalService;
 import com.liferay.portal.kernel.service.PersistedModelLocalService;
 import com.liferay.portal.kernel.service.PersistedModelLocalServiceRegistry;
@@ -2649,6 +2653,8 @@ public class ObjectEntryLocalServiceImpl
 			if (objectField.compareBusinessType(
 					ObjectFieldConstants.BUSINESS_TYPE_AGGREGATION) ||
 				objectField.compareBusinessType(
+					ObjectFieldConstants.BUSINESS_TYPE_ENCRYPTED) ||
+				objectField.compareBusinessType(
 					ObjectFieldConstants.BUSINESS_TYPE_FORMULA) ||
 				!values.containsKey(objectField.getName())) {
 
@@ -3641,6 +3647,9 @@ public class ObjectEntryLocalServiceImpl
 	private AssetLinkLocalService _assetLinkLocalService;
 
 	@Reference
+	private CompanyLocalService _companyLocalService;
+
+	@Reference
 	private CurrentConnection _currentConnection;
 
 	@Reference
@@ -3654,6 +3663,9 @@ public class ObjectEntryLocalServiceImpl
 
 	@Reference
 	private DLFolderLocalService _dlFolderLocalService;
+
+	@Reference
+	private Encryptor _encryptor;
 
 	@Reference
 	private FilterPredicateFactory _filterPredicateFactory;
