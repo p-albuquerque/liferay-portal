@@ -158,6 +158,7 @@ import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.Localization;
+import com.liferay.portal.kernel.util.MapUtil;
 import com.liferay.portal.kernel.util.SetUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.TempFileEntryUtil;
@@ -268,6 +269,17 @@ public class ObjectEntryLocalServiceImpl
 			objectEntry.getPrimaryKey(), false, false, false);
 
 		objectEntry = objectEntryPersistence.update(objectEntry);
+
+		if (_objectFieldLocalService.hasEncryptedObjectField(
+				objectDefinitionId)) {
+
+			_insertEncryptedValue(
+				_getDynamicObjectDefinitionTable(objectDefinitionId),
+				objectEntryId, values);
+			_insertEncryptedValue(
+				_getExtensionDynamicObjectDefinitionTable(objectDefinitionId),
+				objectEntryId, values);
+		}
 
 		updateAsset(
 			serviceContext.getUserId(), objectEntry,
@@ -1233,6 +1245,19 @@ public class ObjectEntryLocalServiceImpl
 		objectEntry.setTransientValues(transientValues);
 
 		objectEntry = objectEntryPersistence.update(objectEntry);
+
+		if (_objectFieldLocalService.hasEncryptedObjectField(
+				objectEntry.getObjectDefinitionId())) {
+
+			_insertEncryptedValue(
+				_getDynamicObjectDefinitionTable(
+					objectEntry.getObjectDefinitionId()),
+				objectEntryId, values);
+			_insertEncryptedValue(
+				_getExtensionDynamicObjectDefinitionTable(
+					objectEntry.getObjectDefinitionId()),
+				objectEntryId, values);
+		}
 
 		updateAsset(
 			serviceContext.getUserId(), objectEntry,
@@ -2626,6 +2651,90 @@ public class ObjectEntryLocalServiceImpl
 		}
 
 		return values;
+	}
+
+	private void _insertEncryptedValue(
+			DynamicObjectDefinitionTable dynamicObjectDefinitionTable,
+			long objectEntryId, Map<String, Serializable> values)
+		throws PortalException {
+
+		StringBundler sb = new StringBundler();
+
+		sb.append("update ");
+		sb.append(dynamicObjectDefinitionTable.getName());
+		sb.append(" set ");
+
+		int count = 0;
+
+		List<ObjectField> objectFields =
+			dynamicObjectDefinitionTable.getObjectFields();
+
+		for (ObjectField objectField : objectFields) {
+			if (!objectField.compareBusinessType(
+					ObjectFieldConstants.BUSINESS_TYPE_ENCRYPTED)) {
+
+				objectFields.remove(objectField);
+
+				continue;
+			}
+
+			if (count > 0) {
+				sb.append(", ");
+			}
+
+			sb.append(objectField.getDBColumnName());
+			sb.append(" = ?");
+
+			count++;
+		}
+
+		if (count == 0) {
+			return;
+		}
+
+		sb.append(" where ");
+
+		Column<DynamicObjectDefinitionTable, Long> primaryKeyColumn =
+			dynamicObjectDefinitionTable.getPrimaryKeyColumn();
+
+		sb.append(primaryKeyColumn.getName());
+
+		sb.append(" = ?");
+
+		String sql = sb.toString();
+
+		Connection connection = _currentConnection.getConnection(
+			objectEntryPersistence.getDataSource());
+
+		try (PreparedStatement preparedStatement = connection.prepareStatement(
+				sql)) {
+
+			Company company = _companyLocalService.getCompany(
+				CompanyThreadLocal.getCompanyId());
+
+			int index = 1;
+
+			for (ObjectField objectField : objectFields) {
+				Column<?, ?> column = dynamicObjectDefinitionTable.getColumn(
+					objectField.getDBColumnName());
+
+				String value = MapUtil.getString(values, objectField.getName());
+
+				_setColumn(
+					preparedStatement, index++, column.getSQLType(),
+					_encryptor.encrypt(company.getKeyObj(), value));
+			}
+
+			_setColumn(preparedStatement, index++, Types.BIGINT, objectEntryId);
+
+			preparedStatement.executeUpdate();
+
+			FinderCacheUtil.clearDSLQueryCache(
+				dynamicObjectDefinitionTable.getTableName());
+		}
+		catch (Exception exception) {
+			throw new SystemException(exception);
+		}
 	}
 
 	private void _insertIntoTable(
