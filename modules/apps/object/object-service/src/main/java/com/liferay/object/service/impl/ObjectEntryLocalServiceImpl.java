@@ -2928,8 +2928,18 @@ public class ObjectEntryLocalServiceImpl
 
 		Object value = values.get(objectField.getName());
 
-		if (StringUtil.equals(
-				objectField.getBusinessType(),
+		if (objectField.compareBusinessType(
+				ObjectFieldConstants.BUSINESS_TYPE_ENCRYPTED)) {
+
+			Company company = _companyLocalService.getCompany(
+				CompanyThreadLocal.getCompanyId());
+
+			_setColumn(
+				preparedStatement, index, column.getSQLType(),
+				_encryptor.encrypt(company.getKeyObj(), (String)value));
+		}
+
+		if (objectField.compareBusinessType(
 				ObjectFieldConstants.BUSINESS_TYPE_MULTISELECT_PICKLIST)) {
 
 			String valueString = String.valueOf(value);
