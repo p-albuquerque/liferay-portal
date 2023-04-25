@@ -44,7 +44,10 @@ export function MaxLengthProperties({
 	setValues,
 }: IMaxLengthPropertiesProps) {
 	const [defaultMaxLength, defaultMaxLengthText] =
-		objectField.businessType === 'Text' ? [280, '280'] : [65000, '65,000'];
+		objectField.businessType === 'Text' ||
+		objectField.businessType === 'Encrypted'
+			? [280, '280']
+			: [65000, '65,000'];
 
 	const settings = normalizeFieldSettings(objectFieldSettings);
 
