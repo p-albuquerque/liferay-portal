@@ -15,6 +15,8 @@
 package com.liferay.object.service.impl;
 
 import com.liferay.document.library.kernel.service.DLFileEntryLocalService;
+import com.liferay.dynamic.data.mapping.expression.CreateExpressionRequest;
+import com.liferay.dynamic.data.mapping.expression.DDMExpressionFactory;
 import com.liferay.object.constants.ObjectFieldConstants;
 import com.liferay.object.constants.ObjectFieldSettingConstants;
 import com.liferay.object.constants.ObjectRelationshipConstants;
@@ -26,6 +28,8 @@ import com.liferay.object.exception.ObjectFieldLabelException;
 import com.liferay.object.exception.ObjectFieldListTypeDefinitionIdException;
 import com.liferay.object.exception.ObjectFieldLocalizedException;
 import com.liferay.object.exception.ObjectFieldNameException;
+import com.liferay.object.exception.ObjectFieldReadOnlyConditionExpressionException;
+import com.liferay.object.exception.ObjectFieldReadOnlyException;
 import com.liferay.object.exception.ObjectFieldRelationshipTypeException;
 import com.liferay.object.exception.ObjectFieldSettingValueException;
 import com.liferay.object.exception.ObjectFieldStateException;
@@ -233,7 +237,12 @@ public class ObjectFieldLocalServiceImpl
 		}
 
 		_validateLabel(labelMap, existingObjectField);
+		_validateReadOnly(
+			businessType, name, readOnly, readOnlyConditionExpression, true);
 
+		existingObjectField.setReadOnly(readOnly);
+		existingObjectField.setReadOnlyConditionExpression(
+			readOnlyConditionExpression);
 		existingObjectField.setLabelMap(labelMap, LocaleUtil.getSiteDefault());
 
 		return objectFieldPersistence.update(existingObjectField);
@@ -600,6 +609,8 @@ public class ObjectFieldLocalServiceImpl
 		_validateLabel(labelMap, newObjectField);
 		_validateLocalized(
 			businessType, localized, oldObjectField.getObjectDefinition());
+		_validateReadOnly(
+			businessType, name, readOnly, readOnlyConditionExpression, false);
 
 		ObjectDefinition objectDefinition =
 			_objectDefinitionPersistence.findByPrimaryKey(
@@ -652,6 +663,9 @@ public class ObjectFieldLocalServiceImpl
 
 		newObjectField.setLocalized(localized);
 		newObjectField.setName(name);
+		newObjectField.setReadOnly(readOnly);
+		newObjectField.setReadOnlyConditionExpression(
+			readOnlyConditionExpression);
 		newObjectField.setRequired(required);
 		newObjectField.setState(state);
 
@@ -735,6 +749,8 @@ public class ObjectFieldLocalServiceImpl
 		_validateLabel(labelMap, null);
 		_validateLocalized(businessType, localized, objectDefinition);
 		_validateName(0, objectDefinition, name, system);
+		_validateReadOnly(
+			businessType, name, readOnly, readOnlyConditionExpression, system);
 		_validateState(required, state);
 
 		ObjectField objectField = objectFieldPersistence.create(
@@ -760,6 +776,8 @@ public class ObjectFieldLocalServiceImpl
 		objectField.setLocalized(localized);
 		objectField.setLabelMap(labelMap, LocaleUtil.getSiteDefault());
 		objectField.setName(name);
+		objectField.setReadOnly(readOnly);
+		objectField.setReadOnlyConditionExpression(readOnlyConditionExpression);
 		objectField.setRelationshipType(null);
 		objectField.setRequired(required);
 		objectField.setState(state);
@@ -1208,6 +1226,69 @@ public class ObjectFieldLocalServiceImpl
 		}
 	}
 
+	private void _validateReadOnly(
+			String businessType, String name, String readOnly,
+			String readOnlyConditionExpression, boolean system)
+		throws PortalException {
+
+		if (!(Objects.equals(readOnly, "conditional") ||
+			  Objects.equals(readOnly, "false") ||
+			  Objects.equals(readOnly, "true"))) {
+
+			throw new ObjectFieldReadOnlyException(
+				"Invalid readOnly value " + readOnly);
+		}
+
+		if ((Objects.equals(
+				businessType, ObjectFieldConstants.BUSINESS_TYPE_AGGREGATION) ||
+			 Objects.equals(
+				 businessType, ObjectFieldConstants.BUSINESS_TYPE_FORMULA)) &&
+			!Objects.equals(readOnly, "true")) {
+
+			throw new ObjectFieldReadOnlyException(
+				StringBundler.concat(
+					"Invalid readOnly value ", readOnly, " for businessType ",
+					businessType));
+		}
+
+		if (system && !Objects.equals(name, "externalReferenceCode") &&
+			!Objects.equals(readOnly, "true")) {
+
+			throw new ObjectFieldReadOnlyException(
+				StringBundler.concat(
+					"Invalid readOnly value ", readOnly,
+					" for system ObjectField except externalReferenceCode"));
+		}
+
+		if (Objects.equals(readOnly, "true") ||
+			Objects.equals(readOnly, "false")) {
+
+			readOnlyConditionExpression = StringPool.BLANK;
+
+			return;
+		}
+
+		if (Validator.isNull(readOnlyConditionExpression)) {
+			throw new ObjectFieldReadOnlyConditionExpressionException(
+				"readOnlyConditionExpression is required");
+		}
+
+		try {
+			_ddmExpressionFactory.createExpression(
+				CreateExpressionRequest.Builder.newBuilder(
+					readOnlyConditionExpression
+				).build());
+		}
+		catch (Exception exception) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(exception);
+			}
+
+			throw new ObjectFieldReadOnlyConditionExpressionException(
+				"syntax-error");
+		}
+	}
+
 	private void _validateState(boolean required, boolean state)
 		throws PortalException {
 
@@ -1242,6 +1323,9 @@ public class ObjectFieldLocalServiceImpl
 
 	@Reference
 	private CurrentConnection _currentConnection;
+
+	@Reference
+	private DDMExpressionFactory _ddmExpressionFactory;
 
 	@Reference
 	private DLFileEntryLocalService _dlFileEntryLocalService;
