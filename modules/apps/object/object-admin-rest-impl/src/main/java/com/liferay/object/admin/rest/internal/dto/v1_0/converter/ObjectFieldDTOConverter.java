@@ -83,15 +83,16 @@ public class ObjectFieldDTOConverter
 				}
 
 				name = objectField.getName();
-				readOnly = ObjectField.ReadOnly.create(
-					objectField.getReadOnly());
-				readOnlyConditionExpression =
-					objectField.getReadOnlyConditionExpression();
+				readOnly = ReadOnly.FALSE;
 				objectFieldSettings = TransformUtil.transformToArray(
 					objectField.getObjectFieldSettings(),
 					objectFieldSetting -> _toObjectFieldSetting(
 						objectFieldSetting),
 					ObjectFieldSetting.class);
+				readOnly = ObjectField.ReadOnly.create(
+					objectField.getReadOnly());
+				readOnlyConditionExpression =
+					objectField.getReadOnlyConditionExpression();
 				relationshipType = ObjectField.RelationshipType.create(
 					objectField.getRelationshipType());
 				required = objectField.isRequired();

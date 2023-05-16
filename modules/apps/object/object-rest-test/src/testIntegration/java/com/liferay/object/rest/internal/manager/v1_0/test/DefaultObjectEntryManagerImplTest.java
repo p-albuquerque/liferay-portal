@@ -35,6 +35,7 @@ import com.liferay.list.type.service.ListTypeDefinitionLocalService;
 import com.liferay.list.type.service.ListTypeEntryLocalService;
 import com.liferay.object.constants.ObjectActionKeys;
 import com.liferay.object.constants.ObjectDefinitionConstants;
+import com.liferay.object.constants.ObjectFieldConstants;
 import com.liferay.object.constants.ObjectFieldSettingConstants;
 import com.liferay.object.constants.ObjectFilterConstants;
 import com.liferay.object.constants.ObjectRelationshipConstants;
@@ -241,6 +242,8 @@ public class DefaultObjectEntryManagerImplTest {
 					"dateObjectFieldName"
 				).objectFieldSettings(
 					Collections.emptyList()
+				).readOnly(
+					ObjectFieldConstants.READ_ONLY_FALSE
 				).build(),
 				new DecimalObjectFieldBuilder(
 				).labelMap(
@@ -250,6 +253,8 @@ public class DefaultObjectEntryManagerImplTest {
 					"decimalObjectFieldName"
 				).objectFieldSettings(
 					Collections.emptyList()
+				).readOnly(
+					ObjectFieldConstants.READ_ONLY_FALSE
 				).build(),
 				new IntegerObjectFieldBuilder(
 				).labelMap(
@@ -259,6 +264,8 @@ public class DefaultObjectEntryManagerImplTest {
 					"integerObjectFieldName"
 				).objectFieldSettings(
 					Collections.emptyList()
+				).readOnly(
+					ObjectFieldConstants.READ_ONLY_FALSE
 				).build(),
 				new LongIntegerObjectFieldBuilder(
 				).labelMap(
@@ -268,6 +275,8 @@ public class DefaultObjectEntryManagerImplTest {
 					"longIntegerObjectFieldName"
 				).objectFieldSettings(
 					Collections.emptyList()
+				).readOnly(
+					ObjectFieldConstants.READ_ONLY_FALSE
 				).build(),
 				new PicklistObjectFieldBuilder(
 				).indexed(
@@ -281,6 +290,8 @@ public class DefaultObjectEntryManagerImplTest {
 					"picklistObjectFieldName"
 				).objectFieldSettings(
 					Collections.emptyList()
+				).readOnly(
+					ObjectFieldConstants.READ_ONLY_FALSE
 				).build(),
 				new PrecisionDecimalObjectFieldBuilder(
 				).labelMap(
@@ -290,6 +301,8 @@ public class DefaultObjectEntryManagerImplTest {
 					"precisionDecimalObjectFieldName"
 				).objectFieldSettings(
 					Collections.emptyList()
+				).readOnly(
+					ObjectFieldConstants.READ_ONLY_FALSE
 				).build(),
 				new RichTextObjectFieldBuilder(
 				).labelMap(
@@ -299,6 +312,8 @@ public class DefaultObjectEntryManagerImplTest {
 					"richTextObjectFieldName"
 				).objectFieldSettings(
 					Collections.emptyList()
+				).readOnly(
+					ObjectFieldConstants.READ_ONLY_FALSE
 				).build(),
 				new TextObjectFieldBuilder(
 				).indexed(
@@ -310,6 +325,8 @@ public class DefaultObjectEntryManagerImplTest {
 					"textObjectFieldName"
 				).objectFieldSettings(
 					Collections.emptyList()
+				).readOnly(
+					ObjectFieldConstants.READ_ONLY_FALSE
 				).build()));
 
 		ObjectRelationship objectRelationship1 =
@@ -1948,6 +1965,7 @@ public class DefaultObjectEntryManagerImplTest {
 			objectField.isIndexedAsKeyword(),
 			objectField.getIndexedLanguageId(), objectField.getLabelMap(),
 			objectField.isLocalized(), objectField.getName(),
+			objectField.getReadOnly(), objectField.getReadOnlyConditionExpression(),
 			objectField.isRequired(), objectField.isState(),
 			objectField.getObjectFieldSettings());
 	}

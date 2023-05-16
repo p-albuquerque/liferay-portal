@@ -125,6 +125,12 @@ public class ObjectFieldBuilder {
 		return this;
 	}
 
+	public ObjectFieldBuilder readOnly(String readOnly) {
+		objectField.setReadOnly(readOnly);
+
+		return this;
+	}
+
 	public ObjectFieldBuilder relationshipType(String relationshipType) {
 		objectField.setRelationshipType(relationshipType);
 

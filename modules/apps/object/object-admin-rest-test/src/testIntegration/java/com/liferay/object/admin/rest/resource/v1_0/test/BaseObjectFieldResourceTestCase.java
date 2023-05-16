@@ -2165,6 +2165,7 @@ public abstract class BaseObjectFieldResourceTestCase {
 					StringUtil.toLowerCase(RandomTestUtil.randomString());
 				listTypeDefinitionId = RandomTestUtil.randomLong();
 				localized = RandomTestUtil.randomBoolean();
+				readOnly = ReadOnly.FALSE;
 				name = StringUtil.toLowerCase(RandomTestUtil.randomString());
 				readOnlyConditionExpression = StringUtil.toLowerCase(
 					RandomTestUtil.randomString());
