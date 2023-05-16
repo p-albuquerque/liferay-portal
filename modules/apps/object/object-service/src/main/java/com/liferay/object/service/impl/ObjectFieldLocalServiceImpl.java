@@ -67,6 +67,7 @@ import com.liferay.portal.kernel.dao.db.IndexMetadataFactoryUtil;
 import com.liferay.portal.kernel.dao.jdbc.CurrentConnection;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
+import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.SystemEventConstants;
@@ -1230,6 +1231,19 @@ public class ObjectFieldLocalServiceImpl
 			String businessType, String name, String readOnly,
 			String readOnlyConditionExpression, boolean system)
 		throws PortalException {
+
+		if (!FeatureFlagManagerUtil.isEnabled("LPS-170122")) {
+			readOnlyConditionExpression = StringPool.BLANK;
+
+			if (system && !Objects.equals(name, "externalReferenceCode")) {
+				readOnly = "true";
+			}
+			else {
+				readOnly = "false";
+			}
+
+			return;
+		}
 
 		if (!(Objects.equals(readOnly, "conditional") ||
 			  Objects.equals(readOnly, "false") ||

@@ -153,6 +153,10 @@ public class ObjectFieldResourceImpl
 			throw new ObjectFieldLocalizedException();
 		}
 
+		_readOnlyFeatureFlag(
+			objectField.getReadOnlyAsString(),
+			objectField.getReadOnlyConditionExpression());
+
 		com.liferay.object.model.ObjectDefinition objectDefinition =
 			_objectDefinitionLocalService.getObjectDefinition(
 				objectDefinitionId);
@@ -216,6 +220,10 @@ public class ObjectFieldResourceImpl
 
 			throw new UnsupportedOperationException();
 		}
+
+		_readOnlyFeatureFlag(
+			objectField.getReadOnlyAsString(),
+			objectField.getReadOnlyConditionExpression());
 
 		com.liferay.object.model.ObjectField serviceBuilderObjectField =
 			_objectFieldService.getObjectField(objectFieldId);
@@ -327,6 +335,17 @@ public class ObjectFieldResourceImpl
 				objectDefinition,
 				_objectFieldService.getObjectField(
 					GetterUtil.getLong(document.get(Field.ENTRY_CLASS_PK)))));
+	}
+
+	private void _readOnlyFeatureFlag(
+		String readOnly, String readOnlyConditionExpression) {
+
+		if (!FeatureFlagManagerUtil.isEnabled("LPS-170122") &&
+			(Validator.isNotNull(readOnly) ||
+			 Validator.isNotNull(readOnlyConditionExpression))) {
+
+			throw new UnsupportedOperationException();
+		}
 	}
 
 	private ObjectField _toObjectField(
