@@ -268,7 +268,8 @@ public class ObjectFieldLocalServiceImpl
 		return _addObjectField(
 			null, userId, 0, objectDefinitionId, businessType, dbColumnName,
 			dbTableName, dbType, indexed, indexedAsKeyword, indexedLanguageId,
-			labelMap, false, name, "true", null, required, state, true);
+			labelMap, false, name, ObjectFieldConstants.READ_ONLY_TRUE, null,
+			required, state, true);
 	}
 
 	@Indexable(type = IndexableType.DELETE)
@@ -1242,18 +1243,19 @@ public class ObjectFieldLocalServiceImpl
 				Objects.equals(
 					businessType, ObjectFieldConstants.BUSINESS_TYPE_FORMULA)) {
 
-				readOnly = "true";
+				readOnly = ObjectFieldConstants.READ_ONLY_TRUE;
 			}
 			else {
-				readOnly = "false";
+				readOnly = ObjectFieldConstants.READ_ONLY_FALSE;
 			}
 
 			return;
 		}
 
-		if (!(Objects.equals(readOnly, "conditional") ||
-			  Objects.equals(readOnly, "false") ||
-			  Objects.equals(readOnly, "true"))) {
+		if (!(Objects.equals(
+				readOnly, ObjectFieldConstants.READ_ONLY_CONDITIONAL) ||
+			  Objects.equals(readOnly, ObjectFieldConstants.READ_ONLY_FALSE) ||
+			  Objects.equals(readOnly, ObjectFieldConstants.READ_ONLY_TRUE))) {
 
 			throw new ObjectFieldReadOnlyException(
 				"Invalid readOnly value " + readOnly);
@@ -1263,7 +1265,7 @@ public class ObjectFieldLocalServiceImpl
 				businessType, ObjectFieldConstants.BUSINESS_TYPE_AGGREGATION) ||
 			 Objects.equals(
 				 businessType, ObjectFieldConstants.BUSINESS_TYPE_FORMULA)) &&
-			!Objects.equals(readOnly, "true")) {
+			!Objects.equals(readOnly, ObjectFieldConstants.READ_ONLY_TRUE)) {
 
 			throw new ObjectFieldReadOnlyException(
 				StringBundler.concat(
@@ -1272,7 +1274,7 @@ public class ObjectFieldLocalServiceImpl
 		}
 
 		if (system && !Objects.equals(name, "externalReferenceCode") &&
-			!Objects.equals(readOnly, "true")) {
+			!Objects.equals(readOnly, ObjectFieldConstants.READ_ONLY_TRUE)) {
 
 			throw new ObjectFieldReadOnlyException(
 				StringBundler.concat(
@@ -1280,8 +1282,8 @@ public class ObjectFieldLocalServiceImpl
 					" for system ObjectField except externalReferenceCode"));
 		}
 
-		if (Objects.equals(readOnly, "true") ||
-			Objects.equals(readOnly, "false")) {
+		if (Objects.equals(readOnly, ObjectFieldConstants.READ_ONLY_TRUE) ||
+			Objects.equals(readOnly, ObjectFieldConstants.READ_ONLY_FALSE)) {
 
 			readOnlyConditionExpression = StringPool.BLANK;
 
