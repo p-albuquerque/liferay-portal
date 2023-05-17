@@ -83,6 +83,10 @@ public class ObjectFieldDTOConverter
 				}
 
 				name = objectField.getName();
+				readOnly = ObjectField.ReadOnly.create(
+					objectField.getReadOnly());
+				readOnlyConditionExpression =
+					objectField.getReadOnlyConditionExpression();
 				objectFieldSettings = TransformUtil.transformToArray(
 					objectField.getObjectFieldSettings(),
 					objectFieldSetting -> _toObjectFieldSetting(
