@@ -52,6 +52,8 @@
 			"name": "createDate",
 			"objectFieldSettings": [
 			],
+			"readOnly": "true",
+			"readOnlyConditionExpression": "",
 			"required": false,
 			"state": false,
 			"system": true,
@@ -69,6 +71,8 @@
 			"name": "creator",
 			"objectFieldSettings": [
 			],
+			"readOnly": "true",
+			"readOnlyConditionExpression": "",
 			"required": false,
 			"state": false,
 			"system": true,
@@ -86,6 +90,8 @@
 			"name": "customField",
 			"objectFieldSettings": [
 			],
+			"readOnly": "false",
+			"readOnlyConditionExpression": "",
 			"required": false,
 			"state": false,
 			"system": false,
@@ -103,6 +109,8 @@
 			"name": "description",
 			"objectFieldSettings": [
 			],
+			"readOnly": "false",
+			"readOnlyConditionExpression": "",
 			"required": false,
 			"state": false,
 			"system": true,
@@ -120,6 +128,8 @@
 			"name": "externalReferenceCode",
 			"objectFieldSettings": [
 			],
+			"readOnly": "false",
+			"readOnlyConditionExpression": "",
 			"required": false,
 			"state": false,
 			"system": true,
@@ -137,6 +147,8 @@
 			"name": "id",
 			"objectFieldSettings": [
 			],
+			"readOnly": "true",
+			"readOnlyConditionExpression": "",
 			"required": false,
 			"state": false,
 			"system": true,
@@ -154,6 +166,8 @@
 			"name": "modifiedDate",
 			"objectFieldSettings": [
 			],
+			"readOnly": "true",
+			"readOnlyConditionExpression": "",
 			"required": false,
 			"state": false,
 			"system": true,
@@ -171,6 +185,8 @@
 			"name": "name",
 			"objectFieldSettings": [
 			],
+			"readOnly": "false",
+			"readOnlyConditionExpression": "",
 			"required": true,
 			"state": false,
 			"system": true,
@@ -188,6 +204,8 @@
 			"name": "status",
 			"objectFieldSettings": [
 			],
+			"readOnly": "true",
+			"readOnlyConditionExpression": "",
 			"required": false,
 			"state": false,
 			"system": true,
@@ -205,6 +223,8 @@
 			"name": "type",
 			"objectFieldSettings": [
 			],
+			"readOnly": "false",
+			"readOnlyConditionExpression": "",
 			"required": true,
 			"state": false,
 			"system": true,
