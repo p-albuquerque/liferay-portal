@@ -23,6 +23,7 @@ import com.liferay.object.field.setting.util.ObjectFieldSettingUtil;
 import com.liferay.object.model.ObjectDefinition;
 import com.liferay.object.model.ObjectField;
 import com.liferay.object.rest.internal.util.ObjectEntryValuesUtil;
+import com.liferay.object.rest.util.ReadOnlyUtil;
 import com.liferay.object.service.ObjectEntryLocalService;
 import com.liferay.object.service.ObjectFieldLocalService;
 import com.liferay.object.service.ObjectFieldSettingLocalService;
@@ -145,6 +146,9 @@ public class ObjectEntryExtensionProvider extends BaseObjectExtensionProvider {
 			ObjectDefinition objectDefinition = fetchObjectDefinition(
 				companyId, className);
 
+			Map<String, Object> existingValues = new HashMap<>(
+				extendedProperties);
+
 			for (ObjectField objectField :
 					_objectFieldLocalService.getObjectFields(
 						objectDefinition.getObjectDefinitionId(), false)) {
@@ -152,7 +156,7 @@ public class ObjectEntryExtensionProvider extends BaseObjectExtensionProvider {
 				Object value = ObjectEntryValuesUtil.getValue(
 					objectDefinitionLocalService, _objectEntryLocalService,
 					objectField, _objectFieldBusinessTypeRegistry, userId,
-					new HashMap<>(extendedProperties));
+					existingValues);
 
 				if (value == null) {
 					continue;
@@ -161,6 +165,11 @@ public class ObjectEntryExtensionProvider extends BaseObjectExtensionProvider {
 				extendedProperties.put(
 					objectField.getName(), (Serializable)value);
 			}
+
+			ReadOnlyUtil.validateReadOnly(
+				objectDefinition.getObjectDefinitionId(), existingValues,
+				new HashMap<>(extendedProperties), _ddmExpressionFactory,
+				_objectFieldLocalService);
 
 			_objectEntryLocalService.
 				addOrUpdateExtensionDynamicObjectDefinitionTableValues(

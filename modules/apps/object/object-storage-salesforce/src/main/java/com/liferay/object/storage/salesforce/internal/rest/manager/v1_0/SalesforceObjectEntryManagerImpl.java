@@ -95,6 +95,10 @@ public class SalesforceObjectEntryManagerImpl
 			objectDefinition, scopeKey, dtoConverterContext.getUser(),
 			ObjectActionKeys.ADD_OBJECT_ENTRY);
 
+		validateReadOnly(
+			0, dtoConverterContext, null, objectDefinition, objectEntry,
+			scopeKey);
+
 		JSONObject responseJSONObject = _salesforceHttp.post(
 			objectDefinition.getCompanyId(),
 			getGroupId(objectDefinition, scopeKey),
@@ -172,6 +176,10 @@ public class SalesforceObjectEntryManagerImpl
 			String externalReferenceCode, ObjectDefinition objectDefinition,
 			ObjectEntry objectEntry, String scopeKey)
 		throws Exception {
+
+		validateReadOnly(
+			companyId, dtoConverterContext, externalReferenceCode,
+			objectDefinition, objectEntry, scopeKey);
 
 		_checkPortletResourcePermission(
 			objectDefinition, scopeKey, dtoConverterContext.getUser(),
