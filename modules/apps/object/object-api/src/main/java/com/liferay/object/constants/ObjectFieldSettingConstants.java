@@ -25,6 +25,7 @@ public class ObjectFieldSettingConstants {
 	public static final String NAME_DEFAULT_VALUE = "defaultValue";
 
 	public static final String NAME_DEFAULT_VALUE_TYPE = "defaultValueType";
+	public static final String NAME_DYNAMIC_READ_ONLY = "dynamicReadOnly";
 
 	public static final String NAME_FILE_SOURCE = "fileSource";
 

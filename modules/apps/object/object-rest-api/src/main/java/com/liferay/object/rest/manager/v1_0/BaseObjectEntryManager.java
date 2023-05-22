@@ -15,13 +15,20 @@
 package com.liferay.object.rest.manager.v1_0;
 
 import com.liferay.depot.service.DepotEntryLocalService;
+import com.liferay.dynamic.data.mapping.expression.DDMExpressionFactory;
 import com.liferay.object.model.ObjectDefinition;
+import com.liferay.object.rest.dto.v1_0.ObjectEntry;
+import com.liferay.object.rest.util.ReadOnlyUtil;
 import com.liferay.object.scope.ObjectScopeProvider;
 import com.liferay.object.scope.ObjectScopeProviderRegistry;
+import com.liferay.object.service.ObjectFieldLocalService;
+import com.liferay.object.service.ObjectFieldSettingLocalService;
 import com.liferay.portal.kernel.service.GroupLocalService;
 import com.liferay.portal.kernel.util.GetterUtil;
+import com.liferay.portal.vulcan.dto.converter.DTOConverterContext;
 import com.liferay.portal.vulcan.util.GroupUtil;
 
+import java.util.Collections;
 import java.util.Objects;
 
 import org.osgi.service.component.annotations.Reference;
@@ -29,7 +36,36 @@ import org.osgi.service.component.annotations.Reference;
 /**
  * @author Guilherme Camacho
  */
-public abstract class BaseObjectEntryManager {
+public abstract class BaseObjectEntryManager implements ObjectEntryManager {
+
+	protected void executeReadOnly(
+			long companyId, DTOConverterContext dtoConverterContext,
+			String externalReferenceCode, ObjectDefinition objectDefinition,
+			ObjectEntry objectEntry, String scopeKey)
+		throws Exception {
+
+		if (Objects.isNull(externalReferenceCode)) {
+			objectEntry.setProperties(
+				ReadOnlyUtil.executeReadOnly(
+					objectDefinition.getObjectDefinitionId(),
+					Collections.emptyMap(), objectEntry.getProperties(),
+					ddmExpressionFactory, objectFieldLocalService,
+					objectFieldSettingLocalService));
+
+			return;
+		}
+
+		ObjectEntry existingObjectEntry = getObjectEntry(
+			companyId, dtoConverterContext, externalReferenceCode,
+			objectDefinition, scopeKey);
+
+		objectEntry.setProperties(
+			ReadOnlyUtil.executeReadOnly(
+				objectDefinition.getObjectDefinitionId(),
+				existingObjectEntry.getProperties(),
+				objectEntry.getProperties(), ddmExpressionFactory,
+				objectFieldLocalService, objectFieldSettingLocalService));
+	}
 
 	protected long getGroupId(
 		ObjectDefinition objectDefinition, String scopeKey) {
@@ -56,10 +92,19 @@ public abstract class BaseObjectEntryManager {
 	}
 
 	@Reference
+	protected DDMExpressionFactory ddmExpressionFactory;
+
+	@Reference
 	protected DepotEntryLocalService depotEntryLocalService;
 
 	@Reference
 	protected GroupLocalService groupLocalService;
+
+	@Reference
+	protected ObjectFieldLocalService objectFieldLocalService;
+
+	@Reference
+	protected ObjectFieldSettingLocalService objectFieldSettingLocalService;
 
 	@Reference
 	protected ObjectScopeProviderRegistry objectScopeProviderRegistry;
