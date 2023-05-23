@@ -58,21 +58,18 @@ import com.liferay.portal.vulcan.dto.converter.DTOConverterContext;
 import com.liferay.portal.vulcan.pagination.Page;
 import com.liferay.portal.vulcan.pagination.Pagination;
 import com.liferay.portal.vulcan.util.LocalizedMapUtil;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 
 import java.math.BigDecimal;
-
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-
-import org.osgi.service.component.annotations.Component;
-import org.osgi.service.component.annotations.Reference;
 
 /**
  * @author Guilherme Camacho
@@ -95,7 +92,7 @@ public class SalesforceObjectEntryManagerImpl
 			objectDefinition, scopeKey, dtoConverterContext.getUser(),
 			ObjectActionKeys.ADD_OBJECT_ENTRY);
 
-		executeReadOnly(
+		validateReadOnly(
 			0, dtoConverterContext, null, objectDefinition, objectEntry,
 			scopeKey);
 
@@ -177,7 +174,7 @@ public class SalesforceObjectEntryManagerImpl
 			ObjectEntry objectEntry, String scopeKey)
 		throws Exception {
 
-		executeReadOnly(
+		validateReadOnly(
 			companyId, dtoConverterContext, externalReferenceCode,
 			objectDefinition, objectEntry, scopeKey);
 

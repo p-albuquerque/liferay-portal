@@ -18,17 +18,13 @@ import com.liferay.dynamic.data.mapping.expression.CreateExpressionRequest;
 import com.liferay.dynamic.data.mapping.expression.DDMExpression;
 import com.liferay.dynamic.data.mapping.expression.DDMExpressionFactory;
 import com.liferay.object.constants.ObjectFieldConstants;
-import com.liferay.object.constants.ObjectFieldSettingConstants;
+import com.liferay.object.exception.ObjectFieldReadOnlyException;
 import com.liferay.object.model.ObjectField;
-import com.liferay.object.model.ObjectFieldSetting;
 import com.liferay.object.rest.dynamic.data.mapping.expression.ObjectEntryDDMExpressionFieldAccessor;
-import com.liferay.object.rest.dynamic.data.mapping.expression.ObjectEntryDDMExpressionParameterAccessor;
 import com.liferay.object.service.ObjectFieldLocalService;
-import com.liferay.object.service.ObjectFieldSettingLocalService;
 import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.util.ListUtil;
+import com.liferay.portal.kernel.util.MapUtil;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
@@ -37,15 +33,12 @@ import java.util.Objects;
  */
 public class ReadOnlyUtil {
 
-	public static HashMap<String, Object> executeReadOnly(
-			long objectDefinitionId, Map<String, Object> oldValues,
+	public static void validateReadOnly(
+			long objectDefinitionId, Map<String, Object> existingValues,
 			Map<String, Object> values,
 			DDMExpressionFactory ddmExpressionFactory,
-			ObjectFieldLocalService objectFieldLocalService,
-			ObjectFieldSettingLocalService objectFieldSettingLocalService)
+			ObjectFieldLocalService objectFieldLocalService)
 		throws PortalException {
-
-		HashMap<String, Object> newValues = new HashMap<>();
 
 		for (Map.Entry<String, Object> entry : values.entrySet()) {
 			ObjectField objectField = objectFieldLocalService.getObjectField(
@@ -53,57 +46,15 @@ public class ReadOnlyUtil {
 
 			if (Objects.equals(
 					objectField.getReadOnly(),
-					ObjectFieldConstants.READ_ONLY_FALSE)) {
-
-				newValues.put(entry.getKey(), entry.getValue());
-
-				continue;
-			}
-
-			if (Objects.equals(
+					ObjectFieldConstants.READ_ONLY_FALSE) ||
+				(Objects.equals(
 					objectField.getReadOnly(),
-					ObjectFieldConstants.READ_ONLY_TRUE)) {
-
-				newValues.put(entry.getKey(), oldValues.get(entry.getKey()));
-
-				continue;
-			}
-
-			ObjectFieldSetting objectFieldSetting =
-				objectFieldSettingLocalService.fetchObjectFieldSetting(
-					objectField.getObjectFieldId(),
-					ObjectFieldSettingConstants.NAME_DYNAMIC_READ_ONLY);
-
-			if (Objects.equals(
-					objectFieldSetting.getValue(),
-					ObjectFieldConstants.READ_ONLY_FALSE)) {
-
-				newValues.put(entry.getKey(), entry.getValue());
+					ObjectFieldConstants.READ_ONLY_TRUE) &&
+				 Objects.equals(
+					 entry.getValue(),
+					 MapUtil.getString(existingValues, entry.getKey())))) {
 
 				continue;
-			}
-
-			newValues.put(entry.getKey(), oldValues.get(entry.getKey()));
-		}
-
-		for (ObjectField objectField :
-				ListUtil.filter(
-					objectFieldLocalService.getObjectFields(objectDefinitionId),
-					objectField -> Objects.equals(
-						objectField.getReadOnly(),
-						ObjectFieldConstants.READ_ONLY_CONDITIONAL))) {
-
-			ObjectFieldSetting objectFieldSetting =
-				objectFieldSettingLocalService.fetchObjectFieldSetting(
-					objectField.getObjectFieldId(),
-					ObjectFieldSettingConstants.NAME_DYNAMIC_READ_ONLY);
-
-			if (objectFieldSetting == null) {
-				objectFieldSetting =
-					objectFieldSettingLocalService.createObjectFieldSetting(0L);
-
-				objectFieldSetting.setName(
-					ObjectFieldSettingConstants.NAME_DYNAMIC_READ_ONLY);
 			}
 
 			DDMExpression<Boolean> ddmExpression =
@@ -112,28 +63,21 @@ public class ReadOnlyUtil {
 						objectField.getReadOnlyConditionExpression()
 					).withDDMExpressionFieldAccessor(
 						new ObjectEntryDDMExpressionFieldAccessor(values)
-					).withDDMExpressionParameterAccessor(
-						new ObjectEntryDDMExpressionParameterAccessor(oldValues)
 					).build());
 
 			ddmExpression.setVariables(values);
 
-			if (ddmExpression.evaluate()) {
-				objectFieldSetting.setValue(
-					ObjectFieldConstants.READ_ONLY_TRUE);
-			}
-			else {
-				objectFieldSetting.setValue(
-					ObjectFieldConstants.READ_ONLY_FALSE);
+			if (ddmExpression.evaluate() &&
+				Objects.equals(
+					entry.getValue(),
+					MapUtil.getString(existingValues, entry.getKey()))) {
+
+				continue;
 			}
 
-			objectFieldSettingLocalService.addOrUpdateObjectFieldSetting(
-				objectFieldSetting.getObjectFieldSettingId(),
-				objectField.getUserId(), objectField.getObjectFieldId(),
-				objectFieldSetting.getName(), objectFieldSetting.getValue());
+			throw new ObjectFieldReadOnlyException(
+				"The object field " + objectField.getName() + " is readOnly");
 		}
-
-		return newValues;
 	}
 
 }

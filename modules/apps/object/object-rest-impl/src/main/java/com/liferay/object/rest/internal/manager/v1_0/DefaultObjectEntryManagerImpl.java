@@ -145,7 +145,7 @@ public class DefaultObjectEntryManagerImpl
 			String scopeKey)
 		throws Exception {
 
-		executeReadOnly(
+		validateReadOnly(
 			0, dtoConverterContext, null, objectDefinition, objectEntry,
 			scopeKey);
 
@@ -627,7 +627,7 @@ public class DefaultObjectEntryManagerImpl
 		_checkObjectEntryObjectDefinitionId(
 			objectDefinition, serviceBuilderObjectEntry);
 
-		executeReadOnly(
+		validateReadOnly(
 			0, dtoConverterContext,
 			serviceBuilderObjectEntry.getExternalReferenceCode(),
 			objectDefinition, objectEntry, null);
@@ -660,7 +660,7 @@ public class DefaultObjectEntryManagerImpl
 			ObjectEntry objectEntry, String scopeKey)
 		throws Exception {
 
-		executeReadOnly(
+		validateReadOnly(
 			companyId, dtoConverterContext, externalReferenceCode,
 			objectDefinition, objectEntry, scopeKey);
 
