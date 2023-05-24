@@ -167,10 +167,6 @@ public class ObjectFieldUtil {
 			throw new UnsupportedOperationException();
 		}
 
-		readOnlyFeatureFlag(
-			objectField.getReadOnlyAsString(),
-			objectField.getReadOnlyConditionExpression());
-
 		com.liferay.object.model.ObjectField serviceBuilderObjectField =
 			objectFieldLocalService.createObjectField(0L);
 
