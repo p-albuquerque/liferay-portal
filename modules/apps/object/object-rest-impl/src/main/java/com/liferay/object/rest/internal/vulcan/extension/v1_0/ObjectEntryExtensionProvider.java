@@ -26,6 +26,7 @@ import com.liferay.object.rest.internal.util.ObjectEntryValuesUtil;
 import com.liferay.object.service.ObjectEntryLocalService;
 import com.liferay.object.service.ObjectFieldLocalService;
 import com.liferay.object.service.ObjectFieldSettingLocalService;
+import com.liferay.object.system.SystemObjectDefinitionManagerRegistry;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
@@ -197,6 +198,10 @@ public class ObjectEntryExtensionProvider extends BaseObjectExtensionProvider {
 
 	@Reference
 	private ObjectFieldSettingLocalService _objectFieldSettingLocalService;
+
+	@Reference
+	private SystemObjectDefinitionManagerRegistry
+		_systemObjectDefinitionManagerRegistry;
 
 	@Reference
 	private UserLocalService _userLocalService;
