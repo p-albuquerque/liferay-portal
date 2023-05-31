@@ -17,6 +17,7 @@ package com.liferay.object.internal.system.model.listener;
 import com.liferay.dynamic.data.mapping.expression.DDMExpressionFactory;
 import com.liferay.object.action.engine.ObjectActionEngine;
 import com.liferay.object.constants.ObjectActionTriggerConstants;
+import com.liferay.object.entry.util.ObjectEntryReadOnlyUtil;
 import com.liferay.object.model.ObjectDefinition;
 import com.liferay.object.service.ObjectDefinitionLocalService;
 import com.liferay.object.service.ObjectEntryLocalService;
@@ -45,8 +46,12 @@ import com.liferay.portal.vulcan.dto.converter.DTOConverterRegistry;
 import com.liferay.portal.vulcan.dto.converter.DefaultDTOConverterContext;
 import com.liferay.portal.vulcan.extension.EntityExtensionThreadLocal;
 
+import java.io.Serializable;
+
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Function;
 
 /**
@@ -360,6 +365,36 @@ public class SystemObjectDefinitionManagerModelListener<T extends BaseModel<T>>
 				userId = _getUserId(model);
 			}
 
+			Map<String, Object> existingValues = new HashMap<>();
+
+			if (originalModel != null) {
+				Map<String, Serializable> extensionValues =
+					_objectEntryLocalService.
+						getExtensionDynamicObjectDefinitionTableValues(
+							objectDefinition, (long)model.getPrimaryKeyObj());
+
+				existingValues.putAll(extensionValues);
+
+				existingValues.putAll(originalModel.getModelAttributes());
+			}
+
+			boolean validateReadOnly = !Objects.equals(
+				_currentCustomValues,
+				HashMapBuilder.<String, Object>putAll(
+					EntityExtensionThreadLocal.getExtendedProperties()
+				).build());
+
+			_currentCustomValues = HashMapBuilder.<String, Object>putAll(
+				EntityExtensionThreadLocal.getExtendedProperties()
+			).build();
+
+			if (validateReadOnly) {
+				ObjectEntryReadOnlyUtil.validateReadOnly(
+					objectDefinition.getObjectDefinitionId(), existingValues,
+					_currentCustomValues, _ddmExpressionFactory,
+					_objectFieldLocalService);
+			}
+
 			_objectValidationRuleLocalService.validate(
 				model, objectDefinition.getObjectDefinitionId(),
 				_getPayloadJSONObject(
@@ -374,6 +409,7 @@ public class SystemObjectDefinitionManagerModelListener<T extends BaseModel<T>>
 	private static final Log _log = LogFactoryUtil.getLog(
 		SystemObjectDefinitionManagerModelListener.class);
 
+	private Map<String, Object> _currentCustomValues;
 	private final DDMExpressionFactory _ddmExpressionFactory;
 	private final DTOConverterRegistry _dtoConverterRegistry;
 	private final JSONFactory _jsonFactory;
