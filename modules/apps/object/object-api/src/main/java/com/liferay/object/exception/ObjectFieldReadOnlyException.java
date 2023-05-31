@@ -12,20 +12,28 @@
  * details.
  */
 
-package com.liferay.object.field.builder;
+package com.liferay.object.exception;
 
-import com.liferay.object.constants.ObjectFieldConstants;
+import com.liferay.portal.kernel.exception.PortalException;
 
 /**
- * @author Feliphe Marinho
+ * @author Marco Leo
  */
-public class AggregationObjectFieldBuilder extends ObjectFieldBuilder {
+public class ObjectFieldReadOnlyException extends PortalException {
 
-	public AggregationObjectFieldBuilder() {
-		objectField.setBusinessType(
-			ObjectFieldConstants.BUSINESS_TYPE_AGGREGATION);
-		objectField.setDBType(ObjectFieldConstants.DB_TYPE_STRING);
-		objectField.setReadOnly(ObjectFieldConstants.READ_ONLY_TRUE);
+	public ObjectFieldReadOnlyException() {
+	}
+
+	public ObjectFieldReadOnlyException(String msg) {
+		super(msg);
+	}
+
+	public ObjectFieldReadOnlyException(String msg, Throwable throwable) {
+		super(msg, throwable);
+	}
+
+	public ObjectFieldReadOnlyException(Throwable throwable) {
+		super(throwable);
 	}
 
 }

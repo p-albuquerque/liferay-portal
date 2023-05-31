@@ -17,15 +17,14 @@ package com.liferay.object.field.builder;
 import com.liferay.object.constants.ObjectFieldConstants;
 
 /**
- * @author Feliphe Marinho
+ * @author Guilherme Camacho
  */
-public class AggregationObjectFieldBuilder extends ObjectFieldBuilder {
+public class MultiSelectPicklistObjectFieldBuilder extends ObjectFieldBuilder {
 
-	public AggregationObjectFieldBuilder() {
+	public MultiSelectPicklistObjectFieldBuilder() {
 		objectField.setBusinessType(
-			ObjectFieldConstants.BUSINESS_TYPE_AGGREGATION);
+			ObjectFieldConstants.BUSINESS_TYPE_MULTISELECT_PICKLIST);
 		objectField.setDBType(ObjectFieldConstants.DB_TYPE_STRING);
-		objectField.setReadOnly(ObjectFieldConstants.READ_ONLY_TRUE);
 	}
 
 }
