@@ -17,6 +17,7 @@ package com.liferay.object.internal.system.model.listener;
 import com.liferay.dynamic.data.mapping.expression.DDMExpressionFactory;
 import com.liferay.object.action.engine.ObjectActionEngine;
 import com.liferay.object.constants.ObjectActionTriggerConstants;
+import com.liferay.object.entry.util.ObjectEntryReadOnlyUtil;
 import com.liferay.object.model.ObjectDefinition;
 import com.liferay.object.service.ObjectDefinitionLocalService;
 import com.liferay.object.service.ObjectEntryLocalService;
@@ -40,12 +41,16 @@ import com.liferay.portal.kernel.security.auth.PrincipalThreadLocal;
 import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
+import com.liferay.portal.kernel.util.MapUtil;
 import com.liferay.portal.vulcan.dto.converter.DTOConverter;
 import com.liferay.portal.vulcan.dto.converter.DTOConverterRegistry;
 import com.liferay.portal.vulcan.dto.converter.DefaultDTOConverterContext;
 import com.liferay.portal.vulcan.extension.EntityExtensionThreadLocal;
 
+import java.io.Serializable;
+
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
 
@@ -358,6 +363,37 @@ public class SystemObjectDefinitionManagerModelListener<T extends BaseModel<T>>
 
 			if (userId == 0) {
 				userId = _getUserId(model);
+			}
+
+			Map<String, Object> originalModelAttributes = new HashMap<>();
+
+			if (originalModel != null) {
+				Map<String, Serializable> extensionValues =
+					_objectEntryLocalService.
+						getExtensionDynamicObjectDefinitionTableValues(
+							objectDefinition, (long)model.getPrimaryKeyObj());
+
+				if (MapUtil.isNotEmpty(extensionValues)) {
+					originalModelAttributes.putAll(extensionValues);
+
+					originalModelAttributes.putAll(
+						originalModel.getModelAttributes());
+				}
+			}
+
+			Map<String, Object> modelAttributes =
+				HashMapBuilder.<String, Object>putAll(
+					EntityExtensionThreadLocal.getExtendedProperties()
+				).build();
+
+			if (!modelAttributes.isEmpty() &&
+				(!originalModelAttributes.isEmpty() ||
+				 (originalModel == null))) {
+
+				ObjectEntryReadOnlyUtil.validateReadOnly(
+					objectDefinition.getObjectDefinitionId(),
+					originalModelAttributes, modelAttributes,
+					_ddmExpressionFactory, _objectFieldLocalService);
 			}
 
 			_objectValidationRuleLocalService.validate(
