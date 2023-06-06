@@ -40,70 +40,7 @@ import java.util.Objects;
  */
 public class ObjectEntryReadOnlyUtil {
 
-	public static void validateReadOnly(
-			long objectDefinitionId, Map<String, Object> existingValues,
-			Map<String, Object> values,
-			DDMExpressionFactory ddmExpressionFactory,
-			ObjectFieldLocalService objectFieldLocalService)
-		throws PortalException {
-
-		if (!FeatureFlagManagerUtil.isEnabled("LPS-170122")) {
-			return;
-		}
-
-		if (existingValues.isEmpty()) {
-			_fillDefaultValues(
-				existingValues,
-				objectFieldLocalService.getObjectFields(objectDefinitionId));
-		}
-
-		for (Map.Entry<String, Object> entry : values.entrySet()) {
-			if (Objects.equals(entry.getKey(), "status")) {
-				continue;
-			}
-
-			ObjectField objectField = objectFieldLocalService.fetchObjectField(
-				objectDefinitionId, entry.getKey());
-
-			if ((objectField == null) ||
-				Objects.equals(
-					objectField.getReadOnly(),
-					ObjectFieldConstants.READ_ONLY_FALSE)) {
-
-				continue;
-			}
-
-			if (Objects.equals(
-					objectField.getReadOnly(),
-					ObjectFieldConstants.READ_ONLY_TRUE)) {
-
-				_verifyReadOnlyTrue(
-					entry.getKey(), entry.getValue(), existingValues,
-					objectField.getName());
-
-				continue;
-			}
-
-			DDMExpression<Boolean> ddmExpression =
-				ddmExpressionFactory.createExpression(
-					CreateExpressionRequest.Builder.newBuilder(
-						objectField.getReadOnlyConditionExpression()
-					).withDDMExpressionFieldAccessor(
-						new ObjectEntryDDMExpressionFieldAccessor(
-							existingValues)
-					).build());
-
-			ddmExpression.setVariables(existingValues);
-
-			if (ddmExpression.evaluate()) {
-				_verifyReadOnlyTrue(
-					entry.getKey(), entry.getValue(), existingValues,
-					objectField.getName());
-			}
-		}
-	}
-
-	private static void _fillDefaultValues(
+	public static void fillDefaultValues(
 		Map<String, Object> existingValues, List<ObjectField> objectFields) {
 
 		for (ObjectField objectField : objectFields) {
@@ -151,6 +88,69 @@ public class ObjectEntryReadOnlyUtil {
 			}
 			else {
 				existingValues.put(objectField.getName(), null);
+			}
+		}
+	}
+
+	public static void validateReadOnly(
+			long objectDefinitionId, Map<String, Object> existingValues,
+			Map<String, Object> values,
+			DDMExpressionFactory ddmExpressionFactory,
+			ObjectFieldLocalService objectFieldLocalService)
+		throws PortalException {
+
+		if (!FeatureFlagManagerUtil.isEnabled("LPS-170122")) {
+			return;
+		}
+
+		if (existingValues.isEmpty()) {
+			fillDefaultValues(
+				existingValues,
+				objectFieldLocalService.getObjectFields(objectDefinitionId));
+		}
+
+		for (Map.Entry<String, Object> entry : values.entrySet()) {
+			if (Objects.equals(entry.getKey(), "status")) {
+				continue;
+			}
+
+			ObjectField objectField = objectFieldLocalService.fetchObjectField(
+				objectDefinitionId, entry.getKey());
+
+			if ((objectField == null) ||
+				Objects.equals(
+					objectField.getReadOnly(),
+					ObjectFieldConstants.READ_ONLY_FALSE)) {
+
+				continue;
+			}
+
+			if (Objects.equals(
+					objectField.getReadOnly(),
+					ObjectFieldConstants.READ_ONLY_TRUE)) {
+
+				_verifyReadOnlyTrue(
+					entry.getKey(), entry.getValue(), existingValues,
+					objectField.getName());
+
+				continue;
+			}
+
+			DDMExpression<Boolean> ddmExpression =
+				ddmExpressionFactory.createExpression(
+					CreateExpressionRequest.Builder.newBuilder(
+						objectField.getReadOnlyConditionExpression()
+					).withDDMExpressionFieldAccessor(
+						new ObjectEntryDDMExpressionFieldAccessor(
+							existingValues)
+					).build());
+
+			ddmExpression.setVariables(existingValues);
+
+			if (ddmExpression.evaluate()) {
+				_verifyReadOnlyTrue(
+					entry.getKey(), entry.getValue(), existingValues,
+					objectField.getName());
 			}
 		}
 	}
