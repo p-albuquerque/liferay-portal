@@ -26,6 +26,7 @@ import com.liferay.object.service.ObjectFieldLocalService;
 import com.liferay.object.service.ObjectFieldSettingLocalServiceUtil;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
 import com.liferay.portal.kernel.util.Validator;
 
 import java.math.BigDecimal;
@@ -45,6 +46,10 @@ public class ObjectEntryReadOnlyUtil {
 			DDMExpressionFactory ddmExpressionFactory,
 			ObjectFieldLocalService objectFieldLocalService)
 		throws PortalException {
+
+		if (!FeatureFlagManagerUtil.isEnabled("LPS-170122")) {
+			return;
+		}
 
 		if (existingValues.isEmpty()) {
 			_fillDefaultValues(
