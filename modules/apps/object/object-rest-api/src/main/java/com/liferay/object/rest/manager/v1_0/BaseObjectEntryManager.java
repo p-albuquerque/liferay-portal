@@ -21,6 +21,7 @@ import com.liferay.object.model.ObjectDefinition;
 import com.liferay.object.model.ObjectEntry;
 import com.liferay.object.scope.ObjectScopeProvider;
 import com.liferay.object.scope.ObjectScopeProviderRegistry;
+import com.liferay.object.service.ObjectEntryLocalService;
 import com.liferay.object.service.ObjectFieldLocalService;
 import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.model.User;
@@ -114,7 +115,11 @@ public abstract class BaseObjectEntryManager implements ObjectEntryManager {
 
 		Map<String, Object> existingValues = new HashMap<>();
 
-		if (!Objects.isNull(externalReferenceCode)) {
+		if (!Objects.isNull(
+				objectEntryLocalService.fetchObjectEntry(
+					externalReferenceCode,
+					objectDefinition.getObjectDefinitionId()))) {
+
 			companyId =
 				(companyId == 0) ? objectDefinition.getCompanyId() : companyId;
 			scopeKey =
@@ -146,6 +151,9 @@ public abstract class BaseObjectEntryManager implements ObjectEntryManager {
 
 	@Reference
 	protected Language language;
+
+	@Reference
+	protected ObjectEntryLocalService objectEntryLocalService;
 
 	@Reference
 	protected ObjectFieldLocalService objectFieldLocalService;
