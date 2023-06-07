@@ -131,7 +131,19 @@ public abstract class BaseObjectEntryManager implements ObjectEntryManager {
 					companyId, dtoConverterContext, externalReferenceCode,
 					objectDefinition, scopeKey);
 
-			existingValues = existingObjectEntry.getProperties();
+			ObjectEntry serviceBuilderObjectEntry =
+				objectEntryLocalService.getObjectEntry(
+					existingObjectEntry.getId());
+
+			existingValues.putAll(
+				objectEntryLocalService.getValues(serviceBuilderObjectEntry));
+
+			existingValues.putAll(
+				objectEntryLocalService.getSystemValues(
+					serviceBuilderObjectEntry));
+
+			existingValues.put(
+				"currentUserId", dtoConverterContext.getUserId());
 		}
 
 		ObjectEntryReadOnlyUtil.validateReadOnly(

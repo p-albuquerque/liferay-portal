@@ -390,6 +390,9 @@ public class SystemObjectDefinitionManagerModelListener<T extends BaseModel<T>>
 				(!originalModelAttributes.isEmpty() ||
 				 (originalModel == null))) {
 
+				originalModelAttributes.put(
+					"currentUserId", PrincipalThreadLocal.getUserId());
+
 				ObjectEntryReadOnlyUtil.validateReadOnly(
 					objectDefinition.getObjectDefinitionId(),
 					originalModelAttributes, modelAttributes,
