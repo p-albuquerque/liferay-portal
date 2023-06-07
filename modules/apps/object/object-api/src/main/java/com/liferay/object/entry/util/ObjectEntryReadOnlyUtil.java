@@ -41,6 +41,58 @@ import java.util.Objects;
  */
 public class ObjectEntryReadOnlyUtil {
 
+	public static void fillDefaultValues(
+		Map<String, Object> existingValues, List<ObjectField> objectFields) {
+
+		for (ObjectField objectField : objectFields) {
+			String defaultValue =
+				ObjectFieldSettingUtil.getDefaultValueAsString(
+					null, objectField.getObjectFieldId(),
+					ObjectFieldSettingLocalServiceUtil.getService(), null);
+
+			if (defaultValue != null) {
+				existingValues.put(objectField.getName(), defaultValue);
+			}
+
+			if (Objects.equals(
+					objectField.getDBType(),
+					ObjectFieldConstants.DB_TYPE_STRING) ||
+				Objects.equals(
+					objectField.getDBType(),
+					ObjectFieldConstants.DB_TYPE_CLOB)) {
+
+				existingValues.put(objectField.getName(), StringPool.BLANK);
+			}
+			else if (Objects.equals(
+						objectField.getDBType(),
+						ObjectFieldConstants.DB_TYPE_DOUBLE) ||
+					 Objects.equals(
+						 objectField.getDBType(),
+						 ObjectFieldConstants.DB_TYPE_INTEGER) ||
+					 Objects.equals(
+						 objectField.getDBType(),
+						 ObjectFieldConstants.DB_TYPE_LONG)) {
+
+				existingValues.put(objectField.getName(), 0);
+			}
+			else if (Objects.equals(
+						objectField.getDBType(),
+						ObjectFieldConstants.DB_TYPE_BIG_DECIMAL)) {
+
+				existingValues.put(objectField.getName(), BigDecimal.ZERO);
+			}
+			else if (Objects.equals(
+						objectField.getDBType(),
+						ObjectFieldConstants.DB_TYPE_BOOLEAN)) {
+
+				existingValues.put(objectField.getName(), false);
+			}
+			else {
+				existingValues.put(objectField.getName(), null);
+			}
+		}
+	}
+
 	public static void validateReadOnly(
 			long objectDefinitionId, Map<String, Object> expressionVariables,
 			Map<String, Object> values,
@@ -53,7 +105,7 @@ public class ObjectEntryReadOnlyUtil {
 		}
 
 		if (expressionVariables.isEmpty()) {
-			_fillDefaultValues(
+			fillDefaultValues(
 				expressionVariables,
 				objectFieldLocalService.getObjectFields(objectDefinitionId));
 		}
@@ -103,58 +155,6 @@ public class ObjectEntryReadOnlyUtil {
 				_verifyReadOnlyTrue(
 					entry.getKey(), entry.getValue(), expressionVariables,
 					objectField.getName());
-			}
-		}
-	}
-
-	private static void _fillDefaultValues(
-		Map<String, Object> existingValues, List<ObjectField> objectFields) {
-
-		for (ObjectField objectField : objectFields) {
-			String defaultValue =
-				ObjectFieldSettingUtil.getDefaultValueAsString(
-					null, objectField.getObjectFieldId(),
-					ObjectFieldSettingLocalServiceUtil.getService(), null);
-
-			if (defaultValue != null) {
-				existingValues.put(objectField.getName(), defaultValue);
-			}
-
-			if (Objects.equals(
-					objectField.getDBType(),
-					ObjectFieldConstants.DB_TYPE_STRING) ||
-				Objects.equals(
-					objectField.getDBType(),
-					ObjectFieldConstants.DB_TYPE_CLOB)) {
-
-				existingValues.put(objectField.getName(), StringPool.BLANK);
-			}
-			else if (Objects.equals(
-						objectField.getDBType(),
-						ObjectFieldConstants.DB_TYPE_DOUBLE) ||
-					 Objects.equals(
-						 objectField.getDBType(),
-						 ObjectFieldConstants.DB_TYPE_INTEGER) ||
-					 Objects.equals(
-						 objectField.getDBType(),
-						 ObjectFieldConstants.DB_TYPE_LONG)) {
-
-				existingValues.put(objectField.getName(), 0);
-			}
-			else if (Objects.equals(
-						objectField.getDBType(),
-						ObjectFieldConstants.DB_TYPE_BIG_DECIMAL)) {
-
-				existingValues.put(objectField.getName(), BigDecimal.ZERO);
-			}
-			else if (Objects.equals(
-						objectField.getDBType(),
-						ObjectFieldConstants.DB_TYPE_BOOLEAN)) {
-
-				existingValues.put(objectField.getName(), false);
-			}
-			else {
-				existingValues.put(objectField.getName(), null);
 			}
 		}
 	}
