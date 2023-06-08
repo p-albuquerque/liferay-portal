@@ -25,6 +25,7 @@ import com.liferay.object.service.ObjectFieldLocalService;
 import com.liferay.object.service.ObjectValidationRuleLocalService;
 import com.liferay.object.system.JaxRsApplicationDescriptor;
 import com.liferay.object.system.SystemObjectDefinitionManager;
+import com.liferay.object.system.SystemObjectDefinitionManagerRegistry;
 import com.liferay.petra.lang.SafeCloseable;
 import com.liferay.portal.kernel.change.tracking.CTCollectionThreadLocal;
 import com.liferay.portal.kernel.exception.ModelListenerException;
@@ -51,7 +52,6 @@ import java.io.Serializable;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 import java.util.function.Function;
 
 /**
@@ -61,6 +61,8 @@ public class SystemObjectDefinitionManagerModelListener<T extends BaseModel<T>>
 	extends BaseModelListener<T> {
 
 	public SystemObjectDefinitionManagerModelListener(
+		SystemObjectDefinitionManagerRegistry
+			systemObjectDefinitionManagerRegistry,
 		DDMExpressionFactory ddmExpressionFactory,
 		DTOConverterRegistry dtoConverterRegistry, JSONFactory jsonFactory,
 		Class<T> modelClass, ObjectActionEngine objectActionEngine,
@@ -71,6 +73,8 @@ public class SystemObjectDefinitionManagerModelListener<T extends BaseModel<T>>
 		SystemObjectDefinitionManager systemObjectDefinitionManager,
 		UserLocalService userLocalService) {
 
+		_systemObjectDefinitionManagerRegistry =
+			systemObjectDefinitionManagerRegistry;
 		_ddmExpressionFactory = ddmExpressionFactory;
 		_dtoConverterRegistry = dtoConverterRegistry;
 		_jsonFactory = jsonFactory;
@@ -365,34 +369,38 @@ public class SystemObjectDefinitionManagerModelListener<T extends BaseModel<T>>
 				userId = _getUserId(model);
 			}
 
-			Map<String, Object> existingValues = new HashMap<>();
+			Map<String, Object> variables = new HashMap<>();
 
 			if (originalModel != null) {
-				Map<String, Serializable> extensionValues =
+				variables.putAll(
 					_objectEntryLocalService.
 						getExtensionDynamicObjectDefinitionTableValues(
-							objectDefinition, (long)model.getPrimaryKeyObj());
+							objectDefinition,
+							GetterUtil.getLong(model.getPrimaryKeyObj())));
 
-				existingValues.putAll(extensionValues);
-
-				existingValues.putAll(originalModel.getModelAttributes());
+				variables.putAll(originalModel.getModelAttributes());
 			}
 
-			boolean validateReadOnly = !Objects.equals(
-				_currentCustomValues,
-				HashMapBuilder.<String, Object>putAll(
-					EntityExtensionThreadLocal.getExtendedProperties()
-				).build());
+			Map<String, Serializable> extendedProperties =
+				EntityExtensionThreadLocal.getExtendedProperties();
 
-			_currentCustomValues = HashMapBuilder.<String, Object>putAll(
-				EntityExtensionThreadLocal.getExtendedProperties()
-			).build();
+			if ((extendedProperties != null) &&
+				GetterUtil.getBoolean(
+					extendedProperties.get("validateReadOnly"))) {
 
-			if (validateReadOnly) {
+				EntityExtensionThreadLocal.setExtendedProperties(
+					HashMapBuilder.putAll(
+						extendedProperties
+					).put(
+						"validateReadOnly", "false"
+					).build());
+
 				ObjectEntryReadOnlyUtil.validateReadOnly(
-					objectDefinition.getObjectDefinitionId(), existingValues,
-					_currentCustomValues, _ddmExpressionFactory,
-					_objectFieldLocalService);
+					objectDefinition.getObjectDefinitionId(), variables,
+					HashMapBuilder.<String, Object>putAll(
+						EntityExtensionThreadLocal.getExtendedProperties()
+					).build(),
+					_ddmExpressionFactory, _objectFieldLocalService);
 			}
 
 			_objectValidationRuleLocalService.validate(
@@ -409,7 +417,6 @@ public class SystemObjectDefinitionManagerModelListener<T extends BaseModel<T>>
 	private static final Log _log = LogFactoryUtil.getLog(
 		SystemObjectDefinitionManagerModelListener.class);
 
-	private Map<String, Object> _currentCustomValues;
 	private final DDMExpressionFactory _ddmExpressionFactory;
 	private final DTOConverterRegistry _dtoConverterRegistry;
 	private final JSONFactory _jsonFactory;
@@ -421,6 +428,8 @@ public class SystemObjectDefinitionManagerModelListener<T extends BaseModel<T>>
 	private final ObjectValidationRuleLocalService
 		_objectValidationRuleLocalService;
 	private final SystemObjectDefinitionManager _systemObjectDefinitionManager;
+	private final SystemObjectDefinitionManagerRegistry
+		_systemObjectDefinitionManagerRegistry;
 	private final UserLocalService _userLocalService;
 
 }

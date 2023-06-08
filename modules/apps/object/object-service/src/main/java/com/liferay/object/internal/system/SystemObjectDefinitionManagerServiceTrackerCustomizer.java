@@ -22,6 +22,7 @@ import com.liferay.object.service.ObjectEntryLocalService;
 import com.liferay.object.service.ObjectFieldLocalService;
 import com.liferay.object.service.ObjectValidationRuleLocalService;
 import com.liferay.object.system.SystemObjectDefinitionManager;
+import com.liferay.object.system.SystemObjectDefinitionManagerRegistry;
 import com.liferay.osgi.util.ServiceTrackerFactory;
 import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.model.ModelListener;
@@ -105,6 +106,7 @@ public class SystemObjectDefinitionManagerServiceTrackerCustomizer
 				_bundleContext.registerService(
 					ModelListener.class.getName(),
 					new SystemObjectDefinitionManagerModelListener(
+						_systemObjectDefinitionManagerRegistry,
 						_ddmExpressionFactory, _dtoConverterRegistry,
 						_jsonFactory,
 						systemObjectDefinitionManager.getModelClass(),
@@ -160,6 +162,10 @@ public class SystemObjectDefinitionManagerServiceTrackerCustomizer
 	private ServiceTracker
 		<SystemObjectDefinitionManager, SystemObjectDefinitionManager>
 			_serviceTracker;
+
+	@Reference
+	private SystemObjectDefinitionManagerRegistry
+		_systemObjectDefinitionManagerRegistry;
 
 	@Reference
 	private UserLocalService _userLocalService;

@@ -20,6 +20,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
 
 import com.liferay.portal.kernel.model.Company;
+import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.vulcan.extension.EntityExtensionHandler;
 import com.liferay.portal.vulcan.extension.EntityExtensionThreadLocal;
@@ -108,7 +109,11 @@ public abstract class BaseMessageBodyReader
 						_httpServletRequest.getMethod(), HttpMethod.PATCH));
 
 				EntityExtensionThreadLocal.setExtendedProperties(
-					extendedProperties);
+					HashMapBuilder.putAll(
+						extendedProperties
+					).put(
+						"validateReadOnly", "true"
+					).build());
 			}
 			catch (Exception exception) {
 				throw new IOException(exception);
