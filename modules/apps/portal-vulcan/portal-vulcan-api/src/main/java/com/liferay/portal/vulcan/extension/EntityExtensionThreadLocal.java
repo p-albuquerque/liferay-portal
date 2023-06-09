@@ -29,15 +29,29 @@ public class EntityExtensionThreadLocal {
 		return _extendedPropertiesThreadLocal.get();
 	}
 
+	public static Map<String, Object> getOriginalModelAttributes() {
+		return _originalModelAttributesThreadLocal.get();
+	}
+
 	public static void setExtendedProperties(
 		Map<String, Serializable> extendedProperties) {
 
 		_extendedPropertiesThreadLocal.set(extendedProperties);
 	}
 
+	public static void setOriginalModelAttributes(
+		Map<String, Object> originalModelAttributes) {
+
+		_originalModelAttributesThreadLocal.set(originalModelAttributes);
+	}
+
 	private static final ThreadLocal<Map<String, Serializable>>
 		_extendedPropertiesThreadLocal = new CentralizedThreadLocal<>(
 			EntityExtensionThreadLocal.class +
 				"._extendedPropertiesThreadLocal");
+	private static final ThreadLocal<Map<String, Object>>
+		_originalModelAttributesThreadLocal = new CentralizedThreadLocal<>(
+			EntityExtensionThreadLocal.class +
+				"._originalModelAttributesThreadLocal");
 
 }

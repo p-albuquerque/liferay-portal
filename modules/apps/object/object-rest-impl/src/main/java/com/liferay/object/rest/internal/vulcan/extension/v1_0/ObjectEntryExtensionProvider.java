@@ -17,6 +17,7 @@ package com.liferay.object.rest.internal.vulcan.extension.v1_0;
 import com.liferay.dynamic.data.mapping.expression.DDMExpressionFactory;
 import com.liferay.object.constants.ObjectFieldSettingConstants;
 import com.liferay.object.constants.ObjectRelationshipConstants;
+import com.liferay.object.entry.util.ObjectEntryReadOnlyUtil;
 import com.liferay.object.field.business.type.ObjectFieldBusinessType;
 import com.liferay.object.field.business.type.ObjectFieldBusinessTypeRegistry;
 import com.liferay.object.field.setting.util.ObjectFieldSettingUtil;
@@ -26,11 +27,14 @@ import com.liferay.object.rest.internal.util.ObjectEntryValuesUtil;
 import com.liferay.object.service.ObjectEntryLocalService;
 import com.liferay.object.service.ObjectFieldLocalService;
 import com.liferay.object.service.ObjectFieldSettingLocalService;
+import com.liferay.object.system.SystemObjectDefinitionManagerRegistry;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.UserLocalService;
+import com.liferay.portal.kernel.util.HashMapBuilder;
+import com.liferay.portal.vulcan.extension.EntityExtensionThreadLocal;
 import com.liferay.portal.vulcan.extension.ExtensionProvider;
 import com.liferay.portal.vulcan.extension.PropertyDefinition;
 
@@ -145,6 +149,14 @@ public class ObjectEntryExtensionProvider extends BaseObjectExtensionProvider {
 			ObjectDefinition objectDefinition = fetchObjectDefinition(
 				companyId, className);
 
+			ObjectEntryReadOnlyUtil.validateReadOnly(
+				objectDefinition.getObjectDefinitionId(),
+				HashMapBuilder.putAll(
+					EntityExtensionThreadLocal.getOriginalModelAttributes()
+				).build(),
+				new HashMap<>(extendedProperties), _ddmExpressionFactory,
+				_objectFieldLocalService);
+
 			for (ObjectField objectField :
 					_objectFieldLocalService.getObjectFields(
 						objectDefinition.getObjectDefinitionId(), false)) {
@@ -197,6 +209,10 @@ public class ObjectEntryExtensionProvider extends BaseObjectExtensionProvider {
 
 	@Reference
 	private ObjectFieldSettingLocalService _objectFieldSettingLocalService;
+
+	@Reference
+	private SystemObjectDefinitionManagerRegistry
+		_systemObjectDefinitionManagerRegistry;
 
 	@Reference
 	private UserLocalService _userLocalService;

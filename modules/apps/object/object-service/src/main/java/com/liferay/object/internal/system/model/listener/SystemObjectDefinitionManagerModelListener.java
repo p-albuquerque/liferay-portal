@@ -16,9 +16,11 @@ package com.liferay.object.internal.system.model.listener;
 
 import com.liferay.object.action.engine.ObjectActionEngine;
 import com.liferay.object.constants.ObjectActionTriggerConstants;
+import com.liferay.object.entry.util.ObjectEntryReadOnlyUtil;
 import com.liferay.object.model.ObjectDefinition;
 import com.liferay.object.service.ObjectDefinitionLocalService;
 import com.liferay.object.service.ObjectEntryLocalService;
+import com.liferay.object.service.ObjectFieldLocalServiceUtil;
 import com.liferay.object.service.ObjectValidationRuleLocalService;
 import com.liferay.object.system.JaxRsApplicationDescriptor;
 import com.liferay.object.system.SystemObjectDefinitionManager;
@@ -44,6 +46,7 @@ import com.liferay.portal.vulcan.dto.converter.DefaultDTOConverterContext;
 import com.liferay.portal.vulcan.extension.EntityExtensionThreadLocal;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
 
@@ -336,6 +339,37 @@ public class SystemObjectDefinitionManagerModelListener<T extends BaseModel<T>>
 		return baseModel.getModelAttributes();
 	}
 
+	private void _validateReadOnly(
+			T originalModel, T model, ObjectDefinition objectDefinition)
+		throws PortalException {
+
+		if (originalModel == null) {
+			Map<String, Object> originalModelAttributes = new HashMap<>();
+
+			ObjectEntryReadOnlyUtil.fillDefaultValues(
+				originalModelAttributes,
+				ObjectFieldLocalServiceUtil.getObjectFields(
+					objectDefinition.getObjectDefinitionId()));
+
+			EntityExtensionThreadLocal.setOriginalModelAttributes(
+				originalModelAttributes);
+		}
+
+		if (EntityExtensionThreadLocal.getOriginalModelAttributes() != null) {
+			return;
+		}
+
+		EntityExtensionThreadLocal.setOriginalModelAttributes(
+			HashMapBuilder.putAll(
+				originalModel.getModelAttributes()
+			).putAll(
+				_objectEntryLocalService.
+					getExtensionDynamicObjectDefinitionTableValues(
+						objectDefinition,
+						GetterUtil.getLong(model.getPrimaryKeyObj()))
+			).build());
+	}
+
 	private void _validateSystemObject(T originalModel, T model)
 		throws ModelListenerException {
 
@@ -353,6 +387,8 @@ public class SystemObjectDefinitionManagerModelListener<T extends BaseModel<T>>
 			if (userId == 0) {
 				userId = _getUserId(model);
 			}
+
+			_validateReadOnly(originalModel, model, objectDefinition);
 
 			_objectValidationRuleLocalService.validate(
 				model, objectDefinition.getObjectDefinitionId(),
