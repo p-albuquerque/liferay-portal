@@ -14,12 +14,10 @@
 
 package com.liferay.object.internal.system;
 
-import com.liferay.dynamic.data.mapping.expression.DDMExpressionFactory;
 import com.liferay.object.action.engine.ObjectActionEngine;
 import com.liferay.object.internal.system.model.listener.SystemObjectDefinitionManagerModelListener;
 import com.liferay.object.service.ObjectDefinitionLocalService;
 import com.liferay.object.service.ObjectEntryLocalService;
-import com.liferay.object.service.ObjectFieldLocalService;
 import com.liferay.object.service.ObjectValidationRuleLocalService;
 import com.liferay.object.system.SystemObjectDefinitionManager;
 import com.liferay.osgi.util.ServiceTrackerFactory;
@@ -105,11 +103,10 @@ public class SystemObjectDefinitionManagerServiceTrackerCustomizer
 				_bundleContext.registerService(
 					ModelListener.class.getName(),
 					new SystemObjectDefinitionManagerModelListener(
-						_ddmExpressionFactory, _dtoConverterRegistry,
-						_jsonFactory,
+						_dtoConverterRegistry, _jsonFactory,
 						systemObjectDefinitionManager.getModelClass(),
 						_objectActionEngine, _objectDefinitionLocalService,
-						_objectEntryLocalService, _objectFieldLocalService,
+						_objectEntryLocalService,
 						_objectValidationRuleLocalService,
 						systemObjectDefinitionManager, _userLocalService),
 					null)));
@@ -132,9 +129,6 @@ public class SystemObjectDefinitionManagerServiceTrackerCustomizer
 	private BundleContext _bundleContext;
 
 	@Reference
-	private DDMExpressionFactory _ddmExpressionFactory;
-
-	@Reference
 	private DTOConverterRegistry _dtoConverterRegistry;
 
 	@Reference
@@ -148,9 +142,6 @@ public class SystemObjectDefinitionManagerServiceTrackerCustomizer
 
 	@Reference
 	private ObjectEntryLocalService _objectEntryLocalService;
-
-	@Reference
-	private ObjectFieldLocalService _objectFieldLocalService;
 
 	@Reference
 	private ObjectValidationRuleLocalService _objectValidationRuleLocalService;
