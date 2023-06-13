@@ -18,6 +18,7 @@ import com.liferay.dynamic.data.mapping.expression.DDMExpressionFactory;
 import com.liferay.object.action.engine.ObjectActionEngine;
 import com.liferay.object.constants.ObjectActionTriggerConstants;
 import com.liferay.object.entry.util.ObjectEntryReadOnlyUtil;
+import com.liferay.object.entry.util.ObjectEntryThreadLocal;
 import com.liferay.object.model.ObjectDefinition;
 import com.liferay.object.model.ObjectField;
 import com.liferay.object.service.ObjectDefinitionLocalService;
@@ -26,7 +27,6 @@ import com.liferay.object.service.ObjectFieldLocalService;
 import com.liferay.object.service.ObjectValidationRuleLocalService;
 import com.liferay.object.system.JaxRsApplicationDescriptor;
 import com.liferay.object.system.SystemObjectDefinitionManager;
-import com.liferay.petra.lang.CentralizedThreadLocal;
 import com.liferay.petra.lang.SafeCloseable;
 import com.liferay.portal.kernel.change.tracking.CTCollectionThreadLocal;
 import com.liferay.portal.kernel.exception.ModelListenerException;
@@ -367,12 +367,8 @@ public class SystemObjectDefinitionManagerModelListener<T extends BaseModel<T>>
 				new HashMap<>(), extendedProperties, _ddmExpressionFactory,
 				objectFields);
 
-			_skipValidateReadOnly.set(true);
+			ObjectEntryThreadLocal.setSkipReadOnlyValidation(true);
 
-			return;
-		}
-
-		if (_skipValidateReadOnly.get()) {
 			return;
 		}
 
@@ -387,7 +383,7 @@ public class SystemObjectDefinitionManagerModelListener<T extends BaseModel<T>>
 			).build(),
 			extendedProperties, _ddmExpressionFactory, objectFields);
 
-		_skipValidateReadOnly.set(true);
+		ObjectEntryThreadLocal.setSkipReadOnlyValidation(true);
 	}
 
 	private void _validateSystemObject(T originalModel, T model)
@@ -423,12 +419,6 @@ public class SystemObjectDefinitionManagerModelListener<T extends BaseModel<T>>
 
 	private static final Log _log = LogFactoryUtil.getLog(
 		SystemObjectDefinitionManagerModelListener.class);
-
-	private static final ThreadLocal<Boolean> _skipValidateReadOnly =
-		new CentralizedThreadLocal<>(
-			SystemObjectDefinitionManagerModelListener.class +
-				"._skipValidateReadOnly",
-			() -> false);
 
 	private final DDMExpressionFactory _ddmExpressionFactory;
 	private final DTOConverterRegistry _dtoConverterRegistry;

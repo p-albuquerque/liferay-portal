@@ -49,7 +49,9 @@ public class ObjectEntryReadOnlyUtil {
 			List<ObjectField> objectFields)
 		throws PortalException {
 
-		if (!FeatureFlagManagerUtil.isEnabled("LPS-170122")) {
+		if (!FeatureFlagManagerUtil.isEnabled("LPS-170122") ||
+			ObjectEntryThreadLocal.isSkipReadOnlyValidation()) {
+
 			return;
 		}
 
