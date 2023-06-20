@@ -31,6 +31,8 @@ import com.liferay.object.exception.ObjectFieldLabelException;
 import com.liferay.object.exception.ObjectFieldListTypeDefinitionIdException;
 import com.liferay.object.exception.ObjectFieldLocalizedException;
 import com.liferay.object.exception.ObjectFieldNameException;
+import com.liferay.object.exception.ObjectFieldReadOnlyConditionExpressionException;
+import com.liferay.object.exception.ObjectFieldReadOnlyException;
 import com.liferay.object.exception.ObjectFieldRelationshipTypeException;
 import com.liferay.object.exception.ObjectFieldSettingNameException;
 import com.liferay.object.exception.ObjectFieldSettingValueException;
@@ -38,6 +40,7 @@ import com.liferay.object.exception.ObjectFieldStateException;
 import com.liferay.object.exception.RequiredObjectFieldException;
 import com.liferay.object.field.builder.AttachmentObjectFieldBuilder;
 import com.liferay.object.field.builder.DateObjectFieldBuilder;
+import com.liferay.object.field.builder.FormulaObjectFieldBuilder;
 import com.liferay.object.field.builder.IntegerObjectFieldBuilder;
 import com.liferay.object.field.builder.LongIntegerObjectFieldBuilder;
 import com.liferay.object.field.builder.MultiselectPicklistObjectFieldBuilder;
@@ -527,6 +530,118 @@ public class ObjectFieldLocalServiceTest {
 					).state(
 						true
 					).build())));
+
+		// readOnly
+
+		String invalidReadOnly = RandomTestUtil.randomString();
+
+		AssertUtils.assertFailure(
+			ObjectFieldReadOnlyException.class,
+			"Unknown read only: " + invalidReadOnly,
+			() -> ObjectDefinitionTestUtil.addObjectDefinition(
+				false, _objectDefinitionLocalService,
+				Arrays.asList(
+					new TextObjectFieldBuilder(
+					).labelMap(
+						LocalizedMapUtil.getLocalizedMap(
+							RandomTestUtil.randomString())
+					).name(
+						"a" + RandomTestUtil.randomString()
+					).readOnly(
+						invalidReadOnly
+					).build())));
+
+		AssertUtils.assertFailure(
+			ObjectFieldReadOnlyConditionExpressionException.class,
+			"Read only condition expression is required",
+			() -> ObjectDefinitionTestUtil.addObjectDefinition(
+				false, _objectDefinitionLocalService,
+				Arrays.asList(
+					new TextObjectFieldBuilder(
+					).labelMap(
+						LocalizedMapUtil.getLocalizedMap(
+							RandomTestUtil.randomString())
+					).name(
+						"a" + RandomTestUtil.randomString()
+					).readOnly(
+						ObjectFieldConstants.READ_ONLY_CONDITIONAL
+					).build())));
+
+		String invalidDDMscript = RandomTestUtil.randomString() + "()";
+
+		AssertUtils.assertFailure(
+			ObjectFieldReadOnlyConditionExpressionException.class,
+			"Syntax error in: " + invalidDDMscript,
+			() -> ObjectDefinitionTestUtil.addObjectDefinition(
+				false, _objectDefinitionLocalService,
+				Arrays.asList(
+					new TextObjectFieldBuilder(
+					).labelMap(
+						LocalizedMapUtil.getLocalizedMap(
+							RandomTestUtil.randomString())
+					).name(
+						"a" + RandomTestUtil.randomString()
+					).readOnly(
+						ObjectFieldConstants.READ_ONLY_CONDITIONAL
+					).readOnlyConditionExpression(
+						invalidDDMscript
+					).build())));
+
+		ObjectDefinition customObjectDefinition =
+			ObjectDefinitionTestUtil.addObjectDefinition(
+				false, _objectDefinitionLocalService,
+				Collections.singletonList(
+					ObjectFieldUtil.createObjectField(
+						ObjectFieldConstants.BUSINESS_TYPE_TEXT,
+						ObjectFieldConstants.DB_TYPE_STRING, "able")));
+
+		ObjectField objectField = _addCustomObjectField(
+			new TextObjectFieldBuilder(
+			).labelMap(
+				LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString())
+			).name(
+				"a" + RandomTestUtil.randomString()
+			).objectDefinitionId(
+				customObjectDefinition.getObjectDefinitionId()
+			).readOnly(
+				null
+			).readOnlyConditionExpression(
+				invalidDDMscript
+			).build());
+
+		Assert.assertEquals(
+			objectField.getReadOnly(), ObjectFieldConstants.READ_ONLY_FALSE);
+		Assert.assertEquals(
+			objectField.getReadOnlyConditionExpression(), StringPool.BLANK);
+
+		objectField = _addCustomObjectField(
+			new FormulaObjectFieldBuilder(
+			).labelMap(
+				LocalizedMapUtil.getLocalizedMap("Overweight")
+			).name(
+				"overweight"
+			).objectDefinitionId(
+				customObjectDefinition.getObjectDefinitionId()
+			).objectFieldSettings(
+				Arrays.asList(
+					new ObjectFieldSettingBuilder(
+					).name(
+						"script"
+					).value(
+						"weight + 10"
+					).build(),
+					new ObjectFieldSettingBuilder(
+					).name(
+						"output"
+					).value(
+						ObjectFieldConstants.BUSINESS_TYPE_DECIMAL
+					).build())
+			).build());
+
+		Assert.assertEquals(
+			objectField.getReadOnly(), ObjectFieldConstants.READ_ONLY_TRUE);
+		Assert.assertEquals(
+			objectField.getReadOnlyConditionExpression(), StringPool.BLANK);
 	}
 
 	@Test

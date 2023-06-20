@@ -34,10 +34,12 @@ import com.liferay.list.type.service.ListTypeDefinitionLocalService;
 import com.liferay.list.type.service.ListTypeEntryLocalService;
 import com.liferay.object.constants.ObjectActionKeys;
 import com.liferay.object.constants.ObjectDefinitionConstants;
+import com.liferay.object.constants.ObjectFieldConstants;
 import com.liferay.object.constants.ObjectFieldSettingConstants;
 import com.liferay.object.constants.ObjectFilterConstants;
 import com.liferay.object.constants.ObjectRelationshipConstants;
 import com.liferay.object.exception.NoSuchObjectEntryException;
+import com.liferay.object.exception.ObjectFieldReadOnlyException;
 import com.liferay.object.exception.ObjectRelationshipDeletionTypeException;
 import com.liferay.object.exception.RequiredObjectRelationshipException;
 import com.liferay.object.field.builder.AggregationObjectFieldBuilder;
@@ -818,6 +820,87 @@ public class DefaultObjectEntryManagerImplTest {
 			).put(
 				"name", listTypeEntry.getName(LocaleUtil.US)
 			).build());
+
+		// readOnly
+
+		String randomString = RandomTestUtil.randomString();
+
+		ObjectDefinition objectDefinition = _createObjectDefinition(
+			Arrays.asList(
+				new DecimalObjectFieldBuilder(
+				).labelMap(
+					LocalizedMapUtil.getLocalizedMap(
+						RandomTestUtil.randomString())
+				).name(
+					"decimalObjectFieldName"
+				).readOnly(
+					ObjectFieldConstants.READ_ONLY_TRUE
+				).build(),
+				new IntegerObjectFieldBuilder(
+				).labelMap(
+					LocalizedMapUtil.getLocalizedMap(
+						RandomTestUtil.randomString())
+				).name(
+					"integerObjectFieldName"
+				).readOnly(
+					ObjectFieldConstants.READ_ONLY_CONDITIONAL
+				).readOnlyConditionExpression(
+					"textObjectFieldName == \"" + randomString + "\""
+				).build(),
+				new TextObjectFieldBuilder(
+				).labelMap(
+					LocalizedMapUtil.getLocalizedMap(
+						RandomTestUtil.randomString())
+				).name(
+					"textObjectFieldName"
+				).readOnly(
+					ObjectFieldConstants.READ_ONLY_FALSE
+				).build()));
+
+		AssertUtils.assertFailure(
+			ObjectFieldReadOnlyException.class,
+			"The object field decimalObjectFieldName is readOnly",
+			() -> _defaultObjectEntryManager.addObjectEntry(
+				_simpleDTOConverterContext, objectDefinition,
+				new ObjectEntry() {
+					{
+						properties = HashMapBuilder.<String, Object>put(
+							"decimalObjectFieldName", 15.7
+						).put(
+							"integerObjectFieldName", 15
+						).put(
+							"textObjectFieldName", randomString
+						).build();
+					}
+				},
+				ObjectDefinitionConstants.SCOPE_COMPANY));
+
+		ObjectEntry objectEntry = _defaultObjectEntryManager.addObjectEntry(
+			_simpleDTOConverterContext, objectDefinition,
+			new ObjectEntry() {
+				{
+					properties = HashMapBuilder.<String, Object>put(
+						"integerObjectFieldName", 15
+					).put(
+						"textObjectFieldName", randomString
+					).build();
+				}
+			},
+			ObjectDefinitionConstants.SCOPE_COMPANY);
+
+		AssertUtils.assertFailure(
+			ObjectFieldReadOnlyException.class,
+			"The object field integerObjectFieldName is readOnly",
+			() -> _defaultObjectEntryManager.updateObjectEntry(
+				_simpleDTOConverterContext, objectDefinition,
+				objectEntry.getId(),
+				new ObjectEntry() {
+					{
+						properties = HashMapBuilder.<String, Object>put(
+							"integerObjectFieldName", 16
+						).build();
+					}
+				}));
 	}
 
 	@Test
