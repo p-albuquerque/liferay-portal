@@ -109,7 +109,7 @@ public class ObjectEntriesTableFDSView extends BaseTableFDSView {
 					_objectDefinition.getObjectDefinitionId(),
 					objectViewColumn.getObjectFieldName());
 			}
-			catch (PortalException portalException) {
+			catch (PortalException portalException) {aac
 				if (_log.isDebugEnabled()) {
 					_log.debug(portalException);
 				}
