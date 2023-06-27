@@ -223,6 +223,16 @@ public class ObjectFieldUtil {
 				objectRelationshipERCObjectFieldName, objectField);
 		}
 
+		for (ObjectField objectField :
+				ListUtil.filter(
+					objectFields,
+					objectField1 ->
+						objectField1.getI18nObjectFieldName() != null)) {
+
+			objectFieldsMap.put(
+				objectField.getI18nObjectFieldName(), objectField);
+		}
+
 		for (Map.Entry<String, Object> entry : values.entrySet()) {
 			if (Objects.equals(entry.getKey(), "status")) {
 				continue;
