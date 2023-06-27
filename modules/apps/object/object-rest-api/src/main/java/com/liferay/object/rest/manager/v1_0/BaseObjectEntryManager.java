@@ -16,7 +16,6 @@ package com.liferay.object.rest.manager.v1_0;
 
 import com.liferay.depot.service.DepotEntryLocalService;
 import com.liferay.dynamic.data.mapping.expression.DDMExpressionFactory;
-import com.liferay.object.field.util.ObjectFieldUtil;
 import com.liferay.object.model.ObjectDefinition;
 import com.liferay.object.model.ObjectEntry;
 import com.liferay.object.scope.ObjectScopeProvider;
@@ -35,7 +34,6 @@ import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.vulcan.util.GroupUtil;
 
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
@@ -103,38 +101,6 @@ public abstract class BaseObjectEntryManager {
 				objectDefinition.getClassName());
 
 		return modelResourcePermission.getPortletResourcePermission();
-	}
-
-	protected void validateReadOnlyObjectFields(
-			String externalReferenceCode, ObjectDefinition objectDefinition,
-			com.liferay.object.rest.dto.v1_0.ObjectEntry objectEntry)
-		throws Exception {
-
-		Map<String, Object> values = new HashMap<>();
-
-		if (externalReferenceCode != null) {
-			ObjectEntry serviceBuilderObjectEntry =
-				objectEntryLocalService.fetchObjectEntry(
-					externalReferenceCode,
-					objectDefinition.getObjectDefinitionId());
-
-			if (serviceBuilderObjectEntry == null) {
-				return;
-			}
-
-			values.putAll(
-				objectEntryLocalService.getValues(serviceBuilderObjectEntry));
-
-			values.putAll(
-				objectEntryLocalService.getSystemValues(
-					serviceBuilderObjectEntry));
-		}
-
-		ObjectFieldUtil.validateReadOnlyObjectFields(
-			ddmExpressionFactory, values,
-			objectFieldLocalService.getObjectFields(
-				objectDefinition.getObjectDefinitionId()),
-			objectEntry.getProperties());
 	}
 
 	@Reference

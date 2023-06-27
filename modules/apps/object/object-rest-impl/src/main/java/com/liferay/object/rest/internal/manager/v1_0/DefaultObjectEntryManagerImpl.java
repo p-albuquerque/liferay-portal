@@ -23,6 +23,7 @@ import com.liferay.object.constants.ObjectRelationshipConstants;
 import com.liferay.object.entry.util.ObjectEntryThreadLocal;
 import com.liferay.object.exception.NoSuchObjectEntryException;
 import com.liferay.object.field.business.type.ObjectFieldBusinessTypeRegistry;
+import com.liferay.object.field.util.ObjectFieldUtil;
 import com.liferay.object.model.ObjectAction;
 import com.liferay.object.model.ObjectDefinition;
 import com.liferay.object.model.ObjectField;
@@ -140,7 +141,11 @@ public class DefaultObjectEntryManagerImpl
 			String scopeKey)
 		throws Exception {
 
-		validateReadOnlyObjectFields(null, objectDefinition, objectEntry);
+		ObjectFieldUtil.validateReadOnlyObjectFields(
+			ddmExpressionFactory, new HashMap<>(),
+			objectFieldLocalService.getObjectFields(
+				objectDefinition.getObjectDefinitionId()),
+			objectEntry.getProperties());
 
 		com.liferay.object.model.ObjectEntry serviceBuilderObjectEntry =
 			_objectEntryService.addObjectEntry(
@@ -766,9 +771,17 @@ public class DefaultObjectEntryManagerImpl
 		_checkObjectEntryObjectDefinitionId(
 			objectDefinition, serviceBuilderObjectEntry);
 
-		validateReadOnlyObjectFields(
-			serviceBuilderObjectEntry.getExternalReferenceCode(),
-			objectDefinition, objectEntry);
+		ObjectFieldUtil.validateReadOnlyObjectFields(
+			ddmExpressionFactory,
+			HashMapBuilder.<String, Object>putAll(
+				objectEntryLocalService.getValues(serviceBuilderObjectEntry)
+			).putAll(
+				objectEntryLocalService.getSystemValues(
+					serviceBuilderObjectEntry)
+			).build(),
+			objectFieldLocalService.getObjectFields(
+				objectDefinition.getObjectDefinitionId()),
+			objectEntry.getProperties());
 
 		serviceBuilderObjectEntry = _objectEntryService.updateObjectEntry(
 			objectEntryId,
@@ -796,8 +809,20 @@ public class DefaultObjectEntryManagerImpl
 			ObjectEntry objectEntry, String scopeKey)
 		throws Exception {
 
-		validateReadOnlyObjectFields(
-			externalReferenceCode, objectDefinition, objectEntry);
+		com.liferay.object.model.ObjectEntry serviceBuilderObjectEntry =
+			_objectEntryService.getObjectEntry(objectEntry.getId());
+
+		ObjectFieldUtil.validateReadOnlyObjectFields(
+			ddmExpressionFactory,
+			HashMapBuilder.<String, Object>putAll(
+				objectEntryLocalService.getValues(serviceBuilderObjectEntry)
+			).putAll(
+				objectEntryLocalService.getSystemValues(
+					serviceBuilderObjectEntry)
+			).build(),
+			objectFieldLocalService.getObjectFields(
+				objectDefinition.getObjectDefinitionId()),
+			objectEntry.getProperties());
 
 		long groupId = getGroupId(objectDefinition, scopeKey);
 
@@ -806,14 +831,13 @@ public class DefaultObjectEntryManagerImpl
 
 		serviceContext.setCompanyId(companyId);
 
-		com.liferay.object.model.ObjectEntry serviceBuilderObjectEntry =
-			_objectEntryService.addOrUpdateObjectEntry(
-				externalReferenceCode, groupId,
-				objectDefinition.getObjectDefinitionId(),
-				_toObjectValues(
-					dtoConverterContext.getUserId(), objectDefinition,
-					objectEntry, dtoConverterContext.getLocale()),
-				serviceContext);
+		serviceBuilderObjectEntry = _objectEntryService.addOrUpdateObjectEntry(
+			externalReferenceCode, groupId,
+			objectDefinition.getObjectDefinitionId(),
+			_toObjectValues(
+				dtoConverterContext.getUserId(), objectDefinition, objectEntry,
+				dtoConverterContext.getLocale()),
+			serviceContext);
 
 		if (FeatureFlagManagerUtil.isEnabled("LPS-153117")) {
 			serviceBuilderObjectEntry = _addOrUpdateNestedObjectEntries(

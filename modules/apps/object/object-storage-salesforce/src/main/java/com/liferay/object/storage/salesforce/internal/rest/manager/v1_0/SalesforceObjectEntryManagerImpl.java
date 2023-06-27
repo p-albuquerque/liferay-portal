@@ -25,6 +25,7 @@ import com.liferay.object.constants.ObjectFieldSettingConstants;
 import com.liferay.object.field.business.type.ObjectFieldBusinessType;
 import com.liferay.object.field.business.type.ObjectFieldBusinessTypeRegistry;
 import com.liferay.object.field.setting.util.ObjectFieldSettingUtil;
+import com.liferay.object.field.util.ObjectFieldUtil;
 import com.liferay.object.model.ObjectDefinition;
 import com.liferay.object.model.ObjectField;
 import com.liferay.object.rest.dto.v1_0.ListEntry;
@@ -33,7 +34,6 @@ import com.liferay.object.rest.dto.v1_0.Status;
 import com.liferay.object.rest.dto.v1_0.util.CreatorUtil;
 import com.liferay.object.rest.manager.v1_0.BaseObjectEntryManager;
 import com.liferay.object.rest.manager.v1_0.ObjectEntryManager;
-import com.liferay.object.service.ObjectFieldLocalService;
 import com.liferay.object.storage.salesforce.internal.http.SalesforceHttp;
 import com.liferay.petra.function.transform.TransformUtil;
 import com.liferay.petra.string.StringBundler;
@@ -191,8 +191,20 @@ public class SalesforceObjectEntryManagerImpl
 			ActionKeys.UPDATE, objectDefinition, scopeKey,
 			dtoConverterContext.getUser());
 
-		validateReadOnlyObjectFields(
-			externalReferenceCode, objectDefinition, objectEntry);
+		ObjectEntry existingObjectEntry = getObjectEntry(
+			companyId, dtoConverterContext, externalReferenceCode,
+			objectDefinition, scopeKey);
+
+		ObjectFieldUtil.validateReadOnlyObjectFields(
+			ddmExpressionFactory,
+			HashMapBuilder.<String, Object>putAll(
+				existingObjectEntry.getProperties()
+			).putAll(
+				_getSystemValues(existingObjectEntry)
+			).build(),
+			objectFieldLocalService.getObjectFields(
+				objectDefinition.getObjectDefinitionId()),
+			objectEntry.getProperties());
 
 		_salesforceHttp.patch(
 			companyId, getGroupId(objectDefinition, scopeKey),
@@ -218,7 +230,7 @@ public class SalesforceObjectEntryManagerImpl
 			return StringPool.BLANK;
 		}
 
-		ObjectField objectField = _objectFieldLocalService.getObjectField(
+		ObjectField objectField = objectFieldLocalService.getObjectField(
 			objectDefinition.getAccountEntryRestrictedObjectFieldId());
 
 		return StringBundler.concat(
@@ -381,7 +393,7 @@ public class SalesforceObjectEntryManagerImpl
 		StringBundler sb = new StringBundler();
 
 		List<ObjectField> objectFields =
-			_objectFieldLocalService.getObjectFields(objectDefinitionId);
+			objectFieldLocalService.getObjectFields(objectDefinitionId);
 
 		for (Sort sort : sorts) {
 			String fieldName = sort.getFieldName();
@@ -428,6 +440,16 @@ public class SalesforceObjectEntryManagerImpl
 		return sb.toString();
 	}
 
+	private Map<String, Object> _getSystemValues(
+			ObjectEntry existingObjectEntry)
+		throws Exception {
+
+		JSONObject jsonObject = _jsonFactory.createJSONObject(
+			_jsonFactory.looseSerializeDeep(existingObjectEntry));
+
+		return jsonObject.toMap();
+	}
+
 	private int _getTotalCount(
 		long companyId, ObjectDefinition objectDefinition,
 		String predicateString, String scopeKey, String search) {
@@ -471,7 +493,7 @@ public class SalesforceObjectEntryManagerImpl
 		Map<String, Object> map = new HashMap<>();
 
 		List<ObjectField> objectFields =
-			_objectFieldLocalService.getObjectFields(
+			objectFieldLocalService.getObjectFields(
 				objectDefinition.getObjectDefinitionId());
 
 		Map<String, Object> properties = objectEntry.getProperties();
@@ -599,7 +621,7 @@ public class SalesforceObjectEntryManagerImpl
 				externalReferenceCode = jsonObject.getString("Id");
 				properties = _toProperties(
 					dtoConverterContext, jsonObject, objectDefinition,
-					_objectFieldLocalService.getObjectFields(
+					objectFieldLocalService.getObjectFields(
 						objectDefinition.getObjectDefinitionId()));
 				status = new Status() {
 					{
@@ -722,9 +744,6 @@ public class SalesforceObjectEntryManagerImpl
 
 	@Reference
 	private ObjectFieldBusinessTypeRegistry _objectFieldBusinessTypeRegistry;
-
-	@Reference
-	private ObjectFieldLocalService _objectFieldLocalService;
 
 	@Reference
 	private Portal _portal;
