@@ -31,6 +31,7 @@ import com.liferay.object.rest.dto.v1_0.ListEntry;
 import com.liferay.object.rest.dto.v1_0.ObjectEntry;
 import com.liferay.object.rest.dto.v1_0.Status;
 import com.liferay.object.rest.dto.v1_0.util.CreatorUtil;
+import com.liferay.object.rest.filter.factory.FilterFactory;
 import com.liferay.object.rest.manager.v1_0.BaseObjectEntryManager;
 import com.liferay.object.rest.manager.v1_0.ObjectEntryManager;
 import com.liferay.object.service.ObjectFieldLocalService;
@@ -136,6 +137,9 @@ public class SalesforceObjectEntryManagerImpl
 		checkPortletResourcePermission(
 			ActionKeys.VIEW, objectDefinition, scopeKey,
 			dtoConverterContext.getUser());
+
+		String salesforceFilter = _filterFactory.create(
+			filterString, objectDefinition.getObjectDefinitionId());
 
 		return _getObjectEntries(
 			companyId, objectDefinition, scopeKey, dtoConverterContext,
@@ -705,6 +709,11 @@ public class SalesforceObjectEntryManagerImpl
 		).put(
 			"userName", "OwnerId"
 		).build();
+
+	@Reference(
+		target = "filter.factory.key=" + ObjectDefinitionConstants.STORAGE_TYPE_SALESFORCE
+	)
+	private FilterFactory<String> _filterFactory;
 
 	@Reference
 	private InlineSQLHelper _inlineSQLHelper;

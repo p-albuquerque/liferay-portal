@@ -14,11 +14,18 @@
 
 package com.liferay.object.storage.salesforce.internal.filter.factory;
 
+import com.liferay.object.constants.ObjectDefinitionConstants;
 import com.liferay.object.rest.filter.factory.FilterFactory;
+
+import org.osgi.service.component.annotations.Component;
 
 /**
  * @author Paulo Albuquerque
  */
+@Component(
+	property = "filter.factory.key=" + ObjectDefinitionConstants.STORAGE_TYPE_SALESFORCE,
+	service = FilterFactory.class
+)
 public class SalesforceFilterFactoryImpl implements FilterFactory<String> {
 
 	@Override

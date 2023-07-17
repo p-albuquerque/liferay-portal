@@ -14,6 +14,7 @@
 
 package com.liferay.object.rest.internal.filter.factory;
 
+import com.liferay.object.constants.ObjectDefinitionConstants;
 import com.liferay.object.field.business.type.ObjectFieldBusinessTypeRegistry;
 import com.liferay.object.related.models.ObjectRelatedModelsPredicateProviderRegistry;
 import com.liferay.object.rest.filter.factory.FilterFactory;
@@ -40,7 +41,10 @@ import org.osgi.service.component.annotations.Reference;
  * @author Marco Leo
  * @author Brian Wing Shun Chan
  */
-@Component(service = FilterFactory.class)
+@Component(
+	property = "filter.factory.key=" + ObjectDefinitionConstants.STORAGE_TYPE_DEFAULT,
+	service = FilterFactory.class
+)
 public class DefaultFilterFactoryImpl implements FilterFactory<Predicate> {
 
 	@Override
