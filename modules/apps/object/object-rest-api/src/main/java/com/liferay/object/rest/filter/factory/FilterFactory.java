@@ -12,19 +12,21 @@
  * details.
  */
 
-package com.liferay.object.rest.petra.sql.dsl.expression;
+package com.liferay.object.rest.filter.factory;
 
-import com.liferay.petra.sql.dsl.expression.Predicate;
 import com.liferay.portal.odata.entity.EntityModel;
 
 /**
  * @author Gabriel Albuquerque
  */
-public interface FilterPredicateFactory {
+public interface FilterFactory<T> {
 
-	public Predicate create(
-		EntityModel entityModel, String filterString, long objectDefinitionId);
+	public default T create(
+		EntityModel entityModel, String filterString, long objectDefinitionId) {
 
-	public Predicate create(String filterString, long objectDefinitionId);
+		throw new UnsupportedOperationException();
+	}
+
+	public T create(String filterString, long objectDefinitionId);
 
 }

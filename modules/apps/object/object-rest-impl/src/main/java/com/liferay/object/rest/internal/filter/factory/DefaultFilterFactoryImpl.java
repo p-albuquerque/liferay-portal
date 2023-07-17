@@ -12,14 +12,14 @@
  * details.
  */
 
-package com.liferay.object.rest.internal.petra.sql.dsl.expression;
+package com.liferay.object.rest.internal.filter.factory;
 
 import com.liferay.object.field.business.type.ObjectFieldBusinessTypeRegistry;
 import com.liferay.object.related.models.ObjectRelatedModelsPredicateProviderRegistry;
+import com.liferay.object.rest.filter.factory.FilterFactory;
 import com.liferay.object.rest.internal.odata.entity.v1_0.ObjectEntryEntityModel;
 import com.liferay.object.rest.internal.odata.filter.expression.PredicateExpressionVisitorImpl;
 import com.liferay.object.rest.internal.odata.filter.expression.field.predicate.provider.FieldPredicateProviderTracker;
-import com.liferay.object.rest.petra.sql.dsl.expression.FilterPredicateFactory;
 import com.liferay.object.service.ObjectFieldLocalService;
 import com.liferay.petra.sql.dsl.expression.Predicate;
 import com.liferay.portal.kernel.util.Validator;
@@ -40,8 +40,8 @@ import org.osgi.service.component.annotations.Reference;
  * @author Marco Leo
  * @author Brian Wing Shun Chan
  */
-@Component(service = FilterPredicateFactory.class)
-public class FilterPredicateFactoryImpl implements FilterPredicateFactory {
+@Component(service = FilterFactory.class)
+public class DefaultFilterFactoryImpl implements FilterFactory<Predicate> {
 
 	@Override
 	public Predicate create(
