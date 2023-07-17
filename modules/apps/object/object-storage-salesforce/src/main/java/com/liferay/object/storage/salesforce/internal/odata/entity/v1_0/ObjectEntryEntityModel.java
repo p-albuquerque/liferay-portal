@@ -40,12 +40,13 @@ import com.liferay.portal.odata.entity.IdEntityField;
 import com.liferay.portal.odata.entity.IntegerEntityField;
 import com.liferay.portal.odata.entity.StringEntityField;
 
-import javax.ws.rs.BadRequestException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+
+import javax.ws.rs.BadRequestException;
 
 /**
  * @author Paulo Albuquerque

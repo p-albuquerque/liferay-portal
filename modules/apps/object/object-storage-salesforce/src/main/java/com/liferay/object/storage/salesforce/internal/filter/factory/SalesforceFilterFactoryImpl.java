@@ -14,6 +14,7 @@
 
 package com.liferay.object.storage.salesforce.internal.filter.factory;
 
+import com.liferay.object.constants.ObjectDefinitionConstants;
 import com.liferay.object.field.business.type.ObjectFieldBusinessTypeRegistry;
 import com.liferay.object.rest.filter.factory.BaseFilterFactory;
 import com.liferay.object.rest.filter.factory.FilterFactory;
@@ -25,13 +26,19 @@ import com.liferay.portal.odata.entity.EntityModel;
 import com.liferay.portal.odata.filter.InvalidFilterException;
 import com.liferay.portal.odata.filter.expression.Expression;
 import com.liferay.portal.odata.filter.expression.ExpressionVisitException;
-import org.osgi.service.component.annotations.Reference;
 
 import javax.ws.rs.ServerErrorException;
+
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 
 /**
  * @author Paulo Albuquerque
  */
+@Component(
+	property = "filter.factory.key=" + ObjectDefinitionConstants.STORAGE_TYPE_SALESFORCE,
+	service = FilterFactory.class
+)
 public class SalesforceFilterFactoryImpl
 	extends BaseFilterFactory implements FilterFactory<String> {
 
