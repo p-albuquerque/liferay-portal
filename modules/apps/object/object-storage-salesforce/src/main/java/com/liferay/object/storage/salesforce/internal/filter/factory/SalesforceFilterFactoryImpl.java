@@ -20,7 +20,7 @@ import com.liferay.object.rest.filter.factory.BaseFilterFactory;
 import com.liferay.object.rest.filter.factory.FilterFactory;
 import com.liferay.object.service.ObjectFieldLocalService;
 import com.liferay.object.storage.salesforce.internal.odata.entity.v1_0.ObjectEntryEntityModel;
-import com.liferay.object.storage.salesforce.internal.odata.filter.expression.SalesforceExpressionVisitorImpl;
+import com.liferay.object.storage.salesforce.internal.odata.filter.expression.SOSQLExpressionVisitorImpl;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.odata.entity.EntityModel;
 import com.liferay.portal.odata.filter.InvalidFilterException;
@@ -54,7 +54,7 @@ public class SalesforceFilterFactoryImpl
 			Expression expression = getExpression(entityModel, filterString);
 
 			return (String)expression.accept(
-				new SalesforceExpressionVisitorImpl(
+				new SOSQLExpressionVisitorImpl(
 					objectDefinitionId, _objectFieldBusinessTypeRegistry,
 					_objectFieldLocalService));
 		}
