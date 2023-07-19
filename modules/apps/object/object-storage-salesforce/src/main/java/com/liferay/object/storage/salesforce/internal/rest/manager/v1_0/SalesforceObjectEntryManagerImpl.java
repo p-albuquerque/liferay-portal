@@ -138,12 +138,12 @@ public class SalesforceObjectEntryManagerImpl
 			ActionKeys.VIEW, objectDefinition, scopeKey,
 			dtoConverterContext.getUser());
 
-		String salesforceFilter = _filterFactory.create(
-			filterString, objectDefinition.getObjectDefinitionId());
-
 		return _getObjectEntries(
 			companyId, objectDefinition, scopeKey, dtoConverterContext,
-			pagination, search, sorts);
+			pagination,
+			_filterFactory.create(
+				filterString, objectDefinition.getObjectDefinitionId()),
+			search, sorts);
 	}
 
 	@Override
@@ -221,7 +221,7 @@ public class SalesforceObjectEntryManagerImpl
 			objectDefinition.getAccountEntryRestrictedObjectFieldId());
 
 		return StringBundler.concat(
-			" WHERE ", objectField.getExternalReferenceCode(), " IN ('",
+			objectField.getExternalReferenceCode(), " IN ('",
 			StringUtil.merge(
 				TransformUtil.transform(
 					_accountEntryUserRelLocalService.
@@ -307,15 +307,16 @@ public class SalesforceObjectEntryManagerImpl
 	private Page<ObjectEntry> _getObjectEntries(
 			long companyId, ObjectDefinition objectDefinition, String scopeKey,
 			DTOConverterContext dtoConverterContext, Pagination pagination,
-			String search, Sort[] sorts)
+			String salesforceFilter, String search, Sort[] sorts)
 		throws Exception {
 
 		JSONObject responseJSONObject = _salesforceHttp.get(
 			companyId, getGroupId(objectDefinition, scopeKey),
 			_getLocation(
 				objectDefinition, pagination,
-				_getAccountRestrictionPredicateString(
-					companyId, dtoConverterContext, objectDefinition, scopeKey),
+				_getPredicateString(
+					companyId, dtoConverterContext, objectDefinition,
+					salesforceFilter, scopeKey),
 				search, sorts));
 
 		if ((responseJSONObject == null) ||
@@ -334,8 +335,9 @@ public class SalesforceObjectEntryManagerImpl
 			pagination,
 			_getTotalCount(
 				companyId, objectDefinition,
-				_getAccountRestrictionPredicateString(
-					companyId, dtoConverterContext, objectDefinition, scopeKey),
+				_getPredicateString(
+					companyId, dtoConverterContext, objectDefinition,
+					salesforceFilter, scopeKey),
 				scopeKey, search));
 	}
 
@@ -364,6 +366,29 @@ public class SalesforceObjectEntryManagerImpl
 		}
 
 		return null;
+	}
+
+	private String _getPredicateString(
+			long companyId, DTOConverterContext dtoConverterContext,
+			ObjectDefinition objectDefinition, String salesforceFilter,
+			String scopeKey)
+		throws Exception {
+
+		String accountRestrictionPredicateString =
+			_getAccountRestrictionPredicateString(
+				companyId, dtoConverterContext, objectDefinition, scopeKey);
+
+		if (Validator.isNull(accountRestrictionPredicateString) &&
+			Validator.isNull(salesforceFilter)) {
+
+			return StringPool.BLANK;
+		}
+
+		if (Validator.isNull(accountRestrictionPredicateString)) {
+			return " WHERE " + salesforceFilter;
+		}
+
+		return " WHERE " + accountRestrictionPredicateString;
 	}
 
 	private String _getSalesforcePagination(Pagination pagination) {

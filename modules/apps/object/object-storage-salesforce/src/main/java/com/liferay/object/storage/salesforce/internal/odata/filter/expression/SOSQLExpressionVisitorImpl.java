@@ -14,7 +14,6 @@
 
 package com.liferay.object.storage.salesforce.internal.odata.filter.expression;
 
-import com.liferay.object.field.business.type.ObjectFieldBusinessTypeRegistry;
 import com.liferay.object.model.ObjectField;
 import com.liferay.object.service.ObjectFieldLocalService;
 import com.liferay.petra.string.StringPool;
@@ -41,11 +40,9 @@ public class SOSQLExpressionVisitorImpl implements ExpressionVisitor<Object> {
 
 	public SOSQLExpressionVisitorImpl(
 		long objectDefinitionId,
-		ObjectFieldBusinessTypeRegistry objectFieldBusinessTypeRegistry,
 		ObjectFieldLocalService objectFieldLocalService) {
 
 		_objectDefinitionId = objectDefinitionId;
-		_objectFieldBusinessTypeRegistry = objectFieldBusinessTypeRegistry;
 		_objectFieldLocalService = objectFieldLocalService;
 	}
 
@@ -131,8 +128,8 @@ public class SOSQLExpressionVisitorImpl implements ExpressionVisitor<Object> {
 					literalExpression.getType())) {
 
 			return StringUtil.replace(
-				StringUtil.unquote(literalExpression.getText()),
-				StringPool.DOUBLE_APOSTROPHE, StringPool.APOSTROPHE);
+				literalExpression.getText(), StringPool.DOUBLE_APOSTROPHE,
+				StringPool.APOSTROPHE);
 		}
 
 		return literalExpression.getText();
@@ -179,8 +176,6 @@ public class SOSQLExpressionVisitorImpl implements ExpressionVisitor<Object> {
 	}
 
 	private final long _objectDefinitionId;
-	private final ObjectFieldBusinessTypeRegistry
-		_objectFieldBusinessTypeRegistry;
 	private final ObjectFieldLocalService _objectFieldLocalService;
 
 }

@@ -15,7 +15,6 @@
 package com.liferay.object.storage.salesforce.internal.filter.factory;
 
 import com.liferay.object.constants.ObjectDefinitionConstants;
-import com.liferay.object.field.business.type.ObjectFieldBusinessTypeRegistry;
 import com.liferay.object.rest.filter.factory.BaseFilterFactory;
 import com.liferay.object.rest.filter.factory.FilterFactory;
 import com.liferay.object.service.ObjectFieldLocalService;
@@ -55,8 +54,7 @@ public class SalesforceFilterFactoryImpl
 
 			return (String)expression.accept(
 				new SOSQLExpressionVisitorImpl(
-					objectDefinitionId, _objectFieldBusinessTypeRegistry,
-					_objectFieldLocalService));
+					objectDefinitionId, _objectFieldLocalService));
 		}
 		catch (ExpressionVisitException expressionVisitException) {
 			throw new InvalidFilterException(
@@ -92,9 +90,6 @@ public class SalesforceFilterFactoryImpl
 			throw new ServerErrorException(500, exception);
 		}
 	}
-
-	@Reference
-	private ObjectFieldBusinessTypeRegistry _objectFieldBusinessTypeRegistry;
 
 	@Reference
 	private ObjectFieldLocalService _objectFieldLocalService;
