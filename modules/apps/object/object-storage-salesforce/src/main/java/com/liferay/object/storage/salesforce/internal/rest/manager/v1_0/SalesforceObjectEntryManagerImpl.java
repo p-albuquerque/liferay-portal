@@ -140,10 +140,7 @@ public class SalesforceObjectEntryManagerImpl
 
 		return _getObjectEntries(
 			companyId, objectDefinition, scopeKey, dtoConverterContext,
-			pagination,
-			_filterFactory.create(
-				filterString, objectDefinition.getObjectDefinitionId()),
-			search, sorts);
+			pagination, filterString, search, sorts);
 	}
 
 	@Override
@@ -205,7 +202,7 @@ public class SalesforceObjectEntryManagerImpl
 			objectDefinition, scopeKey);
 	}
 
-	private String _getAccountRestrictionPredicateString(
+	private String _getAccountRestrictionSOSQLString(
 			long companyId, DTOConverterContext dtoConverterContext,
 			ObjectDefinition objectDefinition, String scopeKey)
 		throws Exception {
@@ -307,16 +304,16 @@ public class SalesforceObjectEntryManagerImpl
 	private Page<ObjectEntry> _getObjectEntries(
 			long companyId, ObjectDefinition objectDefinition, String scopeKey,
 			DTOConverterContext dtoConverterContext, Pagination pagination,
-			String salesforceFilter, String search, Sort[] sorts)
+			String filterString, String search, Sort[] sorts)
 		throws Exception {
 
 		JSONObject responseJSONObject = _salesforceHttp.get(
 			companyId, getGroupId(objectDefinition, scopeKey),
 			_getLocation(
 				objectDefinition, pagination,
-				_getPredicateString(
+				_getSOSQLString(
 					companyId, dtoConverterContext, objectDefinition,
-					salesforceFilter, scopeKey),
+					filterString, scopeKey),
 				search, sorts));
 
 		if ((responseJSONObject == null) ||
@@ -335,9 +332,9 @@ public class SalesforceObjectEntryManagerImpl
 			pagination,
 			_getTotalCount(
 				companyId, objectDefinition,
-				_getPredicateString(
+				_getSOSQLString(
 					companyId, dtoConverterContext, objectDefinition,
-					salesforceFilter, scopeKey),
+					filterString, scopeKey),
 				scopeKey, search));
 	}
 
@@ -366,29 +363,6 @@ public class SalesforceObjectEntryManagerImpl
 		}
 
 		return null;
-	}
-
-	private String _getPredicateString(
-			long companyId, DTOConverterContext dtoConverterContext,
-			ObjectDefinition objectDefinition, String salesforceFilter,
-			String scopeKey)
-		throws Exception {
-
-		String accountRestrictionPredicateString =
-			_getAccountRestrictionPredicateString(
-				companyId, dtoConverterContext, objectDefinition, scopeKey);
-
-		if (Validator.isNull(accountRestrictionPredicateString) &&
-			Validator.isNull(salesforceFilter)) {
-
-			return StringPool.BLANK;
-		}
-
-		if (Validator.isNull(accountRestrictionPredicateString)) {
-			return " WHERE " + salesforceFilter;
-		}
-
-		return " WHERE " + accountRestrictionPredicateString;
 	}
 
 	private String _getSalesforcePagination(Pagination pagination) {
@@ -450,6 +424,42 @@ public class SalesforceObjectEntryManagerImpl
 		}
 
 		return sb.toString();
+	}
+
+	private String _getSOSQLString(
+			long companyId, DTOConverterContext dtoConverterContext,
+			ObjectDefinition objectDefinition, String filterString,
+			String scopeKey)
+		throws Exception {
+
+		String accountRestrictionSOSQLString =
+			_getAccountRestrictionSOSQLString(
+				companyId, dtoConverterContext, objectDefinition, scopeKey);
+
+		String filterSOSQLString = _filterFactory.create(
+			filterString, objectDefinition.getObjectDefinitionId());
+
+		String sosqlString = StringPool.BLANK;
+
+		if (Validator.isNull(accountRestrictionSOSQLString) &&
+			Validator.isNotNull(filterSOSQLString)) {
+
+			sosqlString = " WHERE " + filterSOSQLString;
+		}
+		else if (Validator.isNotNull(accountRestrictionSOSQLString) &&
+				 Validator.isNull(filterSOSQLString)) {
+
+			sosqlString = " WHERE " + accountRestrictionSOSQLString;
+		}
+		else if (Validator.isNotNull(accountRestrictionSOSQLString) &&
+				 Validator.isNotNull(filterSOSQLString)) {
+
+			sosqlString = StringBundler.concat(
+				" WHERE ", filterSOSQLString, " AND ",
+				accountRestrictionSOSQLString);
+		}
+
+		return sosqlString;
 	}
 
 	private int _getTotalCount(

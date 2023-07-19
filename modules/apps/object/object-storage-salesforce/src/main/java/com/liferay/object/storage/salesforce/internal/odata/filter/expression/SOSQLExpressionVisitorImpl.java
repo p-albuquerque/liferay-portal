@@ -54,29 +54,29 @@ public class SOSQLExpressionVisitorImpl implements ExpressionVisitor<Object> {
 		StringBuilder sb = new StringBuilder();
 
 		if (Objects.equals(BinaryExpression.Operation.AND, operation)) {
-			_setBinaryOperator(left, right, " AND ", sb);
+			_buildBinaryOperation(left, right, " AND ", sb);
 		}
 		else if (Objects.equals(BinaryExpression.Operation.OR, operation)) {
-			_setBinaryOperator(left, right, " OR ", sb);
+			_buildBinaryOperation(left, right, " OR ", sb);
 		}
 
 		if (Objects.equals(BinaryExpression.Operation.EQ, operation)) {
-			_setBinaryOperator(left, right, " = ", sb);
+			_buildBinaryOperation(left, right, " = ", sb);
 		}
 		else if (Objects.equals(BinaryExpression.Operation.GE, operation)) {
-			_setBinaryOperator(left, right, " >= ", sb);
+			_buildBinaryOperation(left, right, " >= ", sb);
 		}
 		else if (Objects.equals(BinaryExpression.Operation.GT, operation)) {
-			_setBinaryOperator(left, right, " > ", sb);
+			_buildBinaryOperation(left, right, " > ", sb);
 		}
 		else if (Objects.equals(BinaryExpression.Operation.LE, operation)) {
-			_setBinaryOperator(left, right, " <= ", sb);
+			_buildBinaryOperation(left, right, " <= ", sb);
 		}
 		else if (Objects.equals(BinaryExpression.Operation.LT, operation)) {
-			_setBinaryOperator(left, right, " < ", sb);
+			_buildBinaryOperation(left, right, " < ", sb);
 		}
 		else if (Objects.equals(BinaryExpression.Operation.NE, operation)) {
-			_setBinaryOperator(left, right, " != ", sb);
+			_buildBinaryOperation(left, right, " != ", sb);
 		}
 
 		return sb.toString();
@@ -87,7 +87,7 @@ public class SOSQLExpressionVisitorImpl implements ExpressionVisitor<Object> {
 			ListExpression.Operation operation, Object left, List<Object> right)
 		throws ExpressionVisitException {
 
-		return null;
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
@@ -149,7 +149,7 @@ public class SOSQLExpressionVisitorImpl implements ExpressionVisitor<Object> {
 			List<Object> expressions, MethodExpression.Type type)
 		throws ExpressionVisitException {
 
-		return null;
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
@@ -167,7 +167,7 @@ public class SOSQLExpressionVisitorImpl implements ExpressionVisitor<Object> {
 		return objectField.getExternalReferenceCode();
 	}
 
-	private void _setBinaryOperator(
+	private void _buildBinaryOperation(
 		Object left, Object right, String operator, StringBuilder sb) {
 
 		sb.append(left);
