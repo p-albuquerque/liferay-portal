@@ -12,7 +12,7 @@
  * details.
  */
 
-package com.liferay.object.storage.salesforce.internal.odata.entity.v1_0;
+package com.liferay.object.rest.odata.entity.v1_0;
 
 import com.liferay.object.constants.ObjectFieldConstants;
 import com.liferay.object.constants.ObjectFieldSettingConstants;
@@ -52,6 +52,10 @@ import javax.ws.rs.BadRequestException;
  * @author Paulo Albuquerque
  */
 public class ObjectEntryEntityModel implements EntityModel {
+
+	public ObjectEntryEntityModel(List<ObjectField> objectFields) {
+		_entityFieldsMap = _getStringEntityFieldsMap(objectFields);
+	}
 
 	public ObjectEntryEntityModel(
 			long objectDefinitionId, List<ObjectField> objectFields)
