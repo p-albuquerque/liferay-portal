@@ -32,7 +32,6 @@ import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.WebKeys;
-import com.liferay.portal.kernel.workflow.WorkflowEngineManagerUtil;
 import com.liferay.portal.kernel.workflow.WorkflowHandler;
 import com.liferay.portal.kernel.workflow.WorkflowHandlerRegistryUtil;
 import com.liferay.staging.StagingGroupHelper;
@@ -40,9 +39,8 @@ import com.liferay.staging.StagingGroupHelperUtil;
 import com.liferay.taglib.security.PermissionsURLTag;
 import com.liferay.trash.TrashHelper;
 
-import java.util.List;
-
 import javax.servlet.http.HttpServletRequest;
+import java.util.List;
 
 /**
  * @author Eudaldo Alonso
@@ -165,14 +163,12 @@ public class JournalFolderActionDropdownItems {
 			() -> {
 				boolean workflowEnabled = false;
 
-				if (WorkflowEngineManagerUtil.isDeployed()) {
-					WorkflowHandler<?> workflowHandler =
-						WorkflowHandlerRegistryUtil.getWorkflowHandler(
-							JournalArticle.class.getName());
+				WorkflowHandler<?> workflowHandler =
+					WorkflowHandlerRegistryUtil.getWorkflowHandler(
+						JournalArticle.class.getName());
 
-					if (workflowHandler != null) {
-						workflowEnabled = true;
-					}
+				if (workflowHandler != null) {
+					workflowEnabled = true;
 				}
 
 				if (workflowEnabled &&

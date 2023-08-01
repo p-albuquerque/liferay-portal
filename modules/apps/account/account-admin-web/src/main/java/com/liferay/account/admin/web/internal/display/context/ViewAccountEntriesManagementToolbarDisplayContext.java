@@ -41,17 +41,14 @@ import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.WebKeys;
-import com.liferay.portal.kernel.workflow.WorkflowEngineManagerUtil;
 import com.liferay.portal.kernel.workflow.WorkflowThreadLocal;
 
+import javax.portlet.PortletURL;
+import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Supplier;
-
-import javax.portlet.PortletURL;
-
-import javax.servlet.http.HttpServletRequest;
 
 /**
  * @author Pei-Jung Lan
@@ -328,7 +325,6 @@ public class ViewAccountEntriesManagementToolbarDisplayContext
 				AccountEntry.class.getName(), 0, 0);
 
 		if (WorkflowThreadLocal.isEnabled() &&
-			WorkflowEngineManagerUtil.isDeployed() &&
 			(workflowDefinitionLinkSupplier.get() != null)) {
 
 			return true;

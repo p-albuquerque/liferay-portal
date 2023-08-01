@@ -21,17 +21,15 @@ import com.liferay.portal.kernel.transaction.TransactionCommitCallbackUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.LocaleUtil;
+import org.osgi.framework.BundleContext;
+import org.osgi.framework.ServiceReference;
 
 import java.io.Serializable;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
-
-import org.osgi.framework.BundleContext;
-import org.osgi.framework.ServiceReference;
 
 /**
  * @author Bruno Farache
@@ -109,8 +107,7 @@ public class WorkflowHandlerRegistryUtil {
 
 		WorkflowDefinitionLink workflowDefinitionLink = null;
 
-		if (WorkflowThreadLocal.isEnabled() &&
-			WorkflowEngineManagerUtil.isDeployed()) {
+		if (WorkflowThreadLocal.isEnabled()) {
 
 			workflowDefinitionLink = workflowHandler.getWorkflowDefinitionLink(
 				companyId, groupId, classPK);
