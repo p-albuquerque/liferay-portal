@@ -311,6 +311,13 @@ public class ObjectServiceUpgradeStepRegistrator
 			new com.liferay.object.internal.upgrade.v7_0_0.
 				ObjectDefinitionUpgradeProcess(
 					_companyLocalService, _portalUUID, _resourceLocalService));
+
+		registry.register(
+			"7.0.0", "7.1.0",
+			UpgradeProcessFactory.addColumns(
+				"ObjectDefinition", "rootObjectDefinitionId LONG"),
+			UpgradeProcessFactory.addColumns(
+				"ObjectRelationship", "edge BOOLEAN"));
 	}
 
 	@Reference
