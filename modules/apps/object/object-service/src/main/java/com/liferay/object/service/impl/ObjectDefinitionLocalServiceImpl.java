@@ -897,6 +897,20 @@ public class ObjectDefinitionLocalServiceImpl
 		return objectDefinitionPersistence.update(objectDefinition);
 	}
 
+	@Indexable(type = IndexableType.REINDEX)
+	@Override
+	public ObjectDefinition updateObjectFolderId(
+			long objectDefinitionId, long objectFolderId)
+		throws PortalException {
+
+		ObjectDefinition objectDefinition =
+			objectDefinitionPersistence.findByPrimaryKey(objectDefinitionId);
+
+		objectDefinition.setObjectFolderId(objectFolderId);
+
+		return objectDefinitionPersistence.update(objectDefinition);
+	}
+
 	@Override
 	public ObjectDefinition updateRootObjectDefinitionId(
 			long objectDefinitionId, long rootObjectDefinitionId)
@@ -909,20 +923,6 @@ public class ObjectDefinitionLocalServiceImpl
 			objectDefinitionId, rootObjectDefinitionId);
 
 		objectDefinition.setRootObjectDefinitionId(rootObjectDefinitionId);
-
-		return objectDefinitionPersistence.update(objectDefinition);
-	}
-
-	@Indexable(type = IndexableType.REINDEX)
-	@Override
-	public ObjectDefinition updateObjectFolderId(
-			long objectDefinitionId, long objectFolderId)
-		throws PortalException {
-
-		ObjectDefinition objectDefinition =
-			objectDefinitionPersistence.findByPrimaryKey(objectDefinitionId);
-
-		objectDefinition.setObjectFolderId(objectFolderId);
 
 		return objectDefinitionPersistence.update(objectDefinition);
 	}
