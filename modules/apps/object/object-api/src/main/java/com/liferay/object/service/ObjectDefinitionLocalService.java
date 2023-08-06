@@ -420,6 +420,10 @@ public interface ObjectDefinitionLocalService
 	public ObjectDefinition updateObjectDefinition(
 		ObjectDefinition objectDefinition);
 
+	public ObjectDefinition updateRootObjectDefinitionId(
+			long objectDefinitionId, long rootObjectDefinitionId)
+		throws PortalException;
+
 	@Indexable(type = IndexableType.REINDEX)
 	public ObjectDefinition updateObjectFolderId(
 			long objectDefinitionId, long objectFolderId)
