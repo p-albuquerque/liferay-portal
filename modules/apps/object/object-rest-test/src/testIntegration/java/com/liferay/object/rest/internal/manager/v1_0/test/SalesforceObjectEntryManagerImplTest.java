@@ -6,8 +6,12 @@
 package com.liferay.object.rest.internal.manager.v1_0.test;
 
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
+import com.liferay.list.type.entry.util.ListTypeEntryUtil;
+import com.liferay.list.type.model.ListTypeDefinition;
+import com.liferay.list.type.service.ListTypeDefinitionLocalService;
 import com.liferay.object.constants.ObjectDefinitionConstants;
 import com.liferay.object.constants.ObjectFieldConstants;
+import com.liferay.object.field.builder.PicklistObjectFieldBuilder;
 import com.liferay.object.field.builder.TextObjectFieldBuilder;
 import com.liferay.object.field.util.ObjectFieldUtil;
 import com.liferay.object.model.ObjectDefinition;
@@ -17,6 +21,7 @@ import com.liferay.object.rest.manager.v1_0.ObjectEntryManager;
 import com.liferay.object.service.ObjectDefinitionLocalService;
 import com.liferay.object.service.ObjectFieldLocalService;
 import com.liferay.object.storage.salesforce.configuration.SalesforceConfiguration;
+import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.module.configuration.ConfigurationProvider;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
@@ -36,6 +41,7 @@ import com.liferay.portal.vulcan.dto.converter.DTOConverterRegistry;
 import com.liferay.portal.vulcan.dto.converter.DefaultDTOConverterContext;
 import com.liferay.portal.vulcan.util.LocalizedMapUtil;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Map;
 
@@ -54,7 +60,8 @@ import org.junit.runner.RunWith;
  */
 @FeatureFlags("LPS-135430")
 @RunWith(Arquillian.class)
-public class SalesforceObjectEntryManagerImplTest {
+public class SalesforceObjectEntryManagerImplTest
+	extends BaseObjectEntryManagerImplTest {
 
 	@ClassRule
 	@Rule
@@ -106,6 +113,26 @@ public class SalesforceObjectEntryManagerImplTest {
 	public void setUp() throws Exception {
 		_user = TestPropsValues.getUser();
 
+		_listTypeDefinition =
+			_listTypeDefinitionLocalService.addListTypeDefinition(
+				"Status", TestPropsValues.getUserId(),
+				Collections.singletonMap(
+					LocaleUtil.getDefault(), RandomTestUtil.randomString()),
+				Arrays.asList(
+					ListTypeEntryUtil.createListTypeEntry(
+						"Queued", "queued",
+						Collections.singletonMap(LocaleUtil.US, "Queued")),
+					ListTypeEntryUtil.createListTypeEntry(
+						"Started", "started",
+						Collections.singletonMap(LocaleUtil.US, "Started")),
+					ListTypeEntryUtil.createListTypeEntry(
+						"Not Completed", "notCompleted",
+						Collections.singletonMap(
+							LocaleUtil.US, "Not Completed")),
+					ListTypeEntryUtil.createListTypeEntry(
+						"Completed", "completed",
+						Collections.singletonMap(LocaleUtil.US, "Completed"))));
+
 		_objectDefinition =
 			_objectDefinitionLocalService.addCustomObjectDefinition(
 				_user.getUserId(), 0, false, false,
@@ -116,6 +143,28 @@ public class SalesforceObjectEntryManagerImplTest {
 				Collections.emptyList());
 
 		ObjectField objectField = ObjectFieldUtil.addCustomObjectField(
+			new PicklistObjectFieldBuilder(
+			).userId(
+				_user.getUserId()
+			).labelMap(
+				LocalizedMapUtil.getLocalizedMap("Status")
+			).listTypeDefinitionId(
+				_listTypeDefinition.getListTypeDefinitionId()
+			).name(
+				"customStatus"
+			).objectDefinitionId(
+				_objectDefinition.getObjectDefinitionId()
+			).build());
+
+		_objectFieldLocalService.updateCustomObjectField(
+			"Status__c", objectField.getObjectFieldId(),
+			objectField.getListTypeDefinitionId(),
+			objectField.getBusinessType(), objectField.getDBType(), false,
+			false, null, objectField.getLabelMap(), false,
+			objectField.getName(), ObjectFieldConstants.READ_ONLY_FALSE, null,
+			false, false, objectField.getObjectFieldSettings());
+
+		objectField = ObjectFieldUtil.addCustomObjectField(
 			new TextObjectFieldBuilder(
 			).userId(
 				_user.getUserId()
@@ -134,8 +183,9 @@ public class SalesforceObjectEntryManagerImplTest {
 			objectField.getName(), ObjectFieldConstants.READ_ONLY_FALSE, null,
 			false, false, objectField.getObjectFieldSettings());
 
-		_objectDefinition.setExternalReferenceCode("Ticket__c");
 		_objectDefinition.setTitleObjectFieldId(objectField.getObjectFieldId());
+
+		_objectDefinition.setExternalReferenceCode("Ticket__c");
 
 		_objectDefinition =
 			_objectDefinitionLocalService.updateObjectDefinition(
@@ -211,6 +261,133 @@ public class SalesforceObjectEntryManagerImplTest {
 	}
 
 	@Test
+	public void testGetObjectEntries() throws Exception {
+		String title1 = "a" + RandomTestUtil.randomString();
+		String title2 = "b" + RandomTestUtil.randomString();
+		String title3 = "c" + RandomTestUtil.randomString();
+		String title4 = "d" + RandomTestUtil.randomString();
+
+		ObjectEntry objectEntry1 = _objectEntryManager.addObjectEntry(
+			_getDTOConverterContext(), _objectDefinition,
+			new ObjectEntry() {
+				{
+					properties = HashMapBuilder.<String, Object>put(
+						"customStatus", "queued"
+					).put(
+						"title", title1
+					).build();
+				}
+			},
+			ObjectDefinitionConstants.SCOPE_COMPANY);
+		ObjectEntry objectEntry2 = _objectEntryManager.addObjectEntry(
+			_getDTOConverterContext(), _objectDefinition,
+			new ObjectEntry() {
+				{
+					properties = HashMapBuilder.<String, Object>put(
+						"customStatus", "started"
+					).put(
+						"title", title2
+					).build();
+				}
+			},
+			ObjectDefinitionConstants.SCOPE_COMPANY);
+		ObjectEntry objectEntry3 = _objectEntryManager.addObjectEntry(
+			_getDTOConverterContext(), _objectDefinition,
+			new ObjectEntry() {
+				{
+					properties = HashMapBuilder.<String, Object>put(
+						"customStatus", "completed"
+					).put(
+						"title", title3
+					).build();
+				}
+			},
+			ObjectDefinitionConstants.SCOPE_COMPANY);
+		ObjectEntry objectEntry4 = _objectEntryManager.addObjectEntry(
+			_getDTOConverterContext(), _objectDefinition,
+			new ObjectEntry() {
+				{
+					properties = HashMapBuilder.<String, Object>put(
+						"customStatus", "queued"
+					).put(
+						"title", title4
+					).build();
+				}
+			},
+			ObjectDefinitionConstants.SCOPE_COMPANY);
+
+		// And/or with equals/not equals expression
+
+		testGetObjectEntries(
+			HashMapBuilder.put(
+				"filter",
+				StringBundler.concat(
+					buildEqualsExpressionFilterString("customStatus", "queued"),
+					" and ", buildEqualsExpressionFilterString("title", title1))
+			).build(),
+			objectEntry1);
+
+		testGetObjectEntries(
+			HashMapBuilder.put(
+				"filter",
+				StringBundler.concat(
+					_buildNotEqualsExpressionFilterString(
+						"customStatus", "queued"),
+					" and ",
+					_buildNotEqualsExpressionFilterString("title", title1))
+			).build(),
+			objectEntry2, objectEntry3);
+
+		testGetObjectEntries(
+			HashMapBuilder.put(
+				"filter",
+				StringBundler.concat(
+					buildEqualsExpressionFilterString("customStatus", "queued"),
+					" or ", buildEqualsExpressionFilterString("title", title1))
+			).build(),
+			objectEntry1, objectEntry4);
+
+		testGetObjectEntries(
+			HashMapBuilder.put(
+				"filter",
+				StringBundler.concat(
+					_buildNotEqualsExpressionFilterString(
+						"customStatus", "queued"),
+					" or ",
+					_buildNotEqualsExpressionFilterString("title", title1))
+			).build(),
+			objectEntry2, objectEntry3, objectEntry4);
+
+		// Equals/not equals expression
+
+		testGetObjectEntries(
+			HashMapBuilder.put(
+				"filter",
+				buildEqualsExpressionFilterString("customStatus", "queued")
+			).build(),
+			objectEntry1, objectEntry4);
+
+		testGetObjectEntries(
+			HashMapBuilder.put(
+				"filter",
+				_buildNotEqualsExpressionFilterString("customStatus", "queued")
+			).build(),
+			objectEntry2, objectEntry3);
+
+		testGetObjectEntries(
+			HashMapBuilder.put(
+				"filter", buildEqualsExpressionFilterString("title", title1)
+			).build(),
+			objectEntry1);
+
+		testGetObjectEntries(
+			HashMapBuilder.put(
+				"filter", _buildNotEqualsExpressionFilterString("title", title1)
+			).build(),
+			objectEntry2, objectEntry3, objectEntry4);
+	}
+
+	@Test
 	public void testGetObjectEntry() throws Exception {
 		DTOConverterContext dtoConverterContext = _getDTOConverterContext();
 
@@ -241,6 +418,12 @@ public class SalesforceObjectEntryManagerImplTest {
 			ObjectDefinitionConstants.SCOPE_COMPANY);
 	}
 
+	private String _buildNotEqualsExpressionFilterString(
+		String fieldName, Object value) {
+
+		return StringBundler.concat(fieldName, " ne ", getValue(value));
+	}
+
 	private DTOConverterContext _getDTOConverterContext() throws Exception {
 		return new DefaultDTOConverterContext(
 			false, Collections.emptyMap(), _dtoConverterRegistry, null,
@@ -252,6 +435,11 @@ public class SalesforceObjectEntryManagerImplTest {
 
 	@Inject
 	private DTOConverterRegistry _dtoConverterRegistry;
+
+	private ListTypeDefinition _listTypeDefinition;
+
+	@Inject
+	private ListTypeDefinitionLocalService _listTypeDefinitionLocalService;
 
 	private ObjectDefinition _objectDefinition;
 

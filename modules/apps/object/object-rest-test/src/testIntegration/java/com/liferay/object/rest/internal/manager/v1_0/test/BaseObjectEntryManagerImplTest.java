@@ -46,11 +46,16 @@ public class BaseObjectEntryManagerImplTest {
 	protected String buildEqualsExpressionFilterString(
 		String fieldName, Object value) {
 
+		return StringBundler.concat(
+			"( ", fieldName, " eq ", getValue(value), ")");
+	}
+
+	protected String getValue(Object value) {
 		if (value instanceof String) {
-			value = StringUtil.quote(String.valueOf(value));
+			return StringUtil.quote(String.valueOf(value));
 		}
 
-		return StringBundler.concat("( ", fieldName, " eq ", value, ")");
+		return String.valueOf(value);
 	}
 
 	protected void testGetObjectEntries(
