@@ -16,6 +16,7 @@ import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.vulcan.dto.converter.DTOConverterContext;
 import com.liferay.portal.vulcan.pagination.Page;
+import com.liferay.portal.vulcan.pagination.Pagination;
 
 import java.util.List;
 import java.util.Map;
@@ -41,6 +42,35 @@ public class BaseObjectEntryManagerImplTest {
 			assertEquals(
 				expectedObjectEntries.get(i), actualObjectEntries.get(i));
 		}
+	}
+
+	protected void assertEquals(
+			ObjectEntry expectedObjectEntry, ObjectEntry actualObjectEntry)
+		throws Exception {
+
+		Map<String, Object> actualObjectEntryProperties =
+			actualObjectEntry.getProperties();
+
+		Map<String, Object> expectedObjectEntryProperties =
+			expectedObjectEntry.getProperties();
+
+		for (Map.Entry<String, Object> expectedEntry :
+				expectedObjectEntryProperties.entrySet()) {
+
+			assertObjectEntryProperties(
+				actualObjectEntry, actualObjectEntryProperties, expectedEntry);
+		}
+	}
+
+	protected void assertObjectEntryProperties(
+			ObjectEntry actualObjectEntry,
+			Map<String, Object> actualObjectEntryProperties,
+			Map.Entry<String, Object> expectedEntry)
+		throws Exception {
+
+		Assert.assertEquals(
+			expectedEntry.getKey(), expectedEntry.getValue(),
+			actualObjectEntryProperties.get(expectedEntry.getKey()));
 	}
 
 	protected String buildEqualsExpressionFilterString(
@@ -74,7 +104,8 @@ public class BaseObjectEntryManagerImplTest {
 
 		Page<ObjectEntry> page = objectEntryManager.getObjectEntries(
 			companyId, objectDefinition2, null, null, dtoConverterContext,
-			context.get("filter"), null, context.get("search"), sorts);
+			context.get("filter"), Pagination.of(1, 10), context.get("search"),
+			sorts);
 
 		assertEquals(
 			ListUtil.fromArray(expectedObjectEntries),

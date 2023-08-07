@@ -653,7 +653,7 @@ public class DefaultObjectEntryManagerImplTest
 
 		// Aggregation field without filters
 
-		_assertEquals(
+		assertEquals(
 			new ObjectEntry() {
 				{
 					properties = HashMapBuilder.<String, Object>put(
@@ -682,7 +682,7 @@ public class DefaultObjectEntryManagerImplTest
 		objectEntryManager.deleteObjectEntry(
 			objectDefinition2, childObjectEntry1.getId());
 
-		_assertEquals(
+		assertEquals(
 			new ObjectEntry() {
 				{
 					properties = HashMapBuilder.<String, Object>put(
@@ -711,7 +711,7 @@ public class DefaultObjectEntryManagerImplTest
 		objectEntryManager.deleteObjectEntry(
 			objectDefinition2, childObjectEntry2.getId());
 
-		_assertEquals(
+		assertEquals(
 			new ObjectEntry() {
 				{
 					properties = HashMapBuilder.<String, Object>put(
@@ -740,7 +740,7 @@ public class DefaultObjectEntryManagerImplTest
 
 		LocalDateTime localDateTime = LocalDateTime.now();
 
-		_assertEquals(
+		assertEquals(
 			new ObjectEntry() {
 				{
 					properties = Collections.singletonMap(
@@ -772,7 +772,7 @@ public class DefaultObjectEntryManagerImplTest
 		LocalDateTime utcLocalDateTime = LocalDateTime.from(
 			zonedDateTime.withZoneSameInstant(ZoneId.of(StringPool.UTC)));
 
-		_assertEquals(
+		assertEquals(
 			new ObjectEntry() {
 				{
 					properties = Collections.singletonMap(
@@ -1360,7 +1360,7 @@ public class DefaultObjectEntryManagerImplTest
 			},
 			ObjectDefinitionConstants.SCOPE_COMPANY);
 
-		_assertEquals(
+		assertEquals(
 			new ObjectEntry() {
 				{
 					properties = HashMapBuilder.<String, Object>put(
@@ -2337,6 +2337,110 @@ public class DefaultObjectEntryManagerImplTest
 			objectEntry1.getId(), objectEntry1);
 	}
 
+	@Override
+	protected void assertObjectEntryProperties(
+			ObjectEntry actualObjectEntry,
+			Map<String, Object> actualObjectEntryProperties,
+			Map.Entry<String, Object> expectedEntry)
+		throws Exception {
+
+		if (Objects.equals(
+				expectedEntry.getKey(), "attachmentObjectFieldName")) {
+
+			FileEntry fileEntry = (FileEntry)actualObjectEntryProperties.get(
+				expectedEntry.getKey());
+
+			Assert.assertEquals(expectedEntry.getValue(), fileEntry.getId());
+
+			DLFileEntry dlFileEntry = _dlFileEntryLocalService.getFileEntry(
+				fileEntry.getId());
+
+			Assert.assertEquals(fileEntry.getName(), dlFileEntry.getFileName());
+
+			Link link = fileEntry.getLink();
+
+			Assert.assertEquals(link.getLabel(), dlFileEntry.getFileName());
+
+			com.liferay.portal.kernel.repository.model.FileEntry
+				repositoryFileEntry = _dlAppService.getFileEntry(
+					fileEntry.getId());
+
+			String url = _dlURLHelper.getDownloadURL(
+				repositoryFileEntry, repositoryFileEntry.getFileVersion(), null,
+				StringPool.BLANK);
+
+			url = HttpComponentsUtil.addParameter(
+				url, "objectDefinitionExternalReferenceCode",
+				objectDefinition2.getExternalReferenceCode());
+			url = HttpComponentsUtil.addParameter(
+				url, "objectEntryExternalReferenceCode",
+				actualObjectEntry.getExternalReferenceCode());
+
+			Assert.assertEquals(url, link.getHref());
+		}
+		else if (Objects.equals(
+					expectedEntry.getKey(), "dateObjectFieldName")) {
+
+			if ((expectedEntry.getValue() == null) &&
+				(actualObjectEntryProperties.get(expectedEntry.getKey()) ==
+					null)) {
+
+				return;
+			}
+
+			Assert.assertEquals(
+				expectedEntry.getKey(),
+				expectedEntry.getValue() + " 00:00:00.0",
+				String.valueOf(
+					actualObjectEntryProperties.get(expectedEntry.getKey())));
+		}
+		else if (Objects.equals(
+					expectedEntry.getKey(), "picklistObjectFieldName")) {
+
+			ListEntry listEntry = (ListEntry)actualObjectEntryProperties.get(
+				expectedEntry.getKey());
+
+			if (expectedEntry.getValue() instanceof String) {
+				Assert.assertEquals(
+					expectedEntry.getValue(), listEntry.getKey());
+			}
+			else {
+				Assert.assertEquals(expectedEntry.getValue(), listEntry);
+			}
+		}
+		else if (Objects.equals(
+					expectedEntry.getKey(), "richTextObjectFieldNameRawText")) {
+
+			Assert.assertEquals(
+				HtmlParserUtil.extractText(
+					String.valueOf(expectedEntry.getValue())),
+				String.valueOf(
+					actualObjectEntryProperties.get(expectedEntry.getKey())));
+		}
+		else if (Objects.equals(
+					expectedEntry.getKey(),
+					_objectRelationshipERCObjectFieldName)) {
+
+			Assert.assertEquals(
+				expectedEntry.getValue(),
+				actualObjectEntryProperties.get(expectedEntry.getKey()));
+
+			assertEquals(
+				objectEntryManager.getObjectEntry(
+					_objectDefinition1.getCompanyId(),
+					_simpleDTOConverterContext,
+					GetterUtil.getString(expectedEntry.getValue()),
+					_objectDefinition1, null),
+				(ObjectEntry)actualObjectEntryProperties.get(
+					StringUtil.replaceLast(
+						_objectRelationshipFieldName, "Id", StringPool.BLANK)));
+		}
+		else {
+			super.assertObjectEntryProperties(
+				actualObjectEntry, actualObjectEntryProperties, expectedEntry);
+		}
+	}
+
 	private AccountEntry _addAccountEntry() throws Exception {
 		return _accountEntryLocalService.addAccountEntry(
 			_adminUser.getUserId(), 0L, RandomTestUtil.randomString(),
@@ -2521,7 +2625,7 @@ public class DefaultObjectEntryManagerImplTest
 			int expectedValue, ObjectEntry objectEntry)
 		throws Exception {
 
-		_assertEquals(
+		assertEquals(
 			new ObjectEntry() {
 				{
 					properties = HashMapBuilder.<String, Object>put(
@@ -2535,126 +2639,6 @@ public class DefaultObjectEntryManagerImplTest
 				objectEntry.getId()));
 	}
 
-	private void _assertEquals(
-			ObjectEntry expectedObjectEntry, ObjectEntry actualObjectEntry)
-		throws Exception {
-
-		Map<String, Object> actualObjectEntryProperties =
-			actualObjectEntry.getProperties();
-
-		Map<String, Object> expectedObjectEntryProperties =
-			expectedObjectEntry.getProperties();
-
-		for (Map.Entry<String, Object> expectedEntry :
-				expectedObjectEntryProperties.entrySet()) {
-
-			if (Objects.equals(
-					expectedEntry.getKey(), "attachmentObjectFieldName")) {
-
-				FileEntry fileEntry =
-					(FileEntry)actualObjectEntryProperties.get(
-						expectedEntry.getKey());
-
-				Assert.assertEquals(
-					expectedEntry.getValue(), fileEntry.getId());
-
-				DLFileEntry dlFileEntry = _dlFileEntryLocalService.getFileEntry(
-					fileEntry.getId());
-
-				Assert.assertEquals(
-					fileEntry.getName(), dlFileEntry.getFileName());
-
-				Link link = fileEntry.getLink();
-
-				Assert.assertEquals(link.getLabel(), dlFileEntry.getFileName());
-
-				com.liferay.portal.kernel.repository.model.FileEntry
-					repositoryFileEntry = _dlAppService.getFileEntry(
-						fileEntry.getId());
-
-				String url = _dlURLHelper.getDownloadURL(
-					repositoryFileEntry, repositoryFileEntry.getFileVersion(),
-					null, StringPool.BLANK);
-
-				url = HttpComponentsUtil.addParameter(
-					url, "objectDefinitionExternalReferenceCode",
-					objectDefinition2.getExternalReferenceCode());
-				url = HttpComponentsUtil.addParameter(
-					url, "objectEntryExternalReferenceCode",
-					actualObjectEntry.getExternalReferenceCode());
-
-				Assert.assertEquals(url, link.getHref());
-			}
-			else if (Objects.equals(
-						expectedEntry.getKey(), "dateObjectFieldName")) {
-
-				if ((expectedEntry.getValue() == null) &&
-					(actualObjectEntryProperties.get(expectedEntry.getKey()) ==
-						null)) {
-
-					continue;
-				}
-
-				Assert.assertEquals(
-					expectedEntry.getKey(),
-					expectedEntry.getValue() + " 00:00:00.0",
-					String.valueOf(
-						actualObjectEntryProperties.get(
-							expectedEntry.getKey())));
-			}
-			else if (Objects.equals(
-						expectedEntry.getKey(), "picklistObjectFieldName")) {
-
-				ListEntry listEntry =
-					(ListEntry)actualObjectEntryProperties.get(
-						expectedEntry.getKey());
-
-				if (expectedEntry.getValue() instanceof String) {
-					Assert.assertEquals(
-						expectedEntry.getValue(), listEntry.getKey());
-				}
-				else {
-					Assert.assertEquals(expectedEntry.getValue(), listEntry);
-				}
-			}
-			else if (Objects.equals(
-						expectedEntry.getKey(),
-						"richTextObjectFieldNameRawText")) {
-
-				Assert.assertEquals(
-					HtmlParserUtil.extractText(
-						String.valueOf(expectedEntry.getValue())),
-					String.valueOf(
-						actualObjectEntryProperties.get(
-							expectedEntry.getKey())));
-			}
-			else if (Objects.equals(
-						expectedEntry.getKey(),
-						_objectRelationshipERCObjectFieldName)) {
-
-				Assert.assertEquals(
-					expectedEntry.getValue(),
-					actualObjectEntryProperties.get(expectedEntry.getKey()));
-
-				_assertEquals(
-					objectEntryManager.getObjectEntry(
-						_objectDefinition1.getCompanyId(),
-						_simpleDTOConverterContext,
-						GetterUtil.getString(expectedEntry.getValue()),
-						_objectDefinition1, null),
-					(ObjectEntry)actualObjectEntryProperties.get(
-						StringUtil.replaceLast(
-							_objectRelationshipFieldName, "Id",
-							StringPool.BLANK)));
-			}
-			else {
-				Assert.assertEquals(
-					expectedEntry.getKey(), expectedEntry.getValue(),
-					actualObjectEntryProperties.get(expectedEntry.getKey()));
-			}
-		}
-	}
-
 	private void _assertLocalizedValues(
 			Map<String, Object> expectedLocalizedValues, String languageId,
 			long objectEntryId)
@@ -2664,7 +2648,7 @@ public class DefaultObjectEntryManagerImplTest
 
 		_user = _userLocalService.updateUser(_user);
 
-		_assertEquals(
+		assertEquals(
 			new ObjectEntry() {
 				{
 					setProperties(expectedLocalizedValues);
@@ -2695,7 +2679,7 @@ public class DefaultObjectEntryManagerImplTest
 			ListEntry expectedListEntry, Object picklistObjectFieldValue)
 		throws Exception {
 
-		_assertEquals(
+		assertEquals(
 			new ObjectEntry() {
 				{
 					properties = HashMapBuilder.<String, Object>put(
