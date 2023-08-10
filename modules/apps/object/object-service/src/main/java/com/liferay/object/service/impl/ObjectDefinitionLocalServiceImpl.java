@@ -904,6 +904,12 @@ public class ObjectDefinitionLocalServiceImpl
 		ObjectDefinition objectDefinition =
 			objectDefinitionPersistence.findByPrimaryKey(objectDefinitionId);
 
+		if (rootObjectDefinitionId == 0) {
+			objectDefinition.setRootObjectDefinitionId(0);
+
+			return objectDefinitionPersistence.update(objectDefinition);
+		}
+
 		ObjectDefinition rootObjectDefinition =
 			objectDefinitionPersistence.findByPrimaryKey(
 				rootObjectDefinitionId);
