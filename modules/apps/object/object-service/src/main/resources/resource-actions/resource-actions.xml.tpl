@@ -60,4 +60,6 @@
 			</guest-unsupported>
 		</permissions>
 	</model-resource>
+	[$CHILD_STANDALONE_ACTIONS$]
+
 </resource-action-mapping>

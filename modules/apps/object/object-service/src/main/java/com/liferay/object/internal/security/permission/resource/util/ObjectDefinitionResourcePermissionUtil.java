@@ -58,13 +58,19 @@ public class ObjectDefinitionResourcePermissionUtil {
 					"xml.tpl";
 		}
 
+		String childStandalone = StringBundler.concat(
+			"<model-resource>", "\n\t\t<model-name>child 1</model-name>",
+			"\n\t\t<portlet-ref>", "\n\t\t\t<portlet-name>", objectDefinition.getPortletId(),"</portlet-name>","\n\t\t</portlet-ref>",
+			"\n\t\t<weight>3</weight>", "\n\t\t<permissions>", "\n\t\t\t<supports>", "\n\t\t\t\t<action-key>action1</action-key>", "\n\t\t\t</supports>",
+			"\n\t\t\t<guest-defaults />", "\n\t\t\t<guest-unsupported />", "\n\t\t</permissions>", "\n\t</model-resource>");
+
 		Document document = SAXReaderUtil.read(
 			StringUtil.replace(
 				StringUtil.read(classLoader, resourceActionsFileName),
 				new String[] {
 					"[$MODEL_NAME$]", "[$PERMISSIONS_GUEST_UNSUPPORTED$]",
 					"[$PERMISSIONS_SUPPORTS$]", "[$PORTLET_NAME$]",
-					"[$RESOURCE_NAME$]"
+					"[$RESOURCE_NAME$]", "[$CHILD_STANDALONE_ACTIONS$]"
 				},
 				new String[] {
 					objectDefinition.getClassName(),
@@ -73,7 +79,8 @@ public class ObjectDefinitionResourcePermissionUtil {
 					_getPermissionsSupports(objectDefinition) +
 						objectActionPermissionKeys,
 					objectDefinition.getPortletId(),
-					objectDefinition.getResourceName()
+					objectDefinition.getResourceName(),
+					childStandalone
 				}));
 
 		resourceActions.populateModelResources(document);
