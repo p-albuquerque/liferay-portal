@@ -16,6 +16,9 @@ import com.liferay.object.constants.ObjectFieldConstants;
 import com.liferay.object.constants.ObjectFieldSettingConstants;
 import com.liferay.object.constants.ObjectFolderConstants;
 import com.liferay.object.constants.ObjectRelationshipConstants;
+import com.liferay.object.definition.tree.Node;
+import com.liferay.object.definition.tree.Tree;
+import com.liferay.object.definition.tree.TreeFactory;
 import com.liferay.object.deployer.InactiveObjectDefinitionDeployer;
 import com.liferay.object.deployer.ObjectDefinitionDeployer;
 import com.liferay.object.exception.NoSuchObjectFieldException;
@@ -134,6 +137,7 @@ import com.liferay.portal.util.PortalInstances;
 import com.liferay.portal.vulcan.util.LocalizedMapUtil;
 
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -715,6 +719,11 @@ public class ObjectDefinitionLocalServiceImpl
 
 		ObjectDefinition objectDefinition =
 			objectDefinitionPersistence.findByPrimaryKey(objectDefinitionId);
+
+		if (objectDefinition.isNode()) {
+			throw new ObjectDefinitionStatusException(
+				"Node ObjectDefinition cannot be directly published");
+		}
 
 		if (objectDefinition.isUnmodifiableSystemObject()) {
 			throw new ObjectDefinitionStatusException();
@@ -1515,6 +1524,25 @@ public class ObjectDefinitionLocalServiceImpl
 			throw new RequiredObjectFieldException();
 		}
 
+		if (objectDefinition.isRoot()) {
+			Tree tree = _treeFactory.create(objectDefinition);
+
+			Iterator<Node> iterator = tree.iterator();
+
+			while (iterator.hasNext()) {
+				Node node = iterator.next();
+
+				if (node.getObjectDefinitionId() ==
+						objectDefinition.getObjectDefinitionId()) {
+
+					continue;
+				}
+
+				_publishObjectDefinition(
+					userId, getObjectDefinition(node.getObjectDefinitionId()));
+			}
+		}
+
 		objectDefinition.setActive(true);
 		objectDefinition.setStatus(WorkflowConstants.STATUS_APPROVED);
 
@@ -2197,6 +2225,9 @@ public class ObjectDefinitionLocalServiceImpl
 		<ObjectDefinitionDeployer, Map<Long, List<ServiceRegistration<?>>>>
 			_serviceRegistrationsMaps = Collections.synchronizedMap(
 				new LinkedHashMap<>());
+
+	@Reference
+	private TreeFactory _treeFactory;
 
 	@Reference
 	private UserGroupRoleLocalService _userGroupRoleLocalService;
