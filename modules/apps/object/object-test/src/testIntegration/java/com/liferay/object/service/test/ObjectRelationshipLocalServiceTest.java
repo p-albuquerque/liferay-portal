@@ -265,6 +265,51 @@ public class ObjectRelationshipLocalServiceTest {
 	}
 
 	@Test
+	public void testDeleteObjectRelationship() {
+		AssertUtils.assertFailure(
+			ObjectRelationshipEdgeException.class,
+			"Edge object relationships cannot be deleted",
+			() -> {
+				ObjectRelationship objectRelationship =
+					_objectRelationshipLocalService.addObjectRelationship(
+						TestPropsValues.getUserId(),
+						_objectDefinition1.getObjectDefinitionId(),
+						_objectDefinition2.getObjectDefinitionId(), 0,
+						ObjectRelationshipConstants.DELETION_TYPE_CASCADE,
+						LocalizedMapUtil.getLocalizedMap(StringUtil.randomId()),
+						StringUtil.randomId(),
+						ObjectRelationshipConstants.TYPE_ONE_TO_MANY);
+
+				_objectRelationshipLocalService.deleteObjectRelationship(
+					_objectRelationshipLocalService.updateObjectRelationship(
+						objectRelationship.getObjectRelationshipId(),
+						objectRelationship.getParameterObjectFieldId(),
+						objectRelationship.getDeletionType(), true,
+						objectRelationship.getLabelMap()));
+			});
+		AssertUtils.assertFailure(
+			ObjectRelationshipReverseException.class,
+			"Reverse object relationships cannot be deleted",
+			() -> {
+				ObjectRelationship objectRelationship =
+					_objectRelationshipLocalService.addObjectRelationship(
+						TestPropsValues.getUserId(),
+						_objectDefinition1.getObjectDefinitionId(),
+						_objectDefinition2.getObjectDefinitionId(), 0,
+						ObjectRelationshipConstants.DELETION_TYPE_CASCADE,
+						LocalizedMapUtil.getLocalizedMap(
+							RandomTestUtil.randomString()),
+						StringUtil.randomId(),
+						ObjectRelationshipConstants.TYPE_MANY_TO_MANY);
+
+				_objectRelationshipLocalService.deleteObjectRelationship(
+					_objectRelationshipLocalService.
+						fetchReverseObjectRelationship(
+							objectRelationship, true));
+			});
+	}
+
+	@Test
 	public void testUpdateObjectRelationship() throws Exception {
 		ObjectRelationship objectRelationship1 =
 			_objectRelationshipLocalService.addObjectRelationship(
