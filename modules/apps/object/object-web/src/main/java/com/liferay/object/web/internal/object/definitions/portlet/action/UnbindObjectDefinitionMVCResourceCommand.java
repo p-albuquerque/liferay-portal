@@ -49,7 +49,8 @@ public class UnbindObjectDefinitionMVCResourceCommand
 				ParamUtil.getLong(resourceRequest, "objectDefinitionId"));
 
 		Tree tree = _treeFactory.create(
-			objectDefinition.getRootObjectDefinitionId());
+			_objectDefinitionLocalService.getObjectDefinition(
+				objectDefinition.getRootObjectDefinitionId()));
 
 		Iterator<Node> iterator = tree.iterator(
 			objectDefinition.getObjectDefinitionId());

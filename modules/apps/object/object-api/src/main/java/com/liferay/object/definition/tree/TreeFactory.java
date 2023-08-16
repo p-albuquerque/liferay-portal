@@ -5,6 +5,7 @@
 
 package com.liferay.object.definition.tree;
 
+import com.liferay.object.model.ObjectDefinition;
 import com.liferay.portal.kernel.exception.PortalException;
 
 /**
@@ -12,6 +13,7 @@ import com.liferay.portal.kernel.exception.PortalException;
  */
 public interface TreeFactory {
 
-	public Tree create(long objectDefinitionId) throws PortalException;
+	public Tree create(ObjectDefinition objectDefinition)
+		throws PortalException;
 
 }

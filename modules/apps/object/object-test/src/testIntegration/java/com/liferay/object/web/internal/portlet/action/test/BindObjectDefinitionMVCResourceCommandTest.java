@@ -95,15 +95,19 @@ public class BindObjectDefinitionMVCResourceCommandTest {
 
 		_assertEdge(true, _objectRelationshipA_AA, _objectRelationshipAA_AAA);
 
+		long rootObjectDefinitionId =
+			_objectDefinitionA.getObjectDefinitionId();
+
 		_assertRootObjectDefinitionId(
-			_objectDefinitionA.getObjectDefinitionId(), _objectDefinitionA,
-			_objectDefinitionAA, _objectDefinitionAAA);
+			rootObjectDefinitionId, _objectDefinitionA, _objectDefinitionAA,
+			_objectDefinitionAAA);
 
 		Assert.assertEquals(
 			"A, AA, AAA",
 			_toString(
 				_treeFactory.create(
-					_objectDefinitionA.getObjectDefinitionId())));
+					_objectDefinitionLocalService.getObjectDefinition(
+						rootObjectDefinitionId))));
 
 		// Bind one object definition to an existing hierarchical structure
 		// Bind AAB to the hierarchical structure where A is the root
@@ -116,13 +120,14 @@ public class BindObjectDefinitionMVCResourceCommandTest {
 		_assertEdge(true, _objectRelationshipAA_AAB);
 
 		_assertRootObjectDefinitionId(
-			_objectDefinitionA.getObjectDefinitionId(), _objectDefinitionAAB);
+			rootObjectDefinitionId, _objectDefinitionAAB);
 
 		Assert.assertEquals(
 			"A, AA, AAA, AAB",
 			_toString(
 				_treeFactory.create(
-					_objectDefinitionA.getObjectDefinitionId())));
+					_objectDefinitionLocalService.getObjectDefinition(
+						rootObjectDefinitionId))));
 	}
 
 	private void _assertEdge(

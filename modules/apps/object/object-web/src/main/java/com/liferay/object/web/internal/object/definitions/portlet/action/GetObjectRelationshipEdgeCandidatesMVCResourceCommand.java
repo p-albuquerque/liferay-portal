@@ -88,8 +88,7 @@ public class GetObjectRelationshipEdgeCandidatesMVCResourceCommand
 				continue;
 			}
 
-			Tree tree = _treeFactory.create(
-				parentObjectDefinition.getRootObjectDefinitionId());
+			Tree tree = _treeFactory.create(parentObjectDefinition);
 
 			if (!_meetsTreeMaxHeight(depth, parentObjectDefinition, tree)) {
 				continue;
