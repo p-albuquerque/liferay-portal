@@ -274,6 +274,71 @@ public class ObjectDefinitionLocalServiceTest {
 
 		Assert.assertEquals("C_Test", objectDefinition.getName());
 
+		// before publish, bind objects
+
+		ObjectDefinition nodeObjectDefinition =
+			_objectDefinitionLocalService.addCustomObjectDefinition(
+				TestPropsValues.getUserId(), 0, false, false,
+				LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString()),
+				"Node", null, null,
+				LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString()),
+				false, ObjectDefinitionConstants.SCOPE_COMPANY,
+				ObjectDefinitionConstants.STORAGE_TYPE_DEFAULT,
+				Collections.singletonList(
+					new TextObjectFieldBuilder(
+					).labelMap(
+						LocalizedMapUtil.getLocalizedMap(
+							RandomTestUtil.randomString())
+					).name(
+						StringUtil.randomId()
+					).build()));
+
+		ObjectDefinition rootObjectDefinition =
+			_objectDefinitionLocalService.addCustomObjectDefinition(
+				TestPropsValues.getUserId(), 0, false, false,
+				LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString()),
+				"Root", null, null,
+				LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString()),
+				false, ObjectDefinitionConstants.SCOPE_COMPANY,
+				ObjectDefinitionConstants.STORAGE_TYPE_DEFAULT,
+				Collections.singletonList(
+					new TextObjectFieldBuilder(
+					).labelMap(
+						LocalizedMapUtil.getLocalizedMap(
+							RandomTestUtil.randomString())
+					).name(
+						StringUtil.randomId()
+					).build()));
+
+		ObjectRelationship objectRelationship =
+			_objectRelationshipLocalService.addObjectRelationship(
+				TestPropsValues.getUserId(),
+				rootObjectDefinition.getObjectDefinitionId(),
+				nodeObjectDefinition.getObjectDefinitionId(), 0,
+				ObjectRelationshipConstants.DELETION_TYPE_PREVENT,
+				LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString()),
+				StringUtil.randomId(),
+				ObjectRelationshipConstants.TYPE_ONE_TO_MANY);
+
+		_objectRelationshipLocalService.updateObjectRelationship(
+			objectRelationship.getObjectRelationshipId(), 0,
+			ObjectRelationshipConstants.DELETION_TYPE_CASCADE, true,
+			objectRelationship.getLabelMap());
+
+		rootObjectDefinition =
+			_objectDefinitionLocalService.updateRootObjectDefinitionId(
+				rootObjectDefinition.getObjectDefinitionId(),
+				rootObjectDefinition.getObjectDefinitionId());
+
+		nodeObjectDefinition =
+			_objectDefinitionLocalService.updateRootObjectDefinitionId(
+				nodeObjectDefinition.getObjectDefinitionId(),
+				rootObjectDefinition.getObjectDefinitionId());
+
+		Assert.assertEquals(
+			rootObjectDefinition.getObjectDefinitionId(),
+			nodeObjectDefinition.getRootObjectDefinitionId());
+
 		// Before publish, database table
 
 		Assert.assertFalse(_hasTable(objectDefinition.getDBTableName()));
@@ -305,7 +370,11 @@ public class ObjectDefinitionLocalServiceTest {
 		// Before publish, status
 
 		Assert.assertEquals(
+			WorkflowConstants.STATUS_DRAFT, nodeObjectDefinition.getStatus());
+		Assert.assertEquals(
 			WorkflowConstants.STATUS_DRAFT, objectDefinition.getStatus());
+		Assert.assertEquals(
+			WorkflowConstants.STATUS_DRAFT, rootObjectDefinition.getStatus());
 
 		// Publish
 
@@ -327,6 +396,20 @@ public class ObjectDefinitionLocalServiceTest {
 			).required(
 				true
 			).build());
+
+		ObjectDefinition finalNodeObjectDefinition = nodeObjectDefinition;
+
+		AssertUtils.assertFailure(
+			ObjectDefinitionStatusException.class,
+			"Node ObjectDefinition cannot be directly published",
+			() -> _objectDefinitionLocalService.publishCustomObjectDefinition(
+				TestPropsValues.getUserId(),
+				finalNodeObjectDefinition.getObjectDefinitionId()));
+
+		rootObjectDefinition =
+			_objectDefinitionLocalService.publishCustomObjectDefinition(
+				TestPropsValues.getUserId(),
+				rootObjectDefinition.getObjectDefinitionId());
 
 		// After publish, database table
 
@@ -374,10 +457,25 @@ public class ObjectDefinitionLocalServiceTest {
 
 		// After publish, status
 
+		nodeObjectDefinition =
+			_objectDefinitionLocalService.getObjectDefinition(
+				nodeObjectDefinition.getObjectDefinitionId());
+
+		Assert.assertEquals(
+			WorkflowConstants.STATUS_APPROVED,
+			nodeObjectDefinition.getStatus());
+
 		Assert.assertEquals(
 			WorkflowConstants.STATUS_APPROVED, objectDefinition.getStatus());
+		Assert.assertEquals(
+			WorkflowConstants.STATUS_APPROVED,
+			rootObjectDefinition.getStatus());
 
+		_objectDefinitionLocalService.deleteObjectDefinition(
+			nodeObjectDefinition);
 		_objectDefinitionLocalService.deleteObjectDefinition(objectDefinition);
+		_objectDefinitionLocalService.deleteObjectDefinition(
+			rootObjectDefinition);
 	}
 
 	@Test
