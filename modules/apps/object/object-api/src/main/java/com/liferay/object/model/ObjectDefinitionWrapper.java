@@ -960,6 +960,11 @@ public class ObjectDefinitionWrapper
 		return model.isModifiable();
 	}
 
+	@Override
+	public boolean isNode() {
+		return model.isNode();
+	}
+
 	/**
 	 * Returns <code>true</code> if this object definition is portlet.
 	 *
@@ -968,6 +973,11 @@ public class ObjectDefinitionWrapper
 	@Override
 	public boolean isPortlet() {
 		return model.isPortlet();
+	}
+
+	@Override
+	public boolean isRoot() {
+		return model.isRoot();
 	}
 
 	/**
