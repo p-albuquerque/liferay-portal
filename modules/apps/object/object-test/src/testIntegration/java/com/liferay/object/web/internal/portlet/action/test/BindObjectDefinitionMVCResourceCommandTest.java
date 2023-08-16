@@ -100,10 +100,7 @@ public class BindObjectDefinitionMVCResourceCommandTest {
 			_objectDefinitionAA, _objectDefinitionAAA);
 
 		Assert.assertEquals(
-			"A, AA, AAA",
-			_toString(
-				_treeFactory.create(
-					_objectDefinitionA.getObjectDefinitionId())));
+			"A, AA, AAA", _toString(_treeFactory.create(_objectDefinitionA)));
 
 		// Bind one object definition to an existing hierarchical structure
 		// Bind AAB to the hierarchical structure where A is the root
@@ -120,9 +117,7 @@ public class BindObjectDefinitionMVCResourceCommandTest {
 
 		Assert.assertEquals(
 			"A, AA, AAA, AAB",
-			_toString(
-				_treeFactory.create(
-					_objectDefinitionA.getObjectDefinitionId())));
+			_toString(_treeFactory.create(_objectDefinitionA)));
 	}
 
 	private void _assertEdge(

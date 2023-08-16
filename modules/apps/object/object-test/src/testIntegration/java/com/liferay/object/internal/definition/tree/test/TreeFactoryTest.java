@@ -84,8 +84,7 @@ public class TreeFactoryTest {
 
 	@Test
 	public void testGetAncestors() throws PortalException {
-		Tree tree = _treeFactory.create(
-			_rootObjectDefinition.getObjectDefinitionId());
+		Tree tree = _treeFactory.create(_rootObjectDefinition);
 
 		Assert.assertEquals("A, AA, AB, AAA, AAB", _toString(tree));
 	}

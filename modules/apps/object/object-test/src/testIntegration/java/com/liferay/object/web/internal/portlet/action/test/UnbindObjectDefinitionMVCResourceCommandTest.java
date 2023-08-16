@@ -103,9 +103,7 @@ public class UnbindObjectDefinitionMVCResourceCommandTest {
 	public void testUnbindObjectDefinition() throws Exception {
 		Assert.assertEquals(
 			"A, AA, AB, AAA, AAB",
-			_toString(
-				_treeFactory.create(
-					_objectDefinitionA.getObjectDefinitionId())));
+			_toString(_treeFactory.create(_objectDefinitionA)));
 
 		_assertEdge(
 			true, _objectRelationshipA_AA, _objectRelationshipA_AB,
@@ -121,10 +119,7 @@ public class UnbindObjectDefinitionMVCResourceCommandTest {
 		_unbindObjectDefinition(_objectDefinitionAA.getObjectDefinitionId());
 
 		Assert.assertEquals(
-			"A, AB",
-			_toString(
-				_treeFactory.create(
-					_objectDefinitionA.getObjectDefinitionId())));
+			"A, AB", _toString(_treeFactory.create(_objectDefinitionA)));
 
 		_assertEdge(
 			false, _objectRelationshipA_AA, _objectRelationshipAA_AAA,
@@ -138,10 +133,7 @@ public class UnbindObjectDefinitionMVCResourceCommandTest {
 		_unbindObjectDefinition(_objectDefinitionAB.getObjectDefinitionId());
 
 		Assert.assertEquals(
-			"A",
-			_toString(
-				_treeFactory.create(
-					_objectDefinitionA.getObjectDefinitionId())));
+			"A", _toString(_treeFactory.create(_objectDefinitionA)));
 
 		_assertEdge(false, _objectRelationshipA_AB);
 
@@ -153,8 +145,7 @@ public class UnbindObjectDefinitionMVCResourceCommandTest {
 
 		_assertRootObjectDefinitionId(0, _objectDefinitionA);
 
-		Assert.assertNull(
-			_treeFactory.create(_objectDefinitionA.getObjectDefinitionId()));
+		Assert.assertNull(_treeFactory.create(_objectDefinitionA));
 	}
 
 	private void _assertEdge(
