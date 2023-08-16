@@ -64,7 +64,7 @@ public class TreeTestUtil {
 			objectDefinitionLocalService, objectRelationshipLocalService,
 			objectDefinitionA, objectDefinitionA);
 
-		return treeFactory.create(objectDefinitionA.getObjectDefinitionId());
+		return treeFactory.create(objectDefinitionA);
 	}
 
 	public static ObjectRelationship getEdgeObjectRelationship(

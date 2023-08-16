@@ -9,6 +9,7 @@ import com.liferay.object.definition.tree.Edge;
 import com.liferay.object.definition.tree.Node;
 import com.liferay.object.definition.tree.Tree;
 import com.liferay.object.definition.tree.TreeFactory;
+import com.liferay.object.model.ObjectDefinition;
 import com.liferay.object.service.ObjectRelationshipLocalService;
 import com.liferay.petra.function.transform.TransformUtil;
 import com.liferay.portal.kernel.util.ListUtil;
@@ -27,8 +28,15 @@ import org.osgi.service.component.annotations.Reference;
 public class TreeFactoryImpl implements TreeFactory {
 
 	@Override
-	public Tree create(long objectDefinitionId) {
-		Node rootNode = new Node(null, objectDefinitionId, null);
+	public Tree create(ObjectDefinition objectDefinition)
+		throws PortalException {
+
+		if (objectDefinition.getRootObjectDefinitionId() == 0) {
+			return null;
+		}
+
+		Node rootNode = new Node(
+			null, objectDefinition.getObjectDefinitionId(), null);
 
 		Queue<Node> queue = new LinkedList<>();
 
