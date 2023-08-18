@@ -45,6 +45,7 @@ import com.liferay.portal.kernel.test.util.ServiceContextTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.test.util.UserTestUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
+import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
@@ -82,6 +83,18 @@ public class ObjectEntryServiceTest {
 		_guestUser = _userLocalService.getGuestUser(
 			TestPropsValues.getCompanyId());
 
+		_nodeObjectDefinition = ObjectDefinitionTestUtil.addObjectDefinition(
+			false, _objectDefinitionLocalService,
+			Arrays.asList(
+				ObjectFieldUtil.createObjectField(
+					ObjectFieldConstants.BUSINESS_TYPE_TEXT,
+					ObjectFieldConstants.DB_TYPE_STRING, true, false, null,
+					"First Name", "firstName", false),
+				ObjectFieldUtil.createObjectField(
+					ObjectFieldConstants.BUSINESS_TYPE_TEXT,
+					ObjectFieldConstants.DB_TYPE_STRING, true, false, null,
+					"Last Name", "lastName", false)));
+
 		_objectDefinition = ObjectDefinitionTestUtil.addObjectDefinition(
 			false, _objectDefinitionLocalService,
 			Arrays.asList(
@@ -94,10 +107,57 @@ public class ObjectEntryServiceTest {
 					ObjectFieldConstants.DB_TYPE_STRING, true, false, null,
 					"Last Name", "lastName", false)));
 
+		_rootObjectDefinition = ObjectDefinitionTestUtil.addObjectDefinition(
+			false, _objectDefinitionLocalService,
+			Arrays.asList(
+				ObjectFieldUtil.createObjectField(
+					ObjectFieldConstants.BUSINESS_TYPE_TEXT,
+					ObjectFieldConstants.DB_TYPE_STRING, true, false, null,
+					"First Name", "firstName", false),
+				ObjectFieldUtil.createObjectField(
+					ObjectFieldConstants.BUSINESS_TYPE_TEXT,
+					ObjectFieldConstants.DB_TYPE_STRING, true, false, null,
+					"Last Name", "lastName", false)));
+
+		ObjectRelationship objectRelationship =
+			_objectRelationshipLocalService.addObjectRelationship(
+				TestPropsValues.getUserId(),
+				_rootObjectDefinition.getObjectDefinitionId(),
+				_nodeObjectDefinition.getObjectDefinitionId(), 0,
+				ObjectRelationshipConstants.DELETION_TYPE_PREVENT,
+				LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString()),
+				StringUtil.randomId(),
+				ObjectRelationshipConstants.TYPE_ONE_TO_MANY);
+
+		_objectRelationshipLocalService.updateObjectRelationship(
+			objectRelationship.getObjectRelationshipId(), 0,
+			ObjectRelationshipConstants.DELETION_TYPE_CASCADE, true,
+			objectRelationship.getLabelMap());
+
+		_rootObjectDefinition =
+			_objectDefinitionLocalService.updateRootObjectDefinitionId(
+				_rootObjectDefinition.getObjectDefinitionId(),
+				_rootObjectDefinition.getObjectDefinitionId());
+
+		_nodeObjectDefinition =
+			_objectDefinitionLocalService.updateRootObjectDefinitionId(
+				_nodeObjectDefinition.getObjectDefinitionId(),
+				_rootObjectDefinition.getObjectDefinitionId());
+
+		_nodeObjectDefinition =
+			_objectDefinitionLocalService.publishCustomObjectDefinition(
+				TestPropsValues.getUserId(),
+				_nodeObjectDefinition.getObjectDefinitionId());
+
 		_objectDefinition =
 			_objectDefinitionLocalService.publishCustomObjectDefinition(
 				TestPropsValues.getUserId(),
 				_objectDefinition.getObjectDefinitionId());
+
+		_rootObjectDefinition =
+			_objectDefinitionLocalService.publishCustomObjectDefinition(
+				TestPropsValues.getUserId(),
+				_rootObjectDefinition.getObjectDefinitionId());
 
 		_originalPermissionChecker =
 			PermissionThreadLocal.getPermissionChecker();
@@ -399,6 +459,9 @@ public class ObjectEntryServiceTest {
 	private User _guestUser;
 
 	@DeleteAfterTestRun
+	private ObjectDefinition _nodeObjectDefinition;
+
+	@DeleteAfterTestRun
 	private ObjectDefinition _objectDefinition;
 
 	@Inject
@@ -420,6 +483,9 @@ public class ObjectEntryServiceTest {
 
 	@Inject
 	private RoleLocalService _roleLocalService;
+
+	@DeleteAfterTestRun
+	private ObjectDefinition _rootObjectDefinition;
 
 	private User _user;
 
