@@ -184,11 +184,13 @@ public class ObjectEntryServiceTest {
 
 		_setUser(_guestUser);
 
-		_assertPrincipalException(ObjectActionKeys.ADD_OBJECT_ENTRY, null);
+		_assertPrincipalException(
+			ObjectActionKeys.ADD_OBJECT_ENTRY, _objectDefinition, null);
 
 		_setUser(_user);
 
-		_assertPrincipalException(ObjectActionKeys.ADD_OBJECT_ENTRY, null);
+		_assertPrincipalException(
+			ObjectActionKeys.ADD_OBJECT_ENTRY, _objectDefinition, null);
 
 		_setUser(_guestUser);
 
@@ -265,15 +267,18 @@ public class ObjectEntryServiceTest {
 			_objectEntryService.getObjectEntry(
 				userObjectEntry.getObjectEntryId()));
 
-		_assertPrincipalException(ActionKeys.VIEW, adminObjectEntry);
+		_assertPrincipalException(
+			ActionKeys.VIEW, _objectDefinition, adminObjectEntry);
 
 		_setUser(_guestUser);
 
-		_assertPrincipalException(ActionKeys.VIEW, adminObjectEntry);
+		_assertPrincipalException(
+			ActionKeys.VIEW, _objectDefinition, adminObjectEntry);
 
 		ObjectEntry guestUserObjectEntry = _addObjectEntry(_guestUser);
 
-		_assertPrincipalException(ActionKeys.VIEW, guestUserObjectEntry);
+		_assertPrincipalException(
+			ActionKeys.VIEW, _objectDefinition, guestUserObjectEntry);
 
 		Role guestRole = _roleLocalService.getRole(
 			TestPropsValues.getCompanyId(), RoleConstants.GUEST);
