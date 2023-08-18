@@ -220,6 +220,11 @@ public class ObjectEntryServiceTest {
 				).build(),
 				ServiceContextTestUtil.getServiceContext(
 					TestPropsValues.getGroupId(), _guestUser.getUserId())));
+
+		_testAddNodeObjectDefinition(
+			_roleLocalService.getRole(
+				TestPropsValues.getCompanyId(), RoleConstants.GUEST),
+			_guestUser);
 	}
 
 	@Test
@@ -386,7 +391,8 @@ public class ObjectEntryServiceTest {
 	}
 
 	private void _assertPrincipalException(
-			String action, ObjectEntry objectEntry)
+			String action, ObjectDefinition objectDefinition,
+			ObjectEntry objectEntry)
 		throws Exception {
 
 		PermissionChecker permissionChecker =
@@ -399,7 +405,7 @@ public class ObjectEntryServiceTest {
 			}
 			else {
 				_objectEntryService.addObjectEntry(
-					0, _objectDefinition.getObjectDefinitionId(),
+					0, objectDefinition.getObjectDefinitionId(),
 					HashMapBuilder.<String, Serializable>put(
 						"firstName", RandomStringUtils.randomAlphabetic(5)
 					).build(),
@@ -426,6 +432,42 @@ public class ObjectEntryServiceTest {
 			PermissionCheckerFactoryUtil.create(user));
 
 		PrincipalThreadLocal.setName(user.getUserId());
+	}
+
+	private void _testAddNodeObjectDefinition(Role role, User user)
+		throws Exception {
+
+		_resourcePermissionLocalService.addResourcePermission(
+			TestPropsValues.getCompanyId(),
+			_nodeObjectDefinition.getResourceName(),
+			ResourceConstants.SCOPE_COMPANY,
+			String.valueOf(TestPropsValues.getCompanyId()), role.getRoleId(),
+			ObjectActionKeys.ADD_OBJECT_ENTRY);
+
+		_setUser(user);
+
+		_assertPrincipalException(
+			ObjectActionKeys.ADD_OBJECT_ENTRY, _nodeObjectDefinition, null);
+
+		_setUser(_adminUser);
+
+		_resourcePermissionLocalService.addResourcePermission(
+			TestPropsValues.getCompanyId(),
+			_rootObjectDefinition.getResourceName(),
+			ResourceConstants.SCOPE_COMPANY,
+			String.valueOf(TestPropsValues.getCompanyId()), role.getRoleId(),
+			ObjectActionKeys.ADD_OBJECT_ENTRY);
+
+		_setUser(user);
+
+		Assert.assertNotNull(
+			_objectEntryService.addObjectEntry(
+				0, _nodeObjectDefinition.getObjectDefinitionId(),
+				HashMapBuilder.<String, Serializable>put(
+					"firstName", RandomStringUtils.randomAlphabetic(5)
+				).build(),
+				ServiceContextTestUtil.getServiceContext(
+					TestPropsValues.getGroupId(), user.getUserId())));
 	}
 
 	private void _testDeleteObjectEntry(User ownerUser, User user)
