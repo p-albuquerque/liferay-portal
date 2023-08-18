@@ -131,6 +131,11 @@ public class ObjectEntryServiceImpl extends ObjectEntryServiceBaseImpl {
 		ObjectDefinition objectDefinition =
 			_objectDefinitionPersistence.findByPrimaryKey(objectDefinitionId);
 
+		if (objectDefinition.isNode()) {
+			objectDefinition = _objectDefinitionPersistence.findByPrimaryKey(
+				objectDefinition.getRootObjectDefinitionId());
+		}
+
 		ModelResourcePermission<ObjectEntry> modelResourcePermission =
 			ModelResourcePermissionRegistryUtil.getModelResourcePermission(
 				objectDefinition.getClassName());
@@ -420,6 +425,11 @@ public class ObjectEntryServiceImpl extends ObjectEntryServiceBaseImpl {
 			_objectDefinitionPersistence.findByPrimaryKey(
 				objectEntry.getObjectDefinitionId());
 
+		if (objectDefinition.isNode()) {
+			objectDefinition = _objectDefinitionPersistence.findByPrimaryKey(
+				objectDefinition.getRootObjectDefinitionId());
+		}
+
 		ModelResourcePermission<ObjectEntry> modelResourcePermission =
 			ModelResourcePermissionRegistryUtil.getModelResourcePermission(
 				objectDefinition.getClassName());
@@ -555,6 +565,13 @@ public class ObjectEntryServiceImpl extends ObjectEntryServiceBaseImpl {
 
 		ObjectDefinition objectDefinition =
 			_objectDefinitionPersistence.findByPrimaryKey(objectDefinitionId);
+
+		if (objectDefinition.isNode()) {
+			objectDefinitionId = objectDefinition.getRootObjectDefinitionId();
+
+			objectDefinition = _objectDefinitionPersistence.findByPrimaryKey(
+				objectDefinitionId);
+		}
 
 		return _portletResourcePermissionsServiceTrackerMap.getService(
 			objectDefinition.getResourceName());
