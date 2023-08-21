@@ -221,6 +221,8 @@ public class ObjectEntryServiceTest {
 		Assert.assertNotNull(
 			_objectEntryService.getObjectEntry(
 				adminObjectEntry.getObjectEntryId()));
+
+		_testGetObjectEntryNodeObjectDefinition();
 	}
 
 	@Test
@@ -343,6 +345,34 @@ public class ObjectEntryServiceTest {
 			).build(),
 			ServiceContextTestUtil.getServiceContext(
 				TestPropsValues.getGroupId(), user.getUserId()));
+	}
+
+	private void _assertIllegalArgumentException(
+			String action, long objectEntryId)
+		throws Exception {
+
+		_setUser(_user);
+
+		try {
+			if (Objects.equals(action, ActionKeys.VIEW)) {
+				_objectEntryService.getObjectEntry(objectEntryId);
+			}
+			else {
+				_objectEntryService.deleteObjectEntry(objectEntryId);
+			}
+
+			Assert.fail();
+		}
+		catch (IllegalArgumentException illegalArgumentException) {
+			String message = illegalArgumentException.getMessage();
+
+			Assert.assertTrue(
+				message.contains(
+					"Someone may be trying to circumvent the permission " +
+						"checker"));
+		}
+
+		_setUser(_adminUser);
 	}
 
 	private void _assertPrincipalException(
@@ -528,24 +558,8 @@ public class ObjectEntryServiceTest {
 				).build(),
 				nodeObjectDefinition.getClassName()));
 
-		_setUser(_user);
-
-		try {
-			_objectEntryService.deleteObjectEntry(
-				objectEntry.getObjectEntryId());
-
-			Assert.fail();
-		}
-		catch (IllegalArgumentException illegalArgumentException) {
-			String message = illegalArgumentException.getMessage();
-
-			Assert.assertTrue(
-				message.contains(
-					"Someone may be trying to circumvent the permission " +
-						"checker"));
-		}
-
-		_setUser(_adminUser);
+		_assertIllegalArgumentException(
+			ActionKeys.DELETE, objectEntry.getObjectEntryId());
 
 		_resourcePermissionLocalService.addModelResourcePermissions(
 			TestPropsValues.getCompanyId(), TestPropsValues.getGroupId(),
@@ -562,6 +576,59 @@ public class ObjectEntryServiceTest {
 		Assert.assertNotNull(
 			_objectEntryService.deleteObjectEntry(
 				objectEntry.getObjectEntryId()));
+
+		_unbindAndDeleteObjectDefinitions(
+			nodeObjectDefinition, rootObjectDefinition);
+	}
+
+	private void _testGetObjectEntryNodeObjectDefinition() throws Exception {
+		_bindObjectDefinition();
+
+		ObjectDefinition nodeObjectDefinition =
+			_objectDefinitionLocalService.fetchObjectDefinition(
+				TestPropsValues.getCompanyId(), "Node");
+		ObjectDefinition rootObjectDefinition =
+			_objectDefinitionLocalService.fetchObjectDefinition(
+				TestPropsValues.getCompanyId(), "Root");
+
+		_setUser(_adminUser);
+
+		ObjectEntry objectEntry = _objectEntryLocalService.addObjectEntry(
+			TestPropsValues.getUserId(), 0,
+			nodeObjectDefinition.getObjectDefinitionId(),
+			HashMapBuilder.<String, Serializable>put(
+				"firstName", RandomStringUtils.randomAlphabetic(5)
+			).build(),
+			ServiceContextTestUtil.getServiceContext(
+				TestPropsValues.getGroupId(), TestPropsValues.getUserId()));
+
+		_resourcePermissionLocalService.addModelResourcePermissions(
+			TestPropsValues.getCompanyId(), TestPropsValues.getGroupId(),
+			_user.getUserId(), nodeObjectDefinition.getClassName(),
+			String.valueOf(objectEntry.getObjectEntryId()),
+			ModelPermissionsFactory.create(
+				HashMapBuilder.put(
+					RoleConstants.USER, new String[] {ActionKeys.VIEW}
+				).build(),
+				nodeObjectDefinition.getClassName()));
+
+		_assertIllegalArgumentException(
+			ActionKeys.VIEW, objectEntry.getObjectEntryId());
+
+		_resourcePermissionLocalService.addModelResourcePermissions(
+			TestPropsValues.getCompanyId(), TestPropsValues.getGroupId(),
+			_user.getUserId(), rootObjectDefinition.getClassName(),
+			String.valueOf(objectEntry.getObjectEntryId()),
+			ModelPermissionsFactory.create(
+				HashMapBuilder.put(
+					RoleConstants.USER, new String[] {ActionKeys.VIEW}
+				).build(),
+				rootObjectDefinition.getClassName()));
+
+		_setUser(_user);
+
+		Assert.assertNotNull(
+			_objectEntryService.getObjectEntry(objectEntry.getObjectEntryId()));
 
 		_unbindAndDeleteObjectDefinitions(
 			nodeObjectDefinition, rootObjectDefinition);
