@@ -11,6 +11,7 @@ import com.liferay.account.service.AccountEntryLocalService;
 import com.liferay.account.service.AccountEntryUserRelLocalService;
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
 import com.liferay.object.constants.ObjectActionKeys;
+import com.liferay.object.constants.ObjectDefinitionConstants;
 import com.liferay.object.constants.ObjectFieldConstants;
 import com.liferay.object.constants.ObjectRelationshipConstants;
 import com.liferay.object.field.util.ObjectFieldUtil;
@@ -21,7 +22,6 @@ import com.liferay.object.service.ObjectDefinitionLocalService;
 import com.liferay.object.service.ObjectEntryLocalService;
 import com.liferay.object.service.ObjectEntryService;
 import com.liferay.object.service.ObjectRelationshipLocalService;
-import com.liferay.object.service.test.util.ObjectDefinitionTestUtil;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.model.ResourceConstants;
 import com.liferay.portal.kernel.model.Role;
@@ -82,17 +82,8 @@ public class ObjectEntryServiceTest {
 		_guestUser = _userLocalService.getGuestUser(
 			TestPropsValues.getCompanyId());
 
-		_objectDefinition = ObjectDefinitionTestUtil.addObjectDefinition(
-			false, _objectDefinitionLocalService,
-			Arrays.asList(
-				ObjectFieldUtil.createObjectField(
-					ObjectFieldConstants.BUSINESS_TYPE_TEXT,
-					ObjectFieldConstants.DB_TYPE_STRING, true, false, null,
-					"First Name", "firstName", false),
-				ObjectFieldUtil.createObjectField(
-					ObjectFieldConstants.BUSINESS_TYPE_TEXT,
-					ObjectFieldConstants.DB_TYPE_STRING, true, false, null,
-					"Last Name", "lastName", false)));
+		_objectDefinition = _addObjectDefinition(
+			"A" + RandomTestUtil.randomString());
 
 		_objectDefinition =
 			_objectDefinitionLocalService.publishCustomObjectDefinition(
@@ -184,6 +175,7 @@ public class ObjectEntryServiceTest {
 
 		_testDeleteObjectEntry(_adminUser, _adminUser);
 		_testDeleteObjectEntry(_user, _user);
+		_testDeleteObjectEntryNodeObjectDefinition();
 	}
 
 	@Test
@@ -320,6 +312,27 @@ public class ObjectEntryServiceTest {
 		_objectEntryLocalService.deleteObjectEntry(objectEntry2);
 	}
 
+	private ObjectDefinition _addObjectDefinition(String name)
+		throws Exception {
+
+		return _objectDefinitionLocalService.addCustomObjectDefinition(
+			TestPropsValues.getUserId(), 0, false, false,
+			LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString()),
+			name, null, null,
+			LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString()),
+			true, ObjectDefinitionConstants.SCOPE_COMPANY,
+			ObjectDefinitionConstants.STORAGE_TYPE_DEFAULT,
+			Arrays.asList(
+				ObjectFieldUtil.createObjectField(
+					ObjectFieldConstants.BUSINESS_TYPE_TEXT,
+					ObjectFieldConstants.DB_TYPE_STRING, true, false, null,
+					"First Name", "firstName", false),
+				ObjectFieldUtil.createObjectField(
+					ObjectFieldConstants.BUSINESS_TYPE_TEXT,
+					ObjectFieldConstants.DB_TYPE_STRING, true, false, null,
+					"Last Name", "lastName", false)));
+	}
+
 	private ObjectEntry _addObjectEntry(User user) throws Exception {
 		return _objectEntryLocalService.addObjectEntry(
 			user.getUserId(), 0, _objectDefinition.getObjectDefinitionId(),
@@ -369,38 +382,10 @@ public class ObjectEntryServiceTest {
 		}
 	}
 
-	private void _setUser(User user) throws Exception {
-		PermissionThreadLocal.setPermissionChecker(
-			PermissionCheckerFactoryUtil.create(user));
+	private void _bindObjectDefinition() throws Exception {
+		ObjectDefinition nodeObjectDefinition = _addObjectDefinition("Node");
 
-		PrincipalThreadLocal.setName(user.getUserId());
-	}
-
-	private void _testAddObjectEntryNodeObjectDefinition() throws Exception {
-		ObjectDefinition nodeObjectDefinition =
-			ObjectDefinitionTestUtil.addObjectDefinition(
-				false, _objectDefinitionLocalService,
-				Arrays.asList(
-					ObjectFieldUtil.createObjectField(
-						ObjectFieldConstants.BUSINESS_TYPE_TEXT,
-						ObjectFieldConstants.DB_TYPE_STRING, true, false, null,
-						"First Name", "firstName", false),
-					ObjectFieldUtil.createObjectField(
-						ObjectFieldConstants.BUSINESS_TYPE_TEXT,
-						ObjectFieldConstants.DB_TYPE_STRING, true, false, null,
-						"Last Name", "lastName", false)));
-		ObjectDefinition rootObjectDefinition =
-			ObjectDefinitionTestUtil.addObjectDefinition(
-				false, _objectDefinitionLocalService,
-				Arrays.asList(
-					ObjectFieldUtil.createObjectField(
-						ObjectFieldConstants.BUSINESS_TYPE_TEXT,
-						ObjectFieldConstants.DB_TYPE_STRING, true, false, null,
-						"First Name", "firstName", false),
-					ObjectFieldUtil.createObjectField(
-						ObjectFieldConstants.BUSINESS_TYPE_TEXT,
-						ObjectFieldConstants.DB_TYPE_STRING, true, false, null,
-						"Last Name", "lastName", false)));
+		ObjectDefinition rootObjectDefinition = _addObjectDefinition("Root");
 
 		ObjectRelationship objectRelationship =
 			_objectRelationshipLocalService.addObjectRelationship(
@@ -425,6 +410,32 @@ public class ObjectEntryServiceTest {
 			_objectDefinitionLocalService.updateRootObjectDefinitionId(
 				nodeObjectDefinition.getObjectDefinitionId(),
 				rootObjectDefinition.getObjectDefinitionId());
+
+		_objectDefinitionLocalService.publishSystemObjectDefinition(
+			TestPropsValues.getUserId(),
+			nodeObjectDefinition.getObjectDefinitionId());
+
+		_objectDefinitionLocalService.publishSystemObjectDefinition(
+			TestPropsValues.getUserId(),
+			rootObjectDefinition.getObjectDefinitionId());
+	}
+
+	private void _setUser(User user) throws Exception {
+		PermissionThreadLocal.setPermissionChecker(
+			PermissionCheckerFactoryUtil.create(user));
+
+		PrincipalThreadLocal.setName(user.getUserId());
+	}
+
+	private void _testAddObjectEntryNodeObjectDefinition() throws Exception {
+		_bindObjectDefinition();
+
+		ObjectDefinition nodeObjectDefinition =
+			_objectDefinitionLocalService.fetchObjectDefinition(
+				TestPropsValues.getCompanyId(), "Node");
+		ObjectDefinition rootObjectDefinition =
+			_objectDefinitionLocalService.fetchObjectDefinition(
+				TestPropsValues.getCompanyId(), "Root");
 
 		Role role = _roleLocalService.getRole(
 			TestPropsValues.getCompanyId(), RoleConstants.USER);
@@ -461,19 +472,8 @@ public class ObjectEntryServiceTest {
 				ServiceContextTestUtil.getServiceContext(
 					TestPropsValues.getGroupId(), _user.getUserId())));
 
-		_objectRelationshipLocalService.deleteObjectRelationship(
-			_objectRelationshipLocalService.updateObjectRelationship(
-				objectRelationship.getObjectRelationshipId(), 0,
-				objectRelationship.getDeletionType(), false,
-				objectRelationship.getLabelMap()));
-
-		_objectDefinitionLocalService.deleteObjectDefinition(
-			_objectDefinitionLocalService.updateRootObjectDefinitionId(
-				nodeObjectDefinition.getObjectDefinitionId(), 0));
-
-		_objectDefinitionLocalService.deleteObjectDefinition(
-			_objectDefinitionLocalService.updateRootObjectDefinitionId(
-				rootObjectDefinition.getObjectDefinitionId(), 0));
+		_unbindAndDeleteObjectDefinitions(
+			nodeObjectDefinition, rootObjectDefinition);
 	}
 
 	private void _testDeleteObjectEntry(User ownerUser, User user)
@@ -495,6 +495,100 @@ public class ObjectEntryServiceTest {
 				_objectEntryLocalService.deleteObjectEntry(objectEntry);
 			}
 		}
+	}
+
+	private void _testDeleteObjectEntryNodeObjectDefinition() throws Exception {
+		_bindObjectDefinition();
+
+		ObjectDefinition nodeObjectDefinition =
+			_objectDefinitionLocalService.fetchObjectDefinition(
+				TestPropsValues.getCompanyId(), "Node");
+		ObjectDefinition rootObjectDefinition =
+			_objectDefinitionLocalService.fetchObjectDefinition(
+				TestPropsValues.getCompanyId(), "Root");
+
+		_setUser(_adminUser);
+
+		ObjectEntry objectEntry = _objectEntryLocalService.addObjectEntry(
+			TestPropsValues.getUserId(), 0,
+			nodeObjectDefinition.getObjectDefinitionId(),
+			HashMapBuilder.<String, Serializable>put(
+				"firstName", RandomStringUtils.randomAlphabetic(5)
+			).build(),
+			ServiceContextTestUtil.getServiceContext(
+				TestPropsValues.getGroupId(), _adminUser.getUserId()));
+
+		_resourcePermissionLocalService.addModelResourcePermissions(
+			TestPropsValues.getCompanyId(), TestPropsValues.getGroupId(),
+			_adminUser.getUserId(), nodeObjectDefinition.getClassName(),
+			String.valueOf(objectEntry.getObjectEntryId()),
+			ModelPermissionsFactory.create(
+				HashMapBuilder.put(
+					RoleConstants.USER, new String[] {ActionKeys.DELETE}
+				).build(),
+				nodeObjectDefinition.getClassName()));
+
+		_setUser(_user);
+
+		try {
+			_objectEntryService.deleteObjectEntry(
+				objectEntry.getObjectEntryId());
+
+			Assert.fail();
+		}
+		catch (IllegalArgumentException illegalArgumentException) {
+			String message = illegalArgumentException.getMessage();
+
+			Assert.assertTrue(
+				message.contains(
+					"Someone may be trying to circumvent the permission " +
+						"checker"));
+		}
+
+		_setUser(_adminUser);
+
+		_resourcePermissionLocalService.addModelResourcePermissions(
+			TestPropsValues.getCompanyId(), TestPropsValues.getGroupId(),
+			_user.getUserId(), rootObjectDefinition.getClassName(),
+			String.valueOf(objectEntry.getObjectEntryId()),
+			ModelPermissionsFactory.create(
+				HashMapBuilder.put(
+					RoleConstants.USER, new String[] {ActionKeys.DELETE}
+				).build(),
+				rootObjectDefinition.getClassName()));
+
+		_setUser(_user);
+
+		Assert.assertNotNull(
+			_objectEntryService.deleteObjectEntry(
+				objectEntry.getObjectEntryId()));
+
+		_unbindAndDeleteObjectDefinitions(
+			nodeObjectDefinition, rootObjectDefinition);
+	}
+
+	private void _unbindAndDeleteObjectDefinitions(
+			ObjectDefinition nodeObjectDefinition,
+			ObjectDefinition rootObjectDefinition)
+		throws Exception {
+
+		ObjectRelationship objectRelationship =
+			_objectRelationshipLocalService.getObjectRelationship(
+				rootObjectDefinition.getObjectDefinitionId(), "relationship");
+
+		_objectRelationshipLocalService.deleteObjectRelationship(
+			_objectRelationshipLocalService.updateObjectRelationship(
+				objectRelationship.getObjectRelationshipId(), 0,
+				objectRelationship.getDeletionType(), false,
+				objectRelationship.getLabelMap()));
+
+		_objectDefinitionLocalService.deleteObjectDefinition(
+			_objectDefinitionLocalService.updateRootObjectDefinitionId(
+				nodeObjectDefinition.getObjectDefinitionId(), 0));
+
+		_objectDefinitionLocalService.deleteObjectDefinition(
+			_objectDefinitionLocalService.updateRootObjectDefinitionId(
+				rootObjectDefinition.getObjectDefinitionId(), 0));
 	}
 
 	@Inject
