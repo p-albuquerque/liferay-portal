@@ -125,8 +125,22 @@ public class ObjectEntryModelResourcePermission
 				objectEntry.getObjectEntryId(), actionId);
 		}
 
+		ObjectDefinition objectDefinition =
+			_objectDefinitionLocalService.getObjectDefinition(
+				objectEntry.getObjectDefinitionId());
+
+		String modelName = _modelName;
+
+		if (objectDefinition.isNode()) {
+			modelName = objectDefinition.getClassName();
+
+			objectDefinition =
+				_objectDefinitionLocalService.fetchObjectDefinitionByClassName(
+					permissionChecker.getCompanyId(), _modelName);
+		}
+
 		if (permissionChecker.hasOwnerPermission(
-				permissionChecker.getCompanyId(), _modelName,
+				permissionChecker.getCompanyId(), modelName,
 				objectEntry.getObjectEntryId(), objectEntry.getUserId(),
 				actionId) ||
 			permissionChecker.hasPermission(
@@ -135,10 +149,6 @@ public class ObjectEntryModelResourcePermission
 
 			return true;
 		}
-
-		ObjectDefinition objectDefinition =
-			_objectDefinitionLocalService.getObjectDefinition(
-				objectEntry.getObjectDefinitionId());
 
 		if (!objectDefinition.isAccountEntryRestricted()) {
 			return false;
