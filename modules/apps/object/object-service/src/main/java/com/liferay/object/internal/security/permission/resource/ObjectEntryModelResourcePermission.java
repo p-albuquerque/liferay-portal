@@ -119,26 +119,36 @@ public class ObjectEntryModelResourcePermission
 
 		User user = permissionChecker.getUser();
 
+		ObjectDefinition objectDefinition =
+			_objectDefinitionLocalService.getObjectDefinition(
+				objectEntry.getObjectDefinitionId());
+
+		long primKey =
+			objectDefinition.isNode() ? permissionChecker.getCompanyId() :
+				objectEntry.getObjectEntryId();
+
 		if (user.isGuestUser()) {
 			return permissionChecker.hasPermission(
-				objectEntry.getGroupId(), _modelName,
-				objectEntry.getObjectEntryId(), actionId);
+				objectEntry.getGroupId(), _modelName, primKey, actionId);
 		}
 
+		String modelName =
+			objectDefinition.isNode() ? objectDefinition.getClassName() :
+				_modelName;
+
 		if (permissionChecker.hasOwnerPermission(
-				permissionChecker.getCompanyId(), _modelName,
+				permissionChecker.getCompanyId(), modelName,
 				objectEntry.getObjectEntryId(), objectEntry.getUserId(),
 				actionId) ||
 			permissionChecker.hasPermission(
-				objectEntry.getGroupId(), _modelName,
-				objectEntry.getObjectEntryId(), actionId)) {
+				objectEntry.getGroupId(), _modelName, primKey, actionId)) {
 
 			return true;
 		}
 
-		ObjectDefinition objectDefinition =
-			_objectDefinitionLocalService.getObjectDefinition(
-				objectEntry.getObjectDefinitionId());
+		objectDefinition =
+			_objectDefinitionLocalService.fetchObjectDefinitionByClassName(
+				permissionChecker.getCompanyId(), _modelName);
 
 		if (!objectDefinition.isAccountEntryRestricted()) {
 			return false;
