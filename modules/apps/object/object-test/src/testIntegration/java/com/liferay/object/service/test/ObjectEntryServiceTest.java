@@ -217,7 +217,7 @@ public class ObjectEntryServiceTest {
 	@Test
 	public void testDeleteObjectEntry() throws Exception {
 		try {
-			_testDeleteObjectEntry(_adminUser, _user);
+			_testDeleteObjectEntry(_objectDefinition, _adminUser, _user);
 
 			Assert.fail();
 		}
@@ -230,15 +230,72 @@ public class ObjectEntryServiceTest {
 						" must have DELETE permission for"));
 		}
 
-		_testDeleteObjectEntry(_adminUser, _adminUser);
-		_testDeleteObjectEntry(_user, _user);
+		_testDeleteObjectEntry(_objectDefinition, _adminUser, _adminUser);
+		_testDeleteObjectEntry(_objectDefinition, _user, _user);
+
+		_createAndBindObjectDefinitions();
+
+		ObjectDefinition nodeObjectDefinition =
+			_objectDefinitionLocalService.fetchObjectDefinition(
+				TestPropsValues.getCompanyId(), "C_Node");
+
+		_testDeleteObjectEntry(nodeObjectDefinition, _adminUser, _adminUser);
+		_testDeleteObjectEntry(nodeObjectDefinition, _user, _user);
+
+		ObjectEntry objectEntry = _addObjectEntry(
+			nodeObjectDefinition, _adminUser);
+
+		_resourcePermissionLocalService.addModelResourcePermissions(
+			TestPropsValues.getCompanyId(), TestPropsValues.getGroupId(),
+			_adminUser.getUserId(), nodeObjectDefinition.getClassName(),
+			String.valueOf(objectEntry.getObjectEntryId()),
+			ModelPermissionsFactory.create(
+				HashMapBuilder.put(
+					RoleConstants.USER, new String[] {ActionKeys.DELETE}
+				).build(),
+				nodeObjectDefinition.getClassName()));
+
+		_setUser(_user);
+
+		try {
+			_objectEntryService.deleteObjectEntry(
+				objectEntry.getObjectEntryId());
+
+			Assert.fail();
+		}
+		catch (IllegalArgumentException illegalArgumentException) {
+			String message = illegalArgumentException.getMessage();
+
+			Assert.assertTrue(
+				message.contains(
+					"Someone may be trying to circumvent the permission"));
+		}
+
+		ObjectDefinition rootObjectDefinition =
+			_objectDefinitionLocalService.fetchObjectDefinition(
+				TestPropsValues.getCompanyId(), "C_Root");
+
+		_resourcePermissionLocalService.addModelResourcePermissions(
+			TestPropsValues.getCompanyId(), TestPropsValues.getGroupId(),
+			_adminUser.getUserId(), rootObjectDefinition.getClassName(),
+			String.valueOf(objectEntry.getObjectEntryId()),
+			ModelPermissionsFactory.create(
+				HashMapBuilder.put(
+					RoleConstants.USER, new String[] {ActionKeys.DELETE}
+				).build(),
+				rootObjectDefinition.getClassName()));
+
+		Assert.assertNotNull(
+			_objectEntryService.deleteObjectEntry(
+				objectEntry.getObjectEntryId()));
 	}
 
 	@Test
 	public void testGetObjectEntry() throws Exception {
 		_setUser(_adminUser);
 
-		ObjectEntry adminObjectEntry = _addObjectEntry(_adminUser);
+		ObjectEntry adminObjectEntry = _addObjectEntry(
+			_objectDefinition, _adminUser);
 
 		Assert.assertNotNull(
 			_objectEntryService.getObjectEntry(
@@ -246,7 +303,7 @@ public class ObjectEntryServiceTest {
 
 		_setUser(_user);
 
-		ObjectEntry userObjectEntry = _addObjectEntry(_user);
+		ObjectEntry userObjectEntry = _addObjectEntry(_objectDefinition, _user);
 
 		Assert.assertNotNull(
 			_objectEntryService.getObjectEntry(
@@ -260,7 +317,8 @@ public class ObjectEntryServiceTest {
 		_assertPrincipalException(
 			ActionKeys.VIEW, _objectDefinition, adminObjectEntry);
 
-		ObjectEntry guestUserObjectEntry = _addObjectEntry(_guestUser);
+		ObjectEntry guestUserObjectEntry = _addObjectEntry(
+			_objectDefinition, _guestUser);
 
 		_assertPrincipalException(
 			ActionKeys.VIEW, _objectDefinition, guestUserObjectEntry);
@@ -348,8 +406,10 @@ public class ObjectEntryServiceTest {
 	public void testSearchObjectEntries() throws Exception {
 		_setUser(_adminUser);
 
-		ObjectEntry objectEntry1 = _addObjectEntry(_adminUser);
-		ObjectEntry objectEntry2 = _addObjectEntry(_adminUser);
+		ObjectEntry objectEntry1 = _addObjectEntry(
+			_objectDefinition, _adminUser);
+		ObjectEntry objectEntry2 = _addObjectEntry(
+			_objectDefinition, _adminUser);
 
 		BaseModelSearchResult<ObjectEntry> baseModelSearchResult =
 			_objectEntryLocalService.searchObjectEntries(
@@ -389,9 +449,12 @@ public class ObjectEntryServiceTest {
 					"Last Name", "lastName", false)));
 	}
 
-	private ObjectEntry _addObjectEntry(User user) throws Exception {
+	private ObjectEntry _addObjectEntry(
+			ObjectDefinition objectDefinition, User user)
+		throws Exception {
+
 		return _objectEntryLocalService.addObjectEntry(
-			user.getUserId(), 0, _objectDefinition.getObjectDefinitionId(),
+			user.getUserId(), 0, objectDefinition.getObjectDefinitionId(),
 			HashMapBuilder.<String, Serializable>put(
 				"firstName", RandomStringUtils.randomAlphabetic(5)
 			).put(
@@ -483,7 +546,8 @@ public class ObjectEntryServiceTest {
 		PrincipalThreadLocal.setName(user.getUserId());
 	}
 
-	private void _testDeleteObjectEntry(User ownerUser, User user)
+	private void _testDeleteObjectEntry(
+			ObjectDefinition objectDefinition, User ownerUser, User user)
 		throws Exception {
 
 		ObjectEntry deleteObjectEntry = null;
@@ -492,7 +556,7 @@ public class ObjectEntryServiceTest {
 		try {
 			_setUser(user);
 
-			objectEntry = _addObjectEntry(ownerUser);
+			objectEntry = _addObjectEntry(objectDefinition, ownerUser);
 
 			deleteObjectEntry = _objectEntryService.deleteObjectEntry(
 				objectEntry.getObjectEntryId());
