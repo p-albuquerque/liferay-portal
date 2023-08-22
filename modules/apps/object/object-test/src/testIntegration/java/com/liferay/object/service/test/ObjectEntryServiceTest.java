@@ -245,7 +245,7 @@ public class ObjectEntryServiceTest {
 	@Test
 	public void testDeleteObjectEntry() throws Exception {
 		try {
-			_testDeleteObjectEntry(_adminUser, _user);
+			_testDeleteObjectEntry(_objectDefinition, _adminUser, _user);
 
 			Assert.fail();
 		}
@@ -258,15 +258,83 @@ public class ObjectEntryServiceTest {
 						" must have DELETE permission for"));
 		}
 
-		_testDeleteObjectEntry(_adminUser, _adminUser);
-		_testDeleteObjectEntry(_user, _user);
+		_testDeleteObjectEntry(_objectDefinition, _adminUser, _adminUser);
+		_testDeleteObjectEntry(_objectDefinition, _user, _user);
+
+		Tree tree = TreeTestUtil.createTree(
+			_objectDefinitionLocalService, _objectRelationshipLocalService,
+			_treeFactory);
+
+		_assertBoundedObjectDefinitions(
+			tree,
+			nodeObjectDefinition -> {
+				try {
+					_testDeleteObjectEntry(
+						nodeObjectDefinition, _adminUser, _user);
+
+					Assert.fail();
+				}
+				catch (PrincipalException.MustHavePermission
+							principalException) {
+
+					String message = principalException.getMessage();
+
+					Assert.assertTrue(
+						message.contains(
+							"User " + _user.getUserId() +
+								" must have DELETE permission for"));
+				}
+
+				_testDeleteObjectEntry(
+					nodeObjectDefinition, _adminUser, _adminUser);
+				_testDeleteObjectEntry(nodeObjectDefinition, _user, _user);
+			});
+
+		Role role = _roleLocalService.getRole(
+			TestPropsValues.getCompanyId(), RoleConstants.GUEST);
+
+		_setUser(_guestUser);
+
+		_assertBoundedObjectDefinitions(
+			tree,
+			nodeObjectDefinition -> {
+				if (nodeObjectDefinition.isNode()) {
+					_resourcePermissionLocalService.addResourcePermission(
+						TestPropsValues.getCompanyId(),
+						nodeObjectDefinition.getResourceName(),
+						ResourceConstants.SCOPE_COMPANY,
+						String.valueOf(TestPropsValues.getCompanyId()),
+						role.getRoleId(), ActionKeys.DELETE);
+
+					_assertPrincipalException(
+						ActionKeys.DELETE, nodeObjectDefinition, null);
+				}
+			});
+
+		ObjectDefinition rootObjectDefinition = _getRootObjectDefinition(tree);
+
+		_resourcePermissionLocalService.addResourcePermission(
+			TestPropsValues.getCompanyId(),
+			rootObjectDefinition.getResourceName(),
+			ResourceConstants.SCOPE_COMPANY,
+			String.valueOf(TestPropsValues.getCompanyId()), role.getRoleId(),
+			ActionKeys.DELETE);
+
+		_assertBoundedObjectDefinitions(
+			tree,
+			nodeObjectDefinition -> {
+				_testDeleteObjectEntry(
+					_objectDefinition, _adminUser, _adminUser);
+				_testDeleteObjectEntry(_objectDefinition, _user, _user);
+			});
 	}
 
 	@Test
 	public void testGetObjectEntry() throws Exception {
 		_setUser(_adminUser);
 
-		ObjectEntry adminObjectEntry = _addObjectEntry(_adminUser);
+		ObjectEntry adminObjectEntry = _addObjectEntry(
+			_objectDefinition, _adminUser);
 
 		Assert.assertNotNull(
 			_objectEntryService.getObjectEntry(
@@ -274,7 +342,7 @@ public class ObjectEntryServiceTest {
 
 		_setUser(_user);
 
-		ObjectEntry userObjectEntry = _addObjectEntry(_user);
+		ObjectEntry userObjectEntry = _addObjectEntry(_objectDefinition, _user);
 
 		Assert.assertNotNull(
 			_objectEntryService.getObjectEntry(
@@ -288,7 +356,8 @@ public class ObjectEntryServiceTest {
 		_assertPrincipalException(
 			ActionKeys.VIEW, _objectDefinition, adminObjectEntry);
 
-		ObjectEntry guestUserObjectEntry = _addObjectEntry(_guestUser);
+		ObjectEntry guestUserObjectEntry = _addObjectEntry(
+			_objectDefinition, _guestUser);
 
 		_assertPrincipalException(
 			ActionKeys.VIEW, _objectDefinition, guestUserObjectEntry);
@@ -376,8 +445,10 @@ public class ObjectEntryServiceTest {
 	public void testSearchObjectEntries() throws Exception {
 		_setUser(_adminUser);
 
-		ObjectEntry objectEntry1 = _addObjectEntry(_adminUser);
-		ObjectEntry objectEntry2 = _addObjectEntry(_adminUser);
+		ObjectEntry objectEntry1 = _addObjectEntry(
+			_objectDefinition, _adminUser);
+		ObjectEntry objectEntry2 = _addObjectEntry(
+			_objectDefinition, _adminUser);
 
 		BaseModelSearchResult<ObjectEntry> baseModelSearchResult =
 			_objectEntryLocalService.searchObjectEntries(
@@ -417,9 +488,12 @@ public class ObjectEntryServiceTest {
 					"Last Name", "lastName", false)));
 	}
 
-	private ObjectEntry _addObjectEntry(User user) throws Exception {
+	private ObjectEntry _addObjectEntry(
+			ObjectDefinition objectDefinition, User user)
+		throws Exception {
+
 		return _objectEntryLocalService.addObjectEntry(
-			user.getUserId(), 0, _objectDefinition.getObjectDefinitionId(),
+			user.getUserId(), 0, objectDefinition.getObjectDefinitionId(),
 			HashMapBuilder.<String, Serializable>put(
 				"firstName", RandomStringUtils.randomAlphabetic(5)
 			).put(
@@ -454,7 +528,11 @@ public class ObjectEntryServiceTest {
 			PermissionThreadLocal.getPermissionChecker();
 
 		try {
-			if (Objects.equals(action, ActionKeys.VIEW)) {
+			if (Objects.equals(action, ActionKeys.DELETE)) {
+				_objectEntryService.deleteObjectEntry(
+					objectEntry.getObjectEntryId());
+			}
+			else if (Objects.equals(action, ActionKeys.VIEW)) {
 				_objectEntryService.getObjectEntry(
 					objectEntry.getObjectEntryId());
 			}
@@ -482,44 +560,6 @@ public class ObjectEntryServiceTest {
 		}
 	}
 
-	private void _createAndBindObjectDefinitions() throws Exception {
-		ObjectDefinition nodeObjectDefinition = _addObjectDefinition("Node");
-
-		ObjectDefinition rootObjectDefinition = _addObjectDefinition("Root");
-
-		ObjectRelationship objectRelationship =
-			_objectRelationshipLocalService.addObjectRelationship(
-				TestPropsValues.getUserId(),
-				rootObjectDefinition.getObjectDefinitionId(),
-				nodeObjectDefinition.getObjectDefinitionId(), 0,
-				ObjectRelationshipConstants.DELETION_TYPE_PREVENT,
-				LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString()),
-				"relationship", ObjectRelationshipConstants.TYPE_ONE_TO_MANY);
-
-		_objectRelationshipLocalService.updateObjectRelationship(
-			objectRelationship.getObjectRelationshipId(), 0,
-			objectRelationship.getDeletionType(), true,
-			objectRelationship.getLabelMap());
-
-		rootObjectDefinition =
-			_objectDefinitionLocalService.updateRootObjectDefinitionId(
-				rootObjectDefinition.getObjectDefinitionId(),
-				rootObjectDefinition.getObjectDefinitionId());
-
-		nodeObjectDefinition =
-			_objectDefinitionLocalService.updateRootObjectDefinitionId(
-				nodeObjectDefinition.getObjectDefinitionId(),
-				rootObjectDefinition.getObjectDefinitionId());
-
-		_objectDefinitionLocalService.publishCustomObjectDefinition(
-			TestPropsValues.getUserId(),
-			nodeObjectDefinition.getObjectDefinitionId());
-
-		_objectDefinitionLocalService.publishCustomObjectDefinition(
-			TestPropsValues.getUserId(),
-			rootObjectDefinition.getObjectDefinitionId());
-	}
-
 	private ObjectDefinition _getRootObjectDefinition(Tree tree) {
 		Iterator<Node> iterator = tree.iterator();
 
@@ -545,7 +585,8 @@ public class ObjectEntryServiceTest {
 		PrincipalThreadLocal.setName(user.getUserId());
 	}
 
-	private void _testDeleteObjectEntry(User ownerUser, User user)
+	private void _testDeleteObjectEntry(
+			ObjectDefinition objectDefinition, User ownerUser, User user)
 		throws Exception {
 
 		ObjectEntry deleteObjectEntry = null;
@@ -554,7 +595,7 @@ public class ObjectEntryServiceTest {
 		try {
 			_setUser(user);
 
-			objectEntry = _addObjectEntry(ownerUser);
+			objectEntry = _addObjectEntry(objectDefinition, ownerUser);
 
 			deleteObjectEntry = _objectEntryService.deleteObjectEntry(
 				objectEntry.getObjectEntryId());
@@ -564,30 +605,6 @@ public class ObjectEntryServiceTest {
 				_objectEntryLocalService.deleteObjectEntry(objectEntry);
 			}
 		}
-	}
-
-	private void _unbindAndDeleteObjectDefinitions(
-			ObjectDefinition nodeObjectDefinition,
-			ObjectDefinition rootObjectDefinition)
-		throws Exception {
-
-		ObjectRelationship objectRelationship =
-			_objectRelationshipLocalService.getObjectRelationship(
-				rootObjectDefinition.getObjectDefinitionId(), "relationship");
-
-		_objectRelationshipLocalService.deleteObjectRelationship(
-			_objectRelationshipLocalService.updateObjectRelationship(
-				objectRelationship.getObjectRelationshipId(), 0,
-				objectRelationship.getDeletionType(), false,
-				objectRelationship.getLabelMap()));
-
-		_objectDefinitionLocalService.deleteObjectDefinition(
-			_objectDefinitionLocalService.updateRootObjectDefinitionId(
-				nodeObjectDefinition.getObjectDefinitionId(), 0));
-
-		_objectDefinitionLocalService.deleteObjectDefinition(
-			_objectDefinitionLocalService.updateRootObjectDefinitionId(
-				rootObjectDefinition.getObjectDefinitionId(), 0));
 	}
 
 	@Inject
