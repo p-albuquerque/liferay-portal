@@ -130,6 +130,7 @@ public class ObjectEntryModelResourcePermission
 				objectEntry.getObjectDefinitionId());
 
 		String modelName = _modelName;
+		long primKey = objectEntry.getObjectEntryId();
 
 		if (objectDefinition.isNode()) {
 			modelName = objectDefinition.getClassName();
@@ -137,6 +138,8 @@ public class ObjectEntryModelResourcePermission
 			objectDefinition =
 				_objectDefinitionLocalService.fetchObjectDefinitionByClassName(
 					permissionChecker.getCompanyId(), _modelName);
+
+			primKey = permissionChecker.getCompanyId();
 		}
 
 		if (permissionChecker.hasOwnerPermission(
@@ -144,8 +147,7 @@ public class ObjectEntryModelResourcePermission
 				objectEntry.getObjectEntryId(), objectEntry.getUserId(),
 				actionId) ||
 			permissionChecker.hasPermission(
-				objectEntry.getGroupId(), _modelName,
-				objectEntry.getObjectEntryId(), actionId)) {
+				objectEntry.getGroupId(), _modelName, primKey, actionId)) {
 
 			return true;
 		}
