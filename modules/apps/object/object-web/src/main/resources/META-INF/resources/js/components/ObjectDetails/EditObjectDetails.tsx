@@ -212,6 +212,11 @@ export default function EditObjectDetails({
 						hasUpdateObjectDefinitionPermission
 					}
 					isApproved={isApproved}
+					isNode={
+						!!values.rootObjectDefinitionExternalReferenceCode &&
+						values.rootObjectDefinitionExternalReferenceCode !==
+							values.externalReferenceCode
+					}
 					label={getLocalizableLabel(
 						values.defaultLanguageId as Liferay.Language.Locale,
 						values.label,

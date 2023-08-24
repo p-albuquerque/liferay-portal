@@ -30,6 +30,7 @@ interface ManagementToolbarProps {
 	hasUpdatePermission: boolean;
 	helpMessage: string;
 	isApproved?: boolean;
+	isNode?: boolean;
 	label: string;
 	onExternalReferenceCodeChange?: (value: string) => void;
 	onGetEntity: () => Promise<Entity>;
@@ -52,6 +53,7 @@ export function ManagementToolbar({
 	hasUpdatePermission,
 	helpMessage,
 	isApproved,
+	isNode,
 	label,
 	onExternalReferenceCodeChange,
 	onGetEntity,
@@ -171,7 +173,7 @@ export function ManagementToolbar({
 								{Liferay.Language.get('save')}
 							</ClayButton>
 
-							{isApproved !== undefined && !isApproved && (
+							{isApproved !== undefined && !isApproved && !isNode && (
 								<ClayButton
 									disabled={!hasUpdatePermission || disabled}
 									id={`${portletNamespace}publish`}
