@@ -336,6 +336,11 @@ export default function EditObjectDetails({
 								<AccountRestrictionContainer
 									errors={errors}
 									isApproved={isApproved}
+									isNode={
+										!!values.rootObjectDefinitionExternalReferenceCode &&
+										values.rootObjectDefinitionExternalReferenceCode !==
+											values.externalReferenceCode
+									}
 									objectFields={objectFields}
 									setValues={setValues}
 									values={values}
