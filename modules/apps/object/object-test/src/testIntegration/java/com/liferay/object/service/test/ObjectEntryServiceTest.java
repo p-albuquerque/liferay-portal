@@ -13,6 +13,10 @@ import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
 import com.liferay.object.constants.ObjectActionKeys;
 import com.liferay.object.constants.ObjectFieldConstants;
 import com.liferay.object.constants.ObjectRelationshipConstants;
+import com.liferay.object.definition.tree.Node;
+import com.liferay.object.definition.tree.Tree;
+import com.liferay.object.definition.tree.TreeFactory;
+import com.liferay.object.field.builder.TextObjectFieldBuilder;
 import com.liferay.object.field.util.ObjectFieldUtil;
 import com.liferay.object.model.ObjectDefinition;
 import com.liferay.object.model.ObjectEntry;
@@ -22,11 +26,14 @@ import com.liferay.object.service.ObjectEntryLocalService;
 import com.liferay.object.service.ObjectEntryService;
 import com.liferay.object.service.ObjectRelationshipLocalService;
 import com.liferay.object.service.test.util.ObjectDefinitionTestUtil;
+import com.liferay.object.service.test.util.TreeTestUtil;
+import com.liferay.petra.function.UnsafeConsumer;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.model.ResourceConstants;
 import com.liferay.portal.kernel.model.Role;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.model.role.RoleConstants;
+import com.liferay.portal.kernel.portlet.bridges.mvc.MVCResourceCommand;
 import com.liferay.portal.kernel.search.BaseModelSearchResult;
 import com.liferay.portal.kernel.security.auth.PrincipalException;
 import com.liferay.portal.kernel.security.auth.PrincipalThreadLocal;
@@ -34,6 +41,7 @@ import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.security.permission.PermissionChecker;
 import com.liferay.portal.kernel.security.permission.PermissionCheckerFactoryUtil;
 import com.liferay.portal.kernel.security.permission.PermissionThreadLocal;
+import com.liferay.portal.kernel.service.PortletLocalService;
 import com.liferay.portal.kernel.service.ResourcePermissionLocalService;
 import com.liferay.portal.kernel.service.RoleLocalService;
 import com.liferay.portal.kernel.service.UserLocalService;
@@ -52,7 +60,10 @@ import com.liferay.portal.vulcan.util.LocalizedMapUtil;
 
 import java.io.Serializable;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Objects;
 
 import org.apache.commons.lang3.RandomStringUtils;
@@ -122,13 +133,76 @@ public class ObjectEntryServiceTest {
 				ServiceContextTestUtil.getServiceContext(
 					TestPropsValues.getGroupId(), _adminUser.getUserId())));
 
+		Tree tree = TreeTestUtil.createTree(
+			_bindObjectDefinitionsMVCResourceCommand,
+			_objectDefinitionLocalService, _objectRelationshipLocalService,
+			_portletLocalService, _treeFactory);
+
+		// This way to publish objects in a Root Context will be
+		// changed when LPS-193250 be merged
+		// >>>
+
+		_assertBoundedObjectDefinitions(
+			tree,
+			objectDefinition -> {
+				ObjectFieldUtil.addCustomObjectField(
+					new TextObjectFieldBuilder(
+					).userId(
+						TestPropsValues.getUserId()
+					).indexed(
+						true
+					).indexedAsKeyword(
+						true
+					).labelMap(
+						LocalizedMapUtil.getLocalizedMap("First Name")
+					).name(
+						"firstName"
+					).objectDefinitionId(
+						objectDefinition.getObjectDefinitionId()
+					).build());
+
+				ObjectFieldUtil.addCustomObjectField(
+					new TextObjectFieldBuilder(
+					).userId(
+						TestPropsValues.getUserId()
+					).indexed(
+						true
+					).indexedAsKeyword(
+						true
+					).labelMap(
+						LocalizedMapUtil.getLocalizedMap("Last Name")
+					).name(
+						"lastName"
+					).objectDefinitionId(
+						objectDefinition.getObjectDefinitionId()
+					).build());
+
+				_objectDefinitionLocalService.publishCustomObjectDefinition(
+					_adminUser.getUserId(),
+					objectDefinition.getObjectDefinitionId());
+			});
+
+		// <<<
+
 		_setUser(_guestUser);
 
-		_assertPrincipalException(ObjectActionKeys.ADD_OBJECT_ENTRY, null);
+		_assertPrincipalException(
+			ObjectActionKeys.ADD_OBJECT_ENTRY, _objectDefinition, null);
+
+		_assertBoundedObjectDefinitions(
+			tree,
+			objectDefinition -> _assertPrincipalException(
+				ObjectActionKeys.ADD_OBJECT_ENTRY, objectDefinition, null));
 
 		_setUser(_user);
 
-		_assertPrincipalException(ObjectActionKeys.ADD_OBJECT_ENTRY, null);
+		_assertPrincipalException(
+			ObjectActionKeys.ADD_OBJECT_ENTRY, _objectDefinition, null);
+
+		_assertBoundedObjectDefinitions(
+			tree,
+			objectDefinition -> _assertPrincipalException(
+				ObjectActionKeys.ADD_OBJECT_ENTRY, objectDefinition, null));
 
 		_setUser(_guestUser);
 
@@ -150,6 +224,61 @@ public class ObjectEntryServiceTest {
 				ServiceContextTestUtil.getServiceContext(
 					TestPropsValues.getGroupId(), _guestUser.getUserId())));
 
+		_assertBoundedObjectDefinitions(
+			tree,
+			objectDefinition -> {
+				if (objectDefinition.isNode()) {
+					_resourcePermissionLocalService.addResourcePermission(
+						TestPropsValues.getCompanyId(),
+						objectDefinition.getResourceName(),
+						ResourceConstants.SCOPE_COMPANY,
+						String.valueOf(TestPropsValues.getCompanyId()),
+						guestRole.getRoleId(),
+						ObjectActionKeys.ADD_OBJECT_ENTRY);
+
+					_assertPrincipalException(
+						ObjectActionKeys.ADD_OBJECT_ENTRY, objectDefinition,
+						null);
+				}
+			});
+
+		ObjectDefinition rootObjectDefinition = null;
+
+		Iterator<Node> iterator = tree.iterator();
+
+		while (iterator.hasNext()) {
+			Node node = iterator.next();
+
+			ObjectDefinition objectDefinition =
+				_objectDefinitionLocalService.fetchObjectDefinition(
+					node.getObjectDefinitionId());
+
+			if (objectDefinition.isRoot()) {
+				rootObjectDefinition = objectDefinition;
+
+				break;
+			}
+		}
+
+		_resourcePermissionLocalService.addResourcePermission(
+			TestPropsValues.getCompanyId(),
+			rootObjectDefinition.getResourceName(),
+			ResourceConstants.SCOPE_COMPANY,
+			String.valueOf(TestPropsValues.getCompanyId()),
+			guestRole.getRoleId(), ObjectActionKeys.ADD_OBJECT_ENTRY);
+
+		_assertBoundedObjectDefinitions(
+			tree,
+			objectDefinition -> Assert.assertNotNull(
+				_objectEntryService.addObjectEntry(
+					0, objectDefinition.getObjectDefinitionId(),
+					HashMapBuilder.<String, Serializable>put(
+						"firstName", RandomStringUtils.randomAlphabetic(5)
+					).build(),
+					ServiceContextTestUtil.getServiceContext(
+						TestPropsValues.getGroupId(),
+						_guestUser.getUserId()))));
+
 		_setUser(_user);
 
 		Assert.assertNotNull(
@@ -160,6 +289,34 @@ public class ObjectEntryServiceTest {
 				).build(),
 				ServiceContextTestUtil.getServiceContext(
 					TestPropsValues.getGroupId(), _guestUser.getUserId())));
+
+		_assertBoundedObjectDefinitions(
+			tree,
+			objectDefinition -> Assert.assertNotNull(
+				_objectEntryService.addObjectEntry(
+					0, objectDefinition.getObjectDefinitionId(),
+					HashMapBuilder.<String, Serializable>put(
+						"firstName", RandomStringUtils.randomAlphabetic(5)
+					).build(),
+					ServiceContextTestUtil.getServiceContext(
+						TestPropsValues.getGroupId(),
+						_guestUser.getUserId()))));
+
+		List<Long> objectDefinitionIds = new ArrayList<>();
+
+		_assertBoundedObjectDefinitions(
+			tree,
+			objectDefinition -> objectDefinitionIds.add(
+				objectDefinition.getObjectDefinitionId()));
+
+		TreeTestUtil.unbind(
+			_objectDefinitionLocalService, rootObjectDefinition.getName(),
+			_portletLocalService, _unbindObjectDefinitionMVCResourceCommand);
+
+		for (long objectDefinitionId : objectDefinitionIds) {
+			_objectDefinitionLocalService.deleteObjectDefinition(
+				objectDefinitionId);
+		}
 	}
 
 	@Test
@@ -200,15 +357,18 @@ public class ObjectEntryServiceTest {
 			_objectEntryService.getObjectEntry(
 				userObjectEntry.getObjectEntryId()));
 
-		_assertPrincipalException(ActionKeys.VIEW, adminObjectEntry);
+		_assertPrincipalException(
+			ActionKeys.VIEW, _objectDefinition, adminObjectEntry);
 
 		_setUser(_guestUser);
 
-		_assertPrincipalException(ActionKeys.VIEW, adminObjectEntry);
+		_assertPrincipalException(
+			ActionKeys.VIEW, _objectDefinition, adminObjectEntry);
 
 		ObjectEntry guestUserObjectEntry = _addObjectEntry(_guestUser);
 
-		_assertPrincipalException(ActionKeys.VIEW, guestUserObjectEntry);
+		_assertPrincipalException(
+			ActionKeys.VIEW, _objectDefinition, guestUserObjectEntry);
 
 		Role guestRole = _roleLocalService.getRole(
 			TestPropsValues.getCompanyId(), RoleConstants.GUEST);
@@ -325,8 +485,25 @@ public class ObjectEntryServiceTest {
 				TestPropsValues.getGroupId(), user.getUserId()));
 	}
 
+	private void _assertBoundedObjectDefinitions(
+			Tree tree,
+			UnsafeConsumer<ObjectDefinition, Exception> unsafeConsumer)
+		throws Exception {
+
+		Iterator<Node> iterator = tree.iterator();
+
+		while (iterator.hasNext()) {
+			Node node = iterator.next();
+
+			unsafeConsumer.accept(
+				_objectDefinitionLocalService.getObjectDefinition(
+					node.getObjectDefinitionId()));
+		}
+	}
+
 	private void _assertPrincipalException(
-			String action, ObjectEntry objectEntry)
+			String action, ObjectDefinition objectDefinition,
+			ObjectEntry objectEntry)
 		throws Exception {
 
 		PermissionChecker permissionChecker =
@@ -339,7 +516,7 @@ public class ObjectEntryServiceTest {
 			}
 			else {
 				_objectEntryService.addObjectEntry(
-					0, _objectDefinition.getObjectDefinitionId(),
+					0, objectDefinition.getObjectDefinitionId(),
 					HashMapBuilder.<String, Serializable>put(
 						"firstName", RandomStringUtils.randomAlphabetic(5)
 					).build(),
@@ -396,6 +573,12 @@ public class ObjectEntryServiceTest {
 	private AccountEntryUserRelLocalService _accountEntryUserRelLocalService;
 
 	private User _adminUser;
+
+	@Inject(
+		filter = "mvc.command.name=/object_definitions/bind_object_definitions"
+	)
+	private MVCResourceCommand _bindObjectDefinitionsMVCResourceCommand;
+
 	private User _guestUser;
 
 	@DeleteAfterTestRun
@@ -416,10 +599,21 @@ public class ObjectEntryServiceTest {
 	private PermissionChecker _originalPermissionChecker;
 
 	@Inject
+	private PortletLocalService _portletLocalService;
+
+	@Inject
 	private ResourcePermissionLocalService _resourcePermissionLocalService;
 
 	@Inject
 	private RoleLocalService _roleLocalService;
+
+	@Inject
+	private TreeFactory _treeFactory;
+
+	@Inject(
+		filter = "mvc.command.name=/object_definitions/unbind_object_definition"
+	)
+	private MVCResourceCommand _unbindObjectDefinitionMVCResourceCommand;
 
 	private User _user;
 
