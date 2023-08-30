@@ -399,6 +399,97 @@ public class ObjectEntryServiceTest {
 		Assert.assertNotNull(
 			_objectEntryService.getObjectEntry(
 				adminObjectEntry.getObjectEntryId()));
+
+		Tree tree = _createTreeAndPublishObjectDefinitions();
+
+		_assertBoundedObjectDefinitions(
+			tree,
+			objectDefinition -> {
+				_setUser(_adminUser);
+
+				ObjectEntry nodeOrRootAdminObjectEntry = _addObjectEntry(
+					objectDefinition, _adminUser);
+
+				Assert.assertNotNull(
+					_objectEntryService.getObjectEntry(
+						nodeOrRootAdminObjectEntry.getObjectEntryId()));
+
+				_setUser(_user);
+
+				ObjectEntry nodeOrRootUserObjectEntry = _addObjectEntry(
+					objectDefinition, _user);
+
+				Assert.assertNotNull(
+					_objectEntryService.getObjectEntry(
+						nodeOrRootUserObjectEntry.getObjectEntryId()));
+
+				_assertPrincipalException(
+					ActionKeys.VIEW, objectDefinition,
+					nodeOrRootAdminObjectEntry);
+
+				_setUser(_guestUser);
+
+				_assertPrincipalException(
+					ActionKeys.VIEW, objectDefinition,
+					nodeOrRootAdminObjectEntry);
+
+				ObjectEntry nodeOrRootGuestUserObjectEntry = _addObjectEntry(
+					objectDefinition, _guestUser);
+
+				_assertPrincipalException(
+					ActionKeys.VIEW, objectDefinition,
+					nodeOrRootGuestUserObjectEntry);
+
+				if (objectDefinition.isNode()) {
+					_resourcePermissionLocalService.addResourcePermission(
+						TestPropsValues.getCompanyId(),
+						objectDefinition.getClassName(),
+						ResourceConstants.SCOPE_COMPANY,
+						String.valueOf(TestPropsValues.getCompanyId()),
+						guestRole.getRoleId(), ActionKeys.VIEW);
+
+					_assertPrincipalException(
+						ActionKeys.VIEW, objectDefinition,
+						nodeOrRootAdminObjectEntry);
+				}
+			});
+
+		ObjectDefinition rootObjectDefinition = null;
+
+		Iterator<Node> iterator = tree.iterator();
+
+		while (iterator.hasNext()) {
+			Node node = iterator.next();
+
+			ObjectDefinition objectDefinition =
+				_objectDefinitionLocalService.fetchObjectDefinition(
+					node.getObjectDefinitionId());
+
+			if (objectDefinition.isRoot()) {
+				rootObjectDefinition = objectDefinition;
+
+				break;
+			}
+		}
+
+		_resourcePermissionLocalService.addResourcePermission(
+			TestPropsValues.getCompanyId(), rootObjectDefinition.getClassName(),
+			ResourceConstants.SCOPE_COMPANY,
+			String.valueOf(TestPropsValues.getCompanyId()),
+			guestRole.getRoleId(), ActionKeys.VIEW);
+
+		_assertBoundedObjectDefinitions(
+			tree,
+			objectDefinition -> {
+				ObjectEntry nodeOrRootAdminObjectEntry = _addObjectEntry(
+					objectDefinition, _adminUser);
+
+				Assert.assertNotNull(
+					_objectEntryService.getObjectEntry(
+						nodeOrRootAdminObjectEntry.getObjectEntryId()));
+			});
+
+		_deleteBoundedObjectDefinitions(rootObjectDefinition, tree);
 	}
 
 	@Test
