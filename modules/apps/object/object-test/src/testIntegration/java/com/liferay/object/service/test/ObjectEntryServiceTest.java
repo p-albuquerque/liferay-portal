@@ -355,6 +355,80 @@ public class ObjectEntryServiceTest {
 		Assert.assertNotNull(
 			_objectEntryService.getObjectEntry(
 				adminObjectEntry.getObjectEntryId()));
+
+		Tree tree = _createTreeAndPublishObjectDefinitions();
+
+		_iterateNodeObjectDefinitions(
+			tree,
+			objectDefinition -> {
+				_setUser(_adminUser);
+
+				ObjectEntry nodeAdminObjectEntry = _addObjectEntry(
+					objectDefinition, _adminUser);
+
+				Assert.assertNotNull(
+					_objectEntryService.getObjectEntry(
+						nodeAdminObjectEntry.getObjectEntryId()));
+
+				_setUser(_user);
+
+				ObjectEntry nodeUserObjectEntry = _addObjectEntry(
+					objectDefinition, _user);
+
+				Assert.assertNotNull(
+					_objectEntryService.getObjectEntry(
+						nodeUserObjectEntry.getObjectEntryId()));
+
+				_assertPrincipalException(
+					ActionKeys.VIEW, objectDefinition, nodeAdminObjectEntry);
+
+				_setUser(_guestUser);
+
+				_assertPrincipalException(
+					ActionKeys.VIEW, objectDefinition, nodeAdminObjectEntry);
+
+				ObjectEntry nodeGuestUserObjectEntry = _addObjectEntry(
+					objectDefinition, _guestUser);
+
+				_assertPrincipalException(
+					ActionKeys.VIEW, objectDefinition,
+					nodeGuestUserObjectEntry);
+
+				if (objectDefinition.isRegularNode()) {
+					_resourcePermissionLocalService.addResourcePermission(
+						TestPropsValues.getCompanyId(),
+						objectDefinition.getClassName(),
+						ResourceConstants.SCOPE_COMPANY,
+						String.valueOf(TestPropsValues.getCompanyId()),
+						guestRole.getRoleId(), ActionKeys.VIEW);
+
+					_assertPrincipalException(
+						ActionKeys.VIEW, objectDefinition,
+						nodeAdminObjectEntry);
+				}
+			});
+
+		_resourcePermissionLocalService.addResourcePermission(
+			TestPropsValues.getCompanyId(),
+			_getRootObjectDefinition(
+				tree
+			).getClassName(),
+			ResourceConstants.SCOPE_COMPANY,
+			String.valueOf(TestPropsValues.getCompanyId()),
+			guestRole.getRoleId(), ActionKeys.VIEW);
+
+		_iterateNodeObjectDefinitions(
+			tree,
+			objectDefinition -> {
+				ObjectEntry nodeAdminObjectEntry = _addObjectEntry(
+					objectDefinition, _adminUser);
+
+				Assert.assertNotNull(
+					_objectEntryService.getObjectEntry(
+						nodeAdminObjectEntry.getObjectEntryId()));
+			});
+
+		TreeTestUtil.tearDown(_objectDefinitionLocalService);
 	}
 
 	@Test
