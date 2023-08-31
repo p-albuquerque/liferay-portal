@@ -117,12 +117,20 @@ public class ObjectEntryModelResourcePermission
 			String actionId)
 		throws PortalException {
 
+		ObjectDefinition objectDefinition =
+			_objectDefinitionLocalService.getObjectDefinition(
+				objectEntry.getObjectDefinitionId());
+
 		User user = permissionChecker.getUser();
+
+		long primKey =
+			objectDefinition.isRegularNode() ?
+				permissionChecker.getCompanyId() :
+					objectEntry.getObjectEntryId();
 
 		if (user.isGuestUser()) {
 			return permissionChecker.hasPermission(
-				objectEntry.getGroupId(), _modelName,
-				objectEntry.getObjectEntryId(), actionId);
+				objectEntry.getGroupId(), _modelName, primKey, actionId);
 		}
 
 		if (permissionChecker.hasOwnerPermission(
@@ -130,15 +138,14 @@ public class ObjectEntryModelResourcePermission
 				objectEntry.getObjectEntryId(), objectEntry.getUserId(),
 				actionId) ||
 			permissionChecker.hasPermission(
-				objectEntry.getGroupId(), _modelName,
-				objectEntry.getObjectEntryId(), actionId)) {
+				objectEntry.getGroupId(), _modelName, primKey, actionId)) {
 
 			return true;
 		}
 
-		ObjectDefinition objectDefinition =
-			_objectDefinitionLocalService.getObjectDefinition(
-				objectEntry.getObjectDefinitionId());
+		objectDefinition =
+			_objectDefinitionLocalService.fetchObjectDefinitionByClassName(
+				permissionChecker.getCompanyId(), _modelName);
 
 		if (!objectDefinition.isAccountEntryRestricted()) {
 			return false;
