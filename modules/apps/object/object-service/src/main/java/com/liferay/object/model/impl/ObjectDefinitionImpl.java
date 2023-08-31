@@ -156,6 +156,28 @@ public class ObjectDefinitionImpl extends ObjectDefinitionBaseImpl {
 	}
 
 	@Override
+	public boolean isRegularNode() {
+		if ((getRootObjectDefinitionId() != 0) &&
+			(getObjectDefinitionId() != getRootObjectDefinitionId())) {
+
+			return true;
+		}
+
+		return false;
+	}
+
+	@Override
+	public boolean isRootNode() {
+		if ((getRootObjectDefinitionId() != 0) &&
+			(getObjectDefinitionId() == getRootObjectDefinitionId())) {
+
+			return true;
+		}
+
+		return false;
+	}
+
+	@Override
 	public boolean isUnmodifiableSystemObject() {
 		if (FeatureFlagManagerUtil.isEnabled("LPS-167253")) {
 			if (!isModifiable() && isSystem()) {
