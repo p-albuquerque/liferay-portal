@@ -13,6 +13,7 @@ import com.liferay.account.service.AccountEntryOrganizationRelLocalService;
 import com.liferay.object.configuration.ObjectConfiguration;
 import com.liferay.object.constants.ObjectActionKeys;
 import com.liferay.object.entry.util.ObjectEntryThreadLocal;
+import com.liferay.object.exception.NoSuchObjectDefinitionException;
 import com.liferay.object.exception.ObjectDefinitionAccountEntryRestrictedException;
 import com.liferay.object.exception.ObjectEntryCountException;
 import com.liferay.object.model.ObjectDefinition;
@@ -128,8 +129,8 @@ public class ObjectEntryServiceImpl extends ObjectEntryServiceBaseImpl {
 			long objectDefinitionId, long objectEntryId, String actionId)
 		throws PortalException {
 
-		ObjectDefinition objectDefinition =
-			_objectDefinitionPersistence.findByPrimaryKey(objectDefinitionId);
+		ObjectDefinition objectDefinition = _getObjectDefinition(
+			objectDefinitionId);
 
 		ModelResourcePermission<ObjectEntry> modelResourcePermission =
 			ModelResourcePermissionRegistryUtil.getModelResourcePermission(
@@ -416,9 +417,8 @@ public class ObjectEntryServiceImpl extends ObjectEntryServiceBaseImpl {
 	private void _checkPermission(String actionId, ObjectEntry objectEntry)
 		throws PortalException {
 
-		ObjectDefinition objectDefinition =
-			_objectDefinitionPersistence.findByPrimaryKey(
-				objectEntry.getObjectDefinitionId());
+		ObjectDefinition objectDefinition = _getObjectDefinition(
+			objectEntry.getObjectDefinitionId());
 
 		ModelResourcePermission<ObjectEntry> modelResourcePermission =
 			ModelResourcePermissionRegistryUtil.getModelResourcePermission(
@@ -549,12 +549,26 @@ public class ObjectEntryServiceImpl extends ObjectEntryServiceBaseImpl {
 			permissionChecker, objectDefinition.getResourceName(), 0, actionId);
 	}
 
+	private ObjectDefinition _getObjectDefinition(long objectDefinitionId)
+		throws NoSuchObjectDefinitionException {
+
+		ObjectDefinition objectDefinition =
+			_objectDefinitionPersistence.findByPrimaryKey(objectDefinitionId);
+
+		if (objectDefinition.isRegularNode()) {
+			return _objectDefinitionPersistence.findByPrimaryKey(
+				objectDefinition.getRootObjectDefinitionId());
+		}
+
+		return objectDefinition;
+	}
+
 	private PortletResourcePermission _getPortletResourcePermission(
 			long objectDefinitionId)
 		throws PortalException {
 
-		ObjectDefinition objectDefinition =
-			_objectDefinitionPersistence.findByPrimaryKey(objectDefinitionId);
+		ObjectDefinition objectDefinition = _getObjectDefinition(
+			objectDefinitionId);
 
 		return _portletResourcePermissionsServiceTrackerMap.getService(
 			objectDefinition.getResourceName());
