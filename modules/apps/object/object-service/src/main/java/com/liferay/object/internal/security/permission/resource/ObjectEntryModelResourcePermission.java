@@ -133,8 +133,12 @@ public class ObjectEntryModelResourcePermission
 				objectEntry.getGroupId(), _modelName, primKey, actionId);
 		}
 
+		String modelName =
+			objectDefinition.isRegularNode() ? objectDefinition.getClassName() :
+				_modelName;
+
 		if (permissionChecker.hasOwnerPermission(
-				permissionChecker.getCompanyId(), _modelName,
+				permissionChecker.getCompanyId(), modelName,
 				objectEntry.getObjectEntryId(), objectEntry.getUserId(),
 				actionId) ||
 			permissionChecker.hasPermission(
