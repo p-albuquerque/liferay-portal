@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
-package com.liferay.object.service.test.util;
+package com.liferay.object.test.util;
 
 import com.liferay.object.definition.tree.Edge;
 import com.liferay.object.definition.tree.Node;
@@ -30,8 +30,8 @@ import java.util.Map;
 public class TreeTestUtil {
 
 	public static void assertTree(
-			Map<String, String[]> expectedMap, Tree actualTree,
-			ObjectDefinitionLocalService objectDefinitionLocalService)
+		Map<String, String[]> expectedMap, Tree actualTree,
+		ObjectDefinitionLocalService objectDefinitionLocalService)
 		throws PortalException {
 
 		Map<String, String[]> actualMap = new LinkedHashMap<>();
@@ -54,8 +54,8 @@ public class TreeTestUtil {
 	}
 
 	public static void bind(
-			ObjectDefinitionLocalService objectDefinitionLocalService,
-			List<ObjectRelationship> objectRelationships)
+		ObjectDefinitionLocalService objectDefinitionLocalService,
+		List<ObjectRelationship> objectRelationships)
 		throws PortalException {
 
 		objectDefinitionLocalService.bindObjectDefinitions(
@@ -65,9 +65,9 @@ public class TreeTestUtil {
 	}
 
 	public static Tree createTree(
-			ObjectDefinitionLocalService objectDefinitionLocalService,
-			ObjectRelationshipLocalService objectRelationshipLocalService,
-			TreeFactory treeFactory)
+		ObjectDefinitionLocalService objectDefinitionLocalService,
+		ObjectRelationshipLocalService objectRelationshipLocalService,
+		TreeFactory treeFactory)
 		throws PortalException {
 
 		ObjectDefinition objectDefinitionA =
@@ -101,9 +101,9 @@ public class TreeTestUtil {
 	}
 
 	public static ObjectRelationship getEdgeObjectRelationship(
-			ObjectDefinition objectDefinition,
-			ObjectRelationshipLocalService objectRelationshipLocalService,
-			Tree tree)
+		ObjectDefinition objectDefinition,
+		ObjectRelationshipLocalService objectRelationshipLocalService,
+		Tree tree)
 		throws PortalException {
 
 		Node node = tree.getNode(objectDefinition.getObjectDefinitionId());
@@ -115,11 +115,11 @@ public class TreeTestUtil {
 	}
 
 	public static void tearDown(
-			ObjectDefinitionLocalService objectDefinitionLocalService)
+		ObjectDefinitionLocalService objectDefinitionLocalService)
 		throws PortalException {
 
 		for (String objectDefinitionName :
-				new String[] {"C_A", "C_AA", "C_AAA", "C_AAB", "C_AB"}) {
+			new String[] {"C_A", "C_AA", "C_AAA", "C_AAB", "C_AB"}) {
 
 			ObjectDefinition objectDefinition =
 				objectDefinitionLocalService.fetchObjectDefinition(
@@ -139,8 +139,8 @@ public class TreeTestUtil {
 	}
 
 	public static void unbind(
-			ObjectDefinitionLocalService objectDefinitionLocalService,
-			String objectDefinitionName)
+		ObjectDefinitionLocalService objectDefinitionLocalService,
+		String objectDefinitionName)
 		throws PortalException {
 
 		ObjectDefinition objectDefinition =
@@ -152,8 +152,8 @@ public class TreeTestUtil {
 	}
 
 	private static String _getShortName(
-			Node node,
-			ObjectDefinitionLocalService objectDefinitionLocalService)
+		Node node,
+		ObjectDefinitionLocalService objectDefinitionLocalService)
 		throws PortalException {
 
 		ObjectDefinition objectDefinition =

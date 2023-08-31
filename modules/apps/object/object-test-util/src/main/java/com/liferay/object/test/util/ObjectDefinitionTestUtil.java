@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
-package com.liferay.object.service.test.util;
+package com.liferay.object.test.util;
 
 import com.liferay.object.constants.ObjectDefinitionConstants;
 import com.liferay.object.model.ObjectDefinition;
@@ -26,12 +26,12 @@ import java.util.Map;
 public class ObjectDefinitionTestUtil {
 
 	public static ObjectDefinition addModifiableSystemObjectDefinition(
-			long userId, String dbTableName, Map<Locale, String> labelMap,
-			String name, String pkObjectFieldDBColumnName,
-			String pkObjectFieldName, Map<Locale, String> pluralLabelMap,
-			String scope, String titleObjectFieldName, int version,
-			ObjectDefinitionLocalService objectDefinitionLocalService,
-			List<ObjectField> objectFields)
+		long userId, String dbTableName, Map<Locale, String> labelMap,
+		String name, String pkObjectFieldDBColumnName,
+		String pkObjectFieldName, Map<Locale, String> pluralLabelMap,
+		String scope, String titleObjectFieldName, int version,
+		ObjectDefinitionLocalService objectDefinitionLocalService,
+		List<ObjectField> objectFields)
 		throws Exception {
 
 		return objectDefinitionLocalService.addSystemObjectDefinition(
@@ -42,9 +42,9 @@ public class ObjectDefinitionTestUtil {
 	}
 
 	public static ObjectDefinition addObjectDefinition(
-			boolean enableLocalization,
-			ObjectDefinitionLocalService objectDefinitionLocalService,
-			List<ObjectField> objectFields)
+		boolean enableLocalization,
+		ObjectDefinitionLocalService objectDefinitionLocalService,
+		List<ObjectField> objectFields)
 		throws Exception {
 
 		return objectDefinitionLocalService.addCustomObjectDefinition(
@@ -57,15 +57,15 @@ public class ObjectDefinitionTestUtil {
 	}
 
 	public static ObjectDefinition addObjectDefinition(
-			ObjectDefinitionLocalService objectDefinitionLocalService)
+		ObjectDefinitionLocalService objectDefinitionLocalService)
 		throws Exception {
 
 		return addObjectDefinition(false, objectDefinitionLocalService, null);
 	}
 
 	public static ObjectDefinition addObjectDefinition(
-			String name,
-			ObjectDefinitionLocalService objectDefinitionLocalService)
+		String name,
+		ObjectDefinitionLocalService objectDefinitionLocalService)
 		throws PortalException {
 
 		return objectDefinitionLocalService.addCustomObjectDefinition(
@@ -79,13 +79,13 @@ public class ObjectDefinitionTestUtil {
 	}
 
 	public static ObjectDefinition addUnmodifiableSystemObjectDefinition(
-			String externalReferenceCode, long userId, String className,
-			String dbTableName, Map<Locale, String> labelMap, String name,
-			String pkObjectFieldDBColumnName, String pkObjectFieldName,
-			Map<Locale, String> pluralLabelMap, String scope,
-			String titleObjectFieldName, int version,
-			ObjectDefinitionLocalService objectDefinitionLocalService,
-			List<ObjectField> objectFields)
+		String externalReferenceCode, long userId, String className,
+		String dbTableName, Map<Locale, String> labelMap, String name,
+		String pkObjectFieldDBColumnName, String pkObjectFieldName,
+		Map<Locale, String> pluralLabelMap, String scope,
+		String titleObjectFieldName, int version,
+		ObjectDefinitionLocalService objectDefinitionLocalService,
+		List<ObjectField> objectFields)
 		throws Exception {
 
 		return objectDefinitionLocalService.addSystemObjectDefinition(
