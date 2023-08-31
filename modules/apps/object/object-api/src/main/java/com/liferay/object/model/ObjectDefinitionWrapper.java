@@ -975,6 +975,16 @@ public class ObjectDefinitionWrapper
 		return model.isPortlet();
 	}
 
+	@Override
+	public boolean isRegularNode() {
+		return model.isRegularNode();
+	}
+
+	@Override
+	public boolean isRootNode() {
+		return model.isRootNode();
+	}
+
 	/**
 	 * Returns <code>true</code> if this object definition is system.
 	 *

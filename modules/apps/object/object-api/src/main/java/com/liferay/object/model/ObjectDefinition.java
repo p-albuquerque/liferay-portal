@@ -72,6 +72,10 @@ public interface ObjectDefinition
 
 	public boolean isDefaultStorageType();
 
+	public boolean isRegularNode();
+
+	public boolean isRootNode();
+
 	public boolean isUnmodifiableSystemObject();
 
 }
