@@ -29,6 +29,8 @@ import com.liferay.object.constants.ObjectFieldSettingConstants;
 import com.liferay.object.constants.ObjectFieldValidationConstants;
 import com.liferay.object.constants.ObjectFilterConstants;
 import com.liferay.object.constants.ObjectRelationshipConstants;
+import com.liferay.object.definition.tree.Tree;
+import com.liferay.object.definition.tree.TreeFactory;
 import com.liferay.object.exception.NoSuchObjectEntryException;
 import com.liferay.object.exception.ObjectDefinitionAccountEntryRestrictedException;
 import com.liferay.object.exception.ObjectEntryValuesException;
@@ -63,6 +65,7 @@ import com.liferay.object.service.ObjectFieldService;
 import com.liferay.object.service.ObjectFieldSettingLocalService;
 import com.liferay.object.service.ObjectFilterLocalService;
 import com.liferay.object.service.ObjectRelationshipLocalService;
+import com.liferay.object.test.util.TreeTestUtil;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.model.Group;
@@ -142,6 +145,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.hamcrest.CoreMatchers;
 
@@ -973,6 +977,153 @@ public class DefaultObjectEntryManagerImplTest
 				accountEntry2.getAccountEntryId()),
 			() -> _addObjectEntry(accountEntry2));
 
+		Tree tree = TreeTestUtil.createTreeAndPublishObjectDefinitions(
+			objectDefinitionLocalService, _objectRelationshipLocalService,
+			_treeFactory);
+
+		ObjectDefinition rootObjectDefinition =
+			TreeTestUtil.getRootObjectDefinition(
+				objectDefinitionLocalService, tree);
+
+		_resourcePermissionLocalService.addResourcePermission(
+			companyId, rootObjectDefinition.getResourceName(),
+			ResourceConstants.SCOPE_GROUP_TEMPLATE, "0", _buyerRole.getRoleId(),
+			ObjectActionKeys.ADD_OBJECT_ENTRY);
+
+		ObjectDefinition accountEntryObjectDefinition =
+			objectDefinitionLocalService.fetchObjectDefinition(
+				companyId, "AccountEntry");
+
+		AtomicInteger index = new AtomicInteger();
+
+		TreeTestUtil.iterateNodeObjectDefinitions(
+			objectDefinitionLocalService, tree,
+			objectDefinition -> {
+				ObjectRelationship objectRelationship =
+					_objectRelationshipLocalService.addObjectRelationship(
+						adminUser.getUserId(),
+						accountEntryObjectDefinition.
+							getObjectDefinitionId(),
+						objectDefinition.getObjectDefinitionId(), 0,
+						ObjectRelationshipConstants.DELETION_TYPE_CASCADE,
+						LocalizedMapUtil.getLocalizedMap(
+							RandomTestUtil.randomString()),
+						"oneToManyRelationshipName" +
+						String.valueOf(index.get()),
+						ObjectRelationshipConstants.TYPE_ONE_TO_MANY);
+
+				if (objectDefinition.isRegularNode()) {
+
+					objectDefinition.setAccountEntryRestrictedObjectFieldId(
+						objectRelationship.getObjectFieldId2());
+
+					objectDefinition.setAccountEntryRestricted(true);
+
+					objectDefinition =
+						objectDefinitionLocalService.updateObjectDefinition(
+							objectDefinition);
+				}
+
+				ObjectDefinition finalObjectDefinition = objectDefinition;
+				AssertUtils.assertFailure(
+					PrincipalException.MustHavePermission.class,
+					StringBundler.concat(
+						"User ", _user.getUserId(), " must have ",
+						ObjectActionKeys.ADD_OBJECT_ENTRY, " permission for ",
+						rootObjectDefinition.getResourceName(),
+						StringPool.SPACE),
+					() -> _defaultObjectEntryManager.addObjectEntry(
+						_simpleDTOConverterContext, finalObjectDefinition,
+						new ObjectEntry() {
+							{
+								properties = HashMapBuilder.<String, Object>put(
+									"r_oneToManyRelationshipName" +
+									String.valueOf(index.get()) +
+									"_accountEntryId",
+									accountEntry1.getAccountEntryId()
+								).build();
+							}
+						},
+						ObjectDefinitionConstants.SCOPE_COMPANY));
+
+				AssertUtils.assertFailure(
+					PrincipalException.MustHavePermission.class,
+					StringBundler.concat(
+						"User ", _user.getUserId(), " must have ",
+						ObjectActionKeys.ADD_OBJECT_ENTRY, " permission for ",
+						rootObjectDefinition.getResourceName(),
+						StringPool.SPACE),
+					() -> _defaultObjectEntryManager.addObjectEntry(
+						_simpleDTOConverterContext, finalObjectDefinition,
+						new ObjectEntry() {
+							{
+								properties = HashMapBuilder.<String, Object>put(
+									"r_oneToManyRelationshipName" +
+									String.valueOf(index.get()) +
+									"_accountEntryId",
+									accountEntry2.getAccountEntryId()
+								).build();
+							}
+						},
+						ObjectDefinitionConstants.SCOPE_COMPANY));
+
+				index.getAndIncrement();
+			});
+
+		ObjectRelationship rootObjectRelationship = _objectRelationshipLocalService.getObjectRelationshipByObjectDefinitionId(
+			accountEntryObjectDefinition.getObjectDefinitionId(), "oneToManyRelationshipName0");
+
+		rootObjectDefinition.setAccountEntryRestrictedObjectFieldId(
+			rootObjectRelationship.getObjectFieldId2());
+
+		rootObjectDefinition.setAccountEntryRestricted(true);
+
+		objectDefinitionLocalService.updateObjectDefinition(
+			rootObjectDefinition);
+
+		index.set(0);
+
+		TreeTestUtil.iterateNodeObjectDefinitions(
+			objectDefinitionLocalService, tree,
+			objectDefinition -> {
+				Assert.assertNotNull(
+					_defaultObjectEntryManager.addObjectEntry(
+						_simpleDTOConverterContext, objectDefinition,
+						new ObjectEntry() {
+							{
+								properties = HashMapBuilder.<String, Object>put(
+									"r_oneToManyRelationshipName" +
+										String.valueOf(index.get()) +
+											"_accountEntryId",
+									accountEntry1.getAccountEntryId()
+								).build();
+							}
+						},
+						ObjectDefinitionConstants.SCOPE_COMPANY));
+
+				AssertUtils.assertFailure(
+					ObjectDefinitionAccountEntryRestrictedException.class,
+					StringBundler.concat(
+						"User ", _user.getUserId(),
+						" does not have access to account entry ",
+						accountEntry2.getAccountEntryId()),
+					() -> _defaultObjectEntryManager.addObjectEntry(
+						_simpleDTOConverterContext, objectDefinition,
+						new ObjectEntry() {
+							{
+								properties = HashMapBuilder.<String, Object>put(
+									"r_oneToManyRelationshipName" +
+										String.valueOf(index.get()) +
+											"_accountEntryId",
+									accountEntry2.getAccountEntryId()
+								).build();
+							}
+						},
+						ObjectDefinitionConstants.SCOPE_COMPANY));
+
+				index.getAndIncrement();
+			});
+
 		// Account entry restricted with organization scope
 
 		Organization organization1 = OrganizationTestUtil.addOrganization();
@@ -1078,6 +1229,8 @@ public class DefaultObjectEntryManagerImplTest
 			ObjectActionKeys.ADD_OBJECT_ENTRY, _accountManagerRole);
 
 		Assert.assertNotNull(_addObjectEntry(accountEntry1));
+
+		TreeTestUtil.tearDown(objectDefinitionLocalService);
 	}
 
 	@Test
@@ -3185,6 +3338,9 @@ public class DefaultObjectEntryManagerImplTest
 
 	@Inject
 	private RoleLocalService _roleLocalService;
+
+	@Inject
+	private TreeFactory _treeFactory;
 
 	@DeleteAfterTestRun
 	private User _user;

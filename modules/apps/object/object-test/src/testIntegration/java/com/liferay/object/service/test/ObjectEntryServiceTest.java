@@ -130,9 +130,11 @@ public class ObjectEntryServiceTest {
 				ServiceContextTestUtil.getServiceContext(
 					TestPropsValues.getGroupId(), _adminUser.getUserId())));
 
-		Tree tree = _createTreeAndPublishObjectDefinitions();
+		Tree tree = TreeTestUtil.createTreeAndPublishObjectDefinitions(_objectDefinitionLocalService,
+			_objectRelationshipLocalService, _treeFactory);
 
-		_iterateNodeObjectDefinitions(
+		TreeTestUtil.iterateNodeObjectDefinitions(
+			_objectDefinitionLocalService,
 			tree,
 			objectDefinition -> Assert.assertNotNull(
 				_objectEntryService.addObjectEntry(
@@ -149,7 +151,8 @@ public class ObjectEntryServiceTest {
 		_assertPrincipalException(
 			ObjectActionKeys.ADD_OBJECT_ENTRY, _objectDefinition, null);
 
-		_iterateNodeObjectDefinitions(
+		TreeTestUtil.iterateNodeObjectDefinitions(
+			_objectDefinitionLocalService,
 			tree,
 			objectDefinition -> _assertPrincipalException(
 				ObjectActionKeys.ADD_OBJECT_ENTRY, _objectDefinition, null));
@@ -159,7 +162,8 @@ public class ObjectEntryServiceTest {
 		_assertPrincipalException(
 			ObjectActionKeys.ADD_OBJECT_ENTRY, _objectDefinition, null);
 
-		_iterateNodeObjectDefinitions(
+		TreeTestUtil.iterateNodeObjectDefinitions(
+			_objectDefinitionLocalService,
 			tree,
 			objectDefinition -> _assertPrincipalException(
 				ObjectActionKeys.ADD_OBJECT_ENTRY, _objectDefinition, null));
@@ -184,7 +188,8 @@ public class ObjectEntryServiceTest {
 				ServiceContextTestUtil.getServiceContext(
 					TestPropsValues.getGroupId(), _guestUser.getUserId())));
 
-		_iterateNodeObjectDefinitions(
+		TreeTestUtil.iterateNodeObjectDefinitions(
+			_objectDefinitionLocalService,
 			tree,
 			objectDefinition -> {
 				if (objectDefinition.isRegularNode()) {
@@ -203,14 +208,15 @@ public class ObjectEntryServiceTest {
 
 		_resourcePermissionLocalService.addResourcePermission(
 			TestPropsValues.getCompanyId(),
-			_getRootObjectDefinition(
+			TreeTestUtil.getRootObjectDefinition(_objectDefinitionLocalService,
 				tree
 			).getResourceName(),
 			ResourceConstants.SCOPE_COMPANY,
 			String.valueOf(TestPropsValues.getCompanyId()),
 			guestRole.getRoleId(), ObjectActionKeys.ADD_OBJECT_ENTRY);
 
-		_iterateNodeObjectDefinitions(
+		TreeTestUtil.iterateNodeObjectDefinitions(
+			_objectDefinitionLocalService,
 			tree,
 			objectDefinition -> Assert.assertNotNull(
 				_objectEntryService.addObjectEntry(
@@ -233,7 +239,8 @@ public class ObjectEntryServiceTest {
 				ServiceContextTestUtil.getServiceContext(
 					TestPropsValues.getGroupId(), _guestUser.getUserId())));
 
-		_iterateNodeObjectDefinitions(
+		TreeTestUtil.iterateNodeObjectDefinitions(
+			_objectDefinitionLocalService,
 			tree,
 			objectDefinition -> Assert.assertNotNull(
 				_objectEntryService.addObjectEntry(
@@ -258,9 +265,11 @@ public class ObjectEntryServiceTest {
 
 		_testDeleteObjectEntry(_objectDefinition, _user, _user);
 
-		Tree tree = _createTreeAndPublishObjectDefinitions();
+		Tree tree = TreeTestUtil.createTreeAndPublishObjectDefinitions(_objectDefinitionLocalService,
+			_objectRelationshipLocalService, _treeFactory);
 
-		_iterateNodeObjectDefinitions(
+		TreeTestUtil.iterateNodeObjectDefinitions(
+			_objectDefinitionLocalService,
 			tree,
 			objectDefinition -> {
 				_setUser(_user);
@@ -278,7 +287,8 @@ public class ObjectEntryServiceTest {
 
 		_setUser(_user);
 
-		_iterateNodeObjectDefinitions(
+		TreeTestUtil.iterateNodeObjectDefinitions(
+			_objectDefinitionLocalService,
 			tree,
 			objectDefinition -> {
 				if (objectDefinition.isRegularNode()) {
@@ -295,14 +305,15 @@ public class ObjectEntryServiceTest {
 
 		_resourcePermissionLocalService.addResourcePermission(
 			TestPropsValues.getCompanyId(),
-			_getRootObjectDefinition(
+			TreeTestUtil.getRootObjectDefinition(_objectDefinitionLocalService,
 				tree
 			).getClassName(),
 			ResourceConstants.SCOPE_COMPANY,
 			String.valueOf(TestPropsValues.getCompanyId()), role.getRoleId(),
 			ActionKeys.DELETE);
 
-		_iterateNodeObjectDefinitions(
+		TreeTestUtil.iterateNodeObjectDefinitions(
+			_objectDefinitionLocalService,
 			tree,
 			objectDefinition -> _testDeleteObjectEntry(
 				objectDefinition, _adminUser, _user));
@@ -356,9 +367,11 @@ public class ObjectEntryServiceTest {
 			_objectEntryService.getObjectEntry(
 				adminObjectEntry.getObjectEntryId()));
 
-		Tree tree = _createTreeAndPublishObjectDefinitions();
+		Tree tree = TreeTestUtil.createTreeAndPublishObjectDefinitions(_objectDefinitionLocalService,
+			_objectRelationshipLocalService, _treeFactory);
 
-		_iterateNodeObjectDefinitions(
+		TreeTestUtil.iterateNodeObjectDefinitions(
+			_objectDefinitionLocalService,
 			tree,
 			objectDefinition -> {
 				_setUser(_adminUser);
@@ -410,14 +423,15 @@ public class ObjectEntryServiceTest {
 
 		_resourcePermissionLocalService.addResourcePermission(
 			TestPropsValues.getCompanyId(),
-			_getRootObjectDefinition(
+			TreeTestUtil.getRootObjectDefinition(_objectDefinitionLocalService,
 				tree
 			).getClassName(),
 			ResourceConstants.SCOPE_COMPANY,
 			String.valueOf(TestPropsValues.getCompanyId()),
 			guestRole.getRoleId(), ActionKeys.VIEW);
 
-		_iterateNodeObjectDefinitions(
+		TreeTestUtil.iterateNodeObjectDefinitions(
+			_objectDefinitionLocalService,
 			tree,
 			objectDefinition -> {
 				ObjectEntry nodeAdminObjectEntry = _addObjectEntry(
@@ -577,60 +591,6 @@ public class ObjectEntryServiceTest {
 		}
 	}
 
-	private Tree _createTreeAndPublishObjectDefinitions() throws Exception {
-		Tree tree = TreeTestUtil.createTree(
-			_objectDefinitionLocalService, _objectRelationshipLocalService,
-			_treeFactory);
-
-		// This way to publish objects in a Root Context will be
-		// changed when LPS-193250 be merged
-		// >>>
-
-		_iterateNodeObjectDefinitions(
-			tree,
-			objectDefinition -> {
-				ObjectFieldUtil.addCustomObjectField(
-					new TextObjectFieldBuilder(
-					).userId(
-						TestPropsValues.getUserId()
-					).indexed(
-						true
-					).indexedAsKeyword(
-						true
-					).labelMap(
-						LocalizedMapUtil.getLocalizedMap("First Name")
-					).name(
-						"firstName"
-					).objectDefinitionId(
-						objectDefinition.getObjectDefinitionId()
-					).build());
-
-				ObjectFieldUtil.addCustomObjectField(
-					new TextObjectFieldBuilder(
-					).userId(
-						TestPropsValues.getUserId()
-					).indexed(
-						true
-					).indexedAsKeyword(
-						true
-					).labelMap(
-						LocalizedMapUtil.getLocalizedMap("Last Name")
-					).name(
-						"lastName"
-					).objectDefinitionId(
-						objectDefinition.getObjectDefinitionId()
-					).build());
-
-				_objectDefinitionLocalService.publishCustomObjectDefinition(
-					_adminUser.getUserId(),
-					objectDefinition.getObjectDefinitionId());
-			});
-
-		// <<<
-
-		return tree;
-	}
-
 	private ObjectDefinition _getRootObjectDefinition(Tree tree)
 		throws PortalException {
 
@@ -645,22 +605,6 @@ public class ObjectEntryServiceTest {
 
 		return _objectDefinitionLocalService.getObjectDefinition(
 			rootObjectDefinitionId);
-	}
-
-	private void _iterateNodeObjectDefinitions(
-			Tree tree,
-			UnsafeConsumer<ObjectDefinition, Exception> unsafeConsumer)
-		throws Exception {
-
-		Iterator<Node> iterator = tree.iterator();
-
-		while (iterator.hasNext()) {
-			Node node = iterator.next();
-
-			unsafeConsumer.accept(
-				_objectDefinitionLocalService.getObjectDefinition(
-					node.getObjectDefinitionId()));
-		}
 	}
 
 	private void _setUser(User user) throws Exception {

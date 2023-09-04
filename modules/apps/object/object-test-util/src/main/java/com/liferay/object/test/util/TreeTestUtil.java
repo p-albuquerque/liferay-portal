@@ -9,14 +9,18 @@ import com.liferay.object.definition.tree.Edge;
 import com.liferay.object.definition.tree.Node;
 import com.liferay.object.definition.tree.Tree;
 import com.liferay.object.definition.tree.TreeFactory;
+import com.liferay.object.field.builder.TextObjectFieldBuilder;
+import com.liferay.object.field.util.ObjectFieldUtil;
 import com.liferay.object.model.ObjectDefinition;
 import com.liferay.object.model.ObjectRelationship;
 import com.liferay.object.service.ObjectDefinitionLocalService;
 import com.liferay.object.service.ObjectRelationshipLocalService;
+import com.liferay.petra.function.UnsafeConsumer;
 import com.liferay.petra.function.transform.TransformUtil;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.test.AssertUtils;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
+import com.liferay.portal.vulcan.util.LocalizedMapUtil;
 
 import java.util.Arrays;
 import java.util.Iterator;
@@ -72,11 +76,11 @@ public class TreeTestUtil {
 
 		ObjectDefinition objectDefinitionA =
 			ObjectDefinitionTestUtil.addObjectDefinition(
-				"A", objectDefinitionLocalService);
+				"A1", objectDefinitionLocalService);
 
 		ObjectDefinition objectDefinitionAA =
 			ObjectDefinitionTestUtil.addObjectDefinition(
-				"AA", objectDefinitionLocalService);
+				"AA1", objectDefinitionLocalService);
 
 		bind(
 			objectDefinitionLocalService,
@@ -87,17 +91,74 @@ public class TreeTestUtil {
 				ObjectRelationshipTestUtil.addObjectRelationship(
 					objectRelationshipLocalService, objectDefinitionAA,
 					ObjectDefinitionTestUtil.addObjectDefinition(
-						"AAA", objectDefinitionLocalService)),
+						"AAA1", objectDefinitionLocalService)),
 				ObjectRelationshipTestUtil.addObjectRelationship(
 					objectRelationshipLocalService, objectDefinitionAA,
 					ObjectDefinitionTestUtil.addObjectDefinition(
-						"AAB", objectDefinitionLocalService)),
+						"AAB1", objectDefinitionLocalService)),
 				ObjectRelationshipTestUtil.addObjectRelationship(
 					objectRelationshipLocalService, objectDefinitionA,
 					ObjectDefinitionTestUtil.addObjectDefinition(
-						"AB", objectDefinitionLocalService))));
+						"AB1", objectDefinitionLocalService))));
 
 		return treeFactory.create(objectDefinitionA.getObjectDefinitionId());
+	}
+
+	public static Tree createTreeAndPublishObjectDefinitions(ObjectDefinitionLocalService objectDefinitionLocalService,
+															 ObjectRelationshipLocalService objectRelationshipLocalService,
+															 TreeFactory treeFactory) throws Exception {
+		Tree tree = createTree(
+			objectDefinitionLocalService, objectRelationshipLocalService,
+			treeFactory);
+
+		// This way to publish objects in a Root Context will be
+		// changed when LPS-193250 be merged
+		// >>>
+
+		iterateNodeObjectDefinitions(
+			objectDefinitionLocalService,
+			tree,
+			objectDefinition -> {
+				ObjectFieldUtil.addCustomObjectField(
+					new TextObjectFieldBuilder(
+					).userId(
+						TestPropsValues.getUserId()
+					).indexed(
+						true
+					).indexedAsKeyword(
+						true
+					).labelMap(
+						LocalizedMapUtil.getLocalizedMap("First Name")
+					).name(
+						"firstName"
+					).objectDefinitionId(
+						objectDefinition.getObjectDefinitionId()
+					).build());
+
+				ObjectFieldUtil.addCustomObjectField(
+					new TextObjectFieldBuilder(
+					).userId(
+						TestPropsValues.getUserId()
+					).indexed(
+						true
+					).indexedAsKeyword(
+						true
+					).labelMap(
+						LocalizedMapUtil.getLocalizedMap("Last Name")
+					).name(
+						"lastName"
+					).objectDefinitionId(
+						objectDefinition.getObjectDefinitionId()
+					).build());
+
+				objectDefinitionLocalService.publishCustomObjectDefinition(
+					TestPropsValues.getUserId(),
+					objectDefinition.getObjectDefinitionId());
+			});
+
+		// <<<
+
+		return tree;
 	}
 
 	public static ObjectRelationship getEdgeObjectRelationship(
@@ -114,12 +175,45 @@ public class TreeTestUtil {
 			edge.getObjectRelationshipId());
 	}
 
+	public static ObjectDefinition getRootObjectDefinition(ObjectDefinitionLocalService objectDefinitionLocalService,
+														   Tree tree)
+		throws PortalException {
+		Iterator<Node> iterator = tree.iterator();
+
+		Node node = iterator.next();
+
+		long rootObjectDefinitionId =
+			objectDefinitionLocalService.getObjectDefinition(
+				node.getObjectDefinitionId()
+			).getRootObjectDefinitionId();
+
+		return objectDefinitionLocalService.getObjectDefinition(
+			rootObjectDefinitionId);
+	}
+
+	public static void iterateNodeObjectDefinitions(ObjectDefinitionLocalService objectDefinitionLocalService,
+		Tree tree,
+		UnsafeConsumer<ObjectDefinition, Exception> unsafeConsumer)
+		throws Exception {
+
+		Iterator<Node> iterator = tree.iterator();
+
+		while (iterator.hasNext()) {
+			Node node = iterator.next();
+
+			unsafeConsumer.accept(
+				objectDefinitionLocalService.getObjectDefinition(
+					node.getObjectDefinitionId()));
+		}
+	}
+
+
 	public static void tearDown(
 		ObjectDefinitionLocalService objectDefinitionLocalService)
 		throws PortalException {
 
 		for (String objectDefinitionName :
-			new String[] {"C_A", "C_AA", "C_AAA", "C_AAB", "C_AB"}) {
+			new String[] {"C_A1", "C_AA1", "C_AAA1", "C_AAB1", "C_AB1"}) {
 
 			ObjectDefinition objectDefinition =
 				objectDefinitionLocalService.fetchObjectDefinition(
