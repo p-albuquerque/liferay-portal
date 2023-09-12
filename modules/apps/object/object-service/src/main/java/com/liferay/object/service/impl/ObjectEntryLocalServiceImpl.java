@@ -35,6 +35,10 @@ import com.liferay.object.constants.ObjectFieldSettingConstants;
 import com.liferay.object.constants.ObjectFieldValidationConstants;
 import com.liferay.object.constants.ObjectFilterConstants;
 import com.liferay.object.constants.ObjectRelationshipConstants;
+import com.liferay.object.definition.tree.Edge;
+import com.liferay.object.definition.tree.Node;
+import com.liferay.object.definition.tree.Tree;
+import com.liferay.object.definition.tree.TreeFactory;
 import com.liferay.object.entry.util.ObjectEntryThreadLocal;
 import com.liferay.object.exception.NoSuchObjectFieldException;
 import com.liferay.object.exception.ObjectDefinitionScopeException;
@@ -80,6 +84,7 @@ import com.liferay.object.system.SystemObjectDefinitionManager;
 import com.liferay.object.system.SystemObjectDefinitionManagerRegistry;
 import com.liferay.osgi.service.tracker.collections.map.ServiceTrackerMap;
 import com.liferay.osgi.service.tracker.collections.map.ServiceTrackerMapFactory;
+import com.liferay.osgi.util.service.Snapshot;
 import com.liferay.petra.function.transform.TransformUtil;
 import com.liferay.petra.lang.CentralizedThreadLocal;
 import com.liferay.petra.sql.dsl.Column;
@@ -276,6 +281,8 @@ public class ObjectEntryLocalServiceImpl
 		ObjectEntry objectEntry = objectEntryPersistence.create(objectEntryId);
 
 		_setExternalReferenceCode(objectEntry, values);
+
+		_setRootObjectEntryId(objectEntry, objectDefinition);
 
 		objectEntry.setGroupId(groupId);
 		objectEntry.setCompanyId(user.getCompanyId());
@@ -1416,6 +1423,8 @@ public class ObjectEntryLocalServiceImpl
 		objectEntry = objectEntryPersistence.findByPrimaryKey(objectEntryId);
 
 		_setExternalReferenceCode(objectEntry, values);
+
+		_setRootObjectEntryId(objectEntry, objectDefinition);
 
 		objectEntry.setModifiedDate(serviceContext.getModifiedDate(null));
 		objectEntry.setTransientValues(transientValues);
@@ -3675,6 +3684,44 @@ public class ObjectEntryLocalServiceImpl
 		}
 	}
 
+	private void _setRootObjectEntryId(
+			ObjectEntry objectEntry, ObjectDefinition objectDefinition)
+		throws PortalException {
+
+		if (!objectDefinition.isRootDescendantNode()) {
+			return;
+		}
+
+		TreeFactory treeFactory = _treeFactorySnapshot.get();
+
+		Tree tree = treeFactory.create(
+			objectDefinition.getRootObjectDefinitionId());
+
+		Node node = tree.getNode(objectDefinition.getObjectDefinitionId());
+
+		ObjectEntry rootObjectEntry = objectEntry;
+
+		while (!node.isRoot()) {
+			Edge edge = node.getEdge();
+
+			ObjectRelationship objectRelationship =
+				_objectRelationshipPersistence.findByPrimaryKey(
+					edge.getObjectRelationshipId());
+
+			ObjectField objectField = _objectFieldLocalService.getObjectField(
+				objectRelationship.getObjectFieldId2());
+
+			rootObjectEntry = getObjectEntry(
+				MapUtil.getLong(
+					rootObjectEntry.getValues(), objectField.getName()));
+
+			node = tree.getNode(objectEntry.getObjectDefinitionId());
+		}
+
+		objectEntry.setRootObjectEntryId(
+			rootObjectEntry.getRootObjectEntryId());
+	}
+
 	private void _startWorkflowInstance(
 			long userId, ObjectEntry objectEntry, ServiceContext serviceContext)
 		throws PortalException {
@@ -4448,6 +4495,9 @@ public class ObjectEntryLocalServiceImpl
 		new CentralizedThreadLocal<>(
 			ObjectEntryLocalServiceImpl.class + "._skipModelListeners",
 			() -> false);
+	private static final Snapshot<TreeFactory> _treeFactorySnapshot =
+		new Snapshot<>(
+			ObjectEntryLocalServiceImpl.class, TreeFactory.class, null, true);
 
 	@Reference
 	private AccountEntryLocalService _accountEntryLocalService;
