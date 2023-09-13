@@ -282,7 +282,7 @@ public class ObjectEntryLocalServiceImpl
 
 		_setExternalReferenceCode(objectEntry, values);
 
-		_setRootObjectEntryId(objectEntry, objectDefinition);
+		_setRootObjectEntryId(objectEntry, objectDefinition, values);
 
 		objectEntry.setGroupId(groupId);
 		objectEntry.setCompanyId(user.getCompanyId());
@@ -1424,7 +1424,7 @@ public class ObjectEntryLocalServiceImpl
 
 		_setExternalReferenceCode(objectEntry, values);
 
-		_setRootObjectEntryId(objectEntry, objectDefinition);
+		_setRootObjectEntryId(objectEntry, objectDefinition, values);
 
 		objectEntry.setModifiedDate(serviceContext.getModifiedDate(null));
 		objectEntry.setTransientValues(transientValues);
@@ -2602,10 +2602,19 @@ public class ObjectEntryLocalServiceImpl
 			return null;
 		}
 
+		Column<?, Long> primKeyColumn =
+			dynamicObjectDefinitionTable.getPrimaryKeyColumn();
+
+		if (objectDefinition.isRootDescendantNode()) {
+			objectDefinition = _objectDefinitionPersistence.findByPrimaryKey(
+				objectDefinition.getRootObjectDefinitionId());
+
+			primKeyColumn = ObjectEntryTable.INSTANCE.rootObjectEntryId;
+		}
+
 		Predicate individualScopePredicate =
 			_inlineSQLHelper.getPermissionWherePredicate(
-				objectDefinition.getClassName(),
-				dynamicObjectDefinitionTable.getPrimaryKeyColumn(), groupId);
+				objectDefinition.getClassName(), primKeyColumn, groupId);
 
 		if (individualScopePredicate == null) {
 			return null;
@@ -3685,7 +3694,8 @@ public class ObjectEntryLocalServiceImpl
 	}
 
 	private void _setRootObjectEntryId(
-			ObjectEntry objectEntry, ObjectDefinition objectDefinition)
+			ObjectEntry objectEntry, ObjectDefinition objectDefinition,
+			Map<String, Serializable> values)
 		throws PortalException {
 
 		if (!objectDefinition.isRootDescendantNode()) {
@@ -3699,7 +3709,9 @@ public class ObjectEntryLocalServiceImpl
 
 		Node node = tree.getNode(objectDefinition.getObjectDefinitionId());
 
-		ObjectEntry rootObjectEntry = objectEntry;
+		ObjectEntry rootObjectEntry = null;
+
+		Map<String, Serializable> valuesList = values;
 
 		while (!node.isRoot()) {
 			Edge edge = node.getEdge();
@@ -3712,14 +3724,14 @@ public class ObjectEntryLocalServiceImpl
 				objectRelationship.getObjectFieldId2());
 
 			rootObjectEntry = getObjectEntry(
-				MapUtil.getLong(
-					rootObjectEntry.getValues(), objectField.getName()));
+				MapUtil.getLong(valuesList, objectField.getName()));
 
-			node = tree.getNode(objectEntry.getObjectDefinitionId());
+			node = tree.getNode(rootObjectEntry.getObjectDefinitionId());
+
+			valuesList = rootObjectEntry.getValues();
 		}
 
-		objectEntry.setRootObjectEntryId(
-			rootObjectEntry.getRootObjectEntryId());
+		objectEntry.setRootObjectEntryId(rootObjectEntry.getObjectEntryId());
 	}
 
 	private void _startWorkflowInstance(
