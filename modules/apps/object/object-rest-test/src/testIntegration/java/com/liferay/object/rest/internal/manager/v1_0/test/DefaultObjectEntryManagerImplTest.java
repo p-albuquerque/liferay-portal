@@ -1453,6 +1453,7 @@ public class DefaultObjectEntryManagerImplTest
 		PrincipalThreadLocal.setName(adminUser.getUserId());
 
 		AtomicInteger index = new AtomicInteger();
+
 		Tree tree = _createTreeAndPublishObjectDefinitions(false, true);
 
 		AtomicInteger finalIndex1 = index;
@@ -2124,7 +2125,7 @@ public class DefaultObjectEntryManagerImplTest
 		PrincipalThreadLocal.setName(adminUser.getUserId());
 
 		AtomicInteger index = new AtomicInteger();
-		Tree tree = _createTreeAndPublishObjectDefinitions(false);
+		Tree tree = _createTreeAndPublishObjectDefinitions(false, false);
 
 		AtomicInteger finalIndex1 = index;
 		Tree finalTree1 = tree;
@@ -2192,7 +2193,7 @@ public class DefaultObjectEntryManagerImplTest
 		_deleteObjectDefinitionHierarchy();
 
 		index = new AtomicInteger();
-		tree = _createTreeAndPublishObjectDefinitions(true);
+		tree = _createTreeAndPublishObjectDefinitions(true, false);
 
 		AtomicInteger finalIndex2 = index;
 		Tree finalTree2 = tree;
@@ -2884,6 +2885,154 @@ public class DefaultObjectEntryManagerImplTest
 				_simpleDTOConverterContext, _objectDefinition3,
 				objectEntry2.getId(), objectEntry2));
 
+		PermissionThreadLocal.setPermissionChecker(
+			PermissionCheckerFactoryUtil.create(adminUser));
+
+		PrincipalThreadLocal.setName(adminUser.getUserId());
+
+		AtomicInteger index = new AtomicInteger();
+		Tree tree = _createTreeAndPublishObjectDefinitions(false, true);
+
+		AtomicInteger finalIndex1 = index;
+		Tree finalTree1 = tree;
+
+		Map<String, ObjectEntry> objectEntries1 = new HashMap<>();
+		Map<String, ObjectEntry> objectEntries2 = new HashMap<>();
+
+		_assertNodeObjectDefinitions(
+			tree,
+			objectDefinition -> {
+				if (objectDefinition.isRootNode()) {
+					objectEntries1.put(
+						objectDefinition.getName(),
+						_addObjectEntry(
+							accountEntry1, finalIndex1.get(), objectDefinition,
+							0, null));
+
+					objectEntries2.put(
+						objectDefinition.getName(),
+						_addObjectEntry(
+							accountEntry2, finalIndex1.getAndIncrement(),
+							objectDefinition, 0, null));
+				}
+				else {
+					Node node = finalTree1.getNode(
+						objectDefinition.getObjectDefinitionId());
+
+					ObjectRelationship edgeObjectRelationship =
+						_objectRelationshipLocalService.getObjectRelationship(
+							node.getEdge(
+							).getObjectRelationshipId());
+
+					ObjectDefinition parentObjectDefinition =
+						objectDefinitionLocalService.getObjectDefinition(
+							edgeObjectRelationship.getObjectDefinitionId1());
+
+					ObjectEntry parentObjectEntry1 = objectEntries1.get(
+						parentObjectDefinition.getName());
+
+					ObjectEntry parentObjectEntry2 = objectEntries2.get(
+						parentObjectDefinition.getName());
+
+					ObjectField objectField =
+						objectFieldLocalService.getObjectField(
+							edgeObjectRelationship.getObjectFieldId2());
+
+					objectEntries1.put(
+						objectDefinition.getName(),
+						_addObjectEntry(
+							_addAccountEntry(), finalIndex1.get(),
+							objectDefinition, parentObjectEntry1.getId(),
+							objectField.getName()));
+
+					objectEntries2.put(
+						objectDefinition.getName(),
+						_addObjectEntry(
+							_addAccountEntry(), finalIndex1.getAndIncrement(),
+							objectDefinition, parentObjectEntry2.getId(),
+							objectField.getName()));
+				}
+			});
+
+		_assertUpdateBoundedObjectEntries(
+			objectEntries1, objectEntries2, tree, false);
+
+		_deleteObjectDefinitionHierarchy();
+
+		index = new AtomicInteger();
+		tree = _createTreeAndPublishObjectDefinitions(true, true);
+
+		AtomicInteger finalIndex2 = index;
+		Tree finalTree2 = tree;
+
+		Map<String, ObjectEntry> objectEntries3 = new HashMap<>();
+		Map<String, ObjectEntry> objectEntries4 = new HashMap<>();
+
+		PermissionThreadLocal.setPermissionChecker(
+			PermissionCheckerFactoryUtil.create(adminUser));
+
+		PrincipalThreadLocal.setName(adminUser.getUserId());
+
+		_assertNodeObjectDefinitions(
+			tree,
+			objectDefinition -> {
+				if (objectDefinition.isRootNode()) {
+					objectEntries3.put(
+						objectDefinition.getName(),
+						_addObjectEntry(
+							accountEntry1, finalIndex2.get(), objectDefinition,
+							0, null));
+
+					objectEntries4.put(
+						objectDefinition.getName(),
+						_addObjectEntry(
+							accountEntry2, finalIndex2.getAndIncrement(),
+							objectDefinition, 0, null));
+				}
+				else {
+					Node node = finalTree2.getNode(
+						objectDefinition.getObjectDefinitionId());
+
+					ObjectRelationship edgeObjectRelationship =
+						_objectRelationshipLocalService.getObjectRelationship(
+							node.getEdge(
+							).getObjectRelationshipId());
+
+					ObjectDefinition parentObjectDefinition =
+						objectDefinitionLocalService.getObjectDefinition(
+							edgeObjectRelationship.getObjectDefinitionId1());
+
+					ObjectEntry parentObjectEntry1 = objectEntries3.get(
+						parentObjectDefinition.getName());
+
+					ObjectEntry parentObjectEntry2 = objectEntries4.get(
+						parentObjectDefinition.getName());
+
+					ObjectField objectField =
+						objectFieldLocalService.getObjectField(
+							edgeObjectRelationship.getObjectFieldId2());
+
+					objectEntries3.put(
+						objectDefinition.getName(),
+						_addObjectEntry(
+							_addAccountEntry(), finalIndex2.get(),
+							objectDefinition, parentObjectEntry1.getId(),
+							objectField.getName()));
+
+					objectEntries4.put(
+						objectDefinition.getName(),
+						_addObjectEntry(
+							_addAccountEntry(), finalIndex2.getAndIncrement(),
+							objectDefinition, parentObjectEntry2.getId(),
+							objectField.getName()));
+				}
+			});
+
+		_assertUpdateBoundedObjectEntries(
+			objectEntries3, objectEntries4, tree, true);
+
+		_deleteObjectDefinitionHierarchy();
+
 		// Organization scope
 
 		_user = _addUser();
@@ -3520,6 +3669,74 @@ public class DefaultObjectEntryManagerImplTest
 		}
 	}
 
+	private void _assertUpdateBoundedObjectEntries(
+			Map<String, ObjectEntry> objectEntries1,
+			Map<String, ObjectEntry> objectEntries2, Tree tree, boolean success)
+		throws Exception {
+
+		PermissionThreadLocal.setPermissionChecker(
+			PermissionCheckerFactoryUtil.create(_user));
+
+		PrincipalThreadLocal.setName(_user.getUserId());
+
+		ObjectDefinition rootObjectDefinition =
+			objectDefinitionLocalService.fetchObjectDefinition(
+				TestPropsValues.getCompanyId(), "C_A");
+
+		ObjectEntry rootObjectEntry1 = objectEntries1.get(
+			rootObjectDefinition.getName());
+		ObjectEntry rootObjectEntry2 = objectEntries2.get(
+			rootObjectDefinition.getName());
+
+		_assertNodeObjectDefinitions(
+			tree,
+			objectDefinition -> {
+				ObjectEntry objectEntry1 = objectEntries1.get(
+					objectDefinition.getName());
+				ObjectEntry objectEntry2 = objectEntries2.get(
+					objectDefinition.getName());
+
+				if (success) {
+					_defaultObjectEntryManager.updateObjectEntry(
+						_simpleDTOConverterContext, objectDefinition,
+						objectEntry1.getId(), objectEntry1);
+
+					AssertUtils.assertFailure(
+						PrincipalException.MustHavePermission.class,
+						StringBundler.concat(
+							"User ", _user.getUserId(),
+							" must have UPDATE permission for ",
+							rootObjectDefinition.getClassName(),
+							StringPool.SPACE, rootObjectEntry2.getId()),
+						() -> _defaultObjectEntryManager.updateObjectEntry(
+							_simpleDTOConverterContext, objectDefinition,
+							objectEntry2.getId(), objectEntry2));
+				}
+				else {
+					AssertUtils.assertFailure(
+						PrincipalException.MustHavePermission.class,
+						StringBundler.concat(
+							"User ", _user.getUserId(),
+							" must have VIEW permission for ",
+							rootObjectDefinition.getClassName(),
+							StringPool.SPACE, rootObjectEntry1.getId()),
+						() -> _defaultObjectEntryManager.updateObjectEntry(
+							_simpleDTOConverterContext, objectDefinition,
+							objectEntry1.getId(), objectEntry1));
+					AssertUtils.assertFailure(
+						PrincipalException.MustHavePermission.class,
+						StringBundler.concat(
+							"User ", _user.getUserId(),
+							" must have VIEW permission for ",
+							rootObjectDefinition.getClassName(),
+							StringPool.SPACE, rootObjectEntry2.getId()),
+						() -> _defaultObjectEntryManager.updateObjectEntry(
+							_simpleDTOConverterContext, objectDefinition,
+							objectEntry2.getId(), objectEntry2));
+				}
+			});
+	}
+
 	private void _assignAccountEntryRole(
 			AccountEntry accountEntry, Role role, User user)
 		throws Exception {
@@ -3686,14 +3903,17 @@ public class DefaultObjectEntryManagerImplTest
 				companyId, rootObjectDefinition.getClassName(),
 				ResourceConstants.SCOPE_GROUP_TEMPLATE, "0",
 				_accountAdministratorRole.getRoleId(), ActionKeys.DELETE);
+
 			_resourcePermissionLocalService.addResourcePermission(
 				companyId, rootObjectDefinition.getClassName(),
 				ResourceConstants.SCOPE_GROUP_TEMPLATE, "0",
 				_accountAdministratorRole.getRoleId(), ActionKeys.UPDATE);
+
 			_resourcePermissionLocalService.addResourcePermission(
 				companyId, rootObjectDefinition.getClassName(),
 				ResourceConstants.SCOPE_GROUP_TEMPLATE, "0",
 				_accountAdministratorRole.getRoleId(), ActionKeys.VIEW);
+
 			_resourcePermissionLocalService.addResourcePermission(
 				companyId, rootObjectDefinition.getClassName(),
 				ResourceConstants.SCOPE_GROUP_TEMPLATE, "0",
