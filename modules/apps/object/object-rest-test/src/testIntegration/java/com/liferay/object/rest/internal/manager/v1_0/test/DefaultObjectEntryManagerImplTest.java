@@ -149,6 +149,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.hamcrest.CoreMatchers;
 
@@ -2119,6 +2120,152 @@ public class DefaultObjectEntryManagerImplTest
 
 		_assertObjectEntriesSize(1);
 
+		PermissionThreadLocal.setPermissionChecker(
+			PermissionCheckerFactoryUtil.create(adminUser));
+
+		PrincipalThreadLocal.setName(adminUser.getUserId());
+
+		AtomicInteger index = new AtomicInteger();
+		Tree tree = _createTreeAndPublishObjectDefinitions(false);
+
+		AtomicInteger finalIndex1 = index;
+		Tree finalTree1 = tree;
+
+		Map<String, ObjectEntry> objectEntries1 = new HashMap<>();
+		Map<String, ObjectEntry> objectEntries2 = new HashMap<>();
+
+		_assertNodeObjectDefinitions(
+			tree,
+			objectDefinition -> {
+				if (objectDefinition.isRootNode()) {
+					objectEntries1.put(
+						objectDefinition.getName(),
+						_addObjectEntry(
+							accountEntry1, finalIndex1.get(), objectDefinition,
+							0, null));
+
+					objectEntries2.put(
+						objectDefinition.getName(),
+						_addObjectEntry(
+							accountEntry2, finalIndex1.getAndIncrement(),
+							objectDefinition, 0, null));
+				}
+				else {
+					Node node = finalTree1.getNode(
+						objectDefinition.getObjectDefinitionId());
+
+					ObjectRelationship edgeObjectRelationship =
+						_objectRelationshipLocalService.getObjectRelationship(
+							node.getEdge(
+							).getObjectRelationshipId());
+
+					ObjectDefinition parentObjectDefinition =
+						objectDefinitionLocalService.getObjectDefinition(
+							edgeObjectRelationship.getObjectDefinitionId1());
+
+					ObjectEntry parentObjectEntry1 = objectEntries1.get(
+						parentObjectDefinition.getName());
+
+					ObjectEntry parentObjectEntry2 = objectEntries2.get(
+						parentObjectDefinition.getName());
+
+					ObjectField objectField =
+						objectFieldLocalService.getObjectField(
+							edgeObjectRelationship.getObjectFieldId2());
+
+					objectEntries1.put(
+						objectDefinition.getName(),
+						_addObjectEntry(
+							_addAccountEntry(), finalIndex1.get(),
+							objectDefinition, parentObjectEntry1.getId(),
+							objectField.getName()));
+
+					objectEntries2.put(
+						objectDefinition.getName(),
+						_addObjectEntry(
+							_addAccountEntry(), finalIndex1.getAndIncrement(),
+							objectDefinition, parentObjectEntry2.getId(),
+							objectField.getName()));
+				}
+			});
+
+		_assertBoundedObjectEntries(tree, false);
+
+		_deleteObjectDefinitionHierarchy();
+
+		index = new AtomicInteger();
+		tree = _createTreeAndPublishObjectDefinitions(true);
+
+		AtomicInteger finalIndex2 = index;
+		Tree finalTree2 = tree;
+
+		Map<String, ObjectEntry> objectEntries3 = new HashMap<>();
+		Map<String, ObjectEntry> objectEntries4 = new HashMap<>();
+
+		PermissionThreadLocal.setPermissionChecker(
+			PermissionCheckerFactoryUtil.create(adminUser));
+
+		PrincipalThreadLocal.setName(adminUser.getUserId());
+
+		_assertNodeObjectDefinitions(
+			tree,
+			objectDefinition -> {
+				if (objectDefinition.isRootNode()) {
+					objectEntries3.put(
+						objectDefinition.getName(),
+						_addObjectEntry(
+							accountEntry1, finalIndex2.get(), objectDefinition,
+							0, null));
+
+					objectEntries4.put(
+						objectDefinition.getName(),
+						_addObjectEntry(
+							accountEntry2, finalIndex2.getAndIncrement(),
+							objectDefinition, 0, null));
+				}
+				else {
+					Node node = finalTree2.getNode(
+						objectDefinition.getObjectDefinitionId());
+
+					ObjectRelationship edgeObjectRelationship =
+						_objectRelationshipLocalService.getObjectRelationship(
+							node.getEdge(
+							).getObjectRelationshipId());
+
+					ObjectDefinition parentObjectDefinition =
+						objectDefinitionLocalService.getObjectDefinition(
+							edgeObjectRelationship.getObjectDefinitionId1());
+
+					ObjectEntry parentObjectEntry1 = objectEntries3.get(
+						parentObjectDefinition.getName());
+
+					ObjectEntry parentObjectEntry2 = objectEntries4.get(
+						parentObjectDefinition.getName());
+
+					ObjectField objectField =
+						objectFieldLocalService.getObjectField(
+							edgeObjectRelationship.getObjectFieldId2());
+
+					objectEntries3.put(
+						objectDefinition.getName(),
+						_addObjectEntry(
+							_addAccountEntry(), finalIndex2.get(),
+							objectDefinition, parentObjectEntry1.getId(),
+							objectField.getName()));
+
+					objectEntries4.put(
+						objectDefinition.getName(),
+						_addObjectEntry(
+							_addAccountEntry(), finalIndex2.getAndIncrement(),
+							objectDefinition, parentObjectEntry2.getId(),
+							objectField.getName()));
+				}
+			});
+
+		_assertBoundedObjectEntries(tree, true);
+
+		_deleteObjectDefinitionHierarchy();
+
 		_accountEntryUserRelLocalService.deleteAccountEntryUserRel(
 			accountEntryUserRel);
 
@@ -3141,6 +3288,62 @@ public class DefaultObjectEntryManagerImplTest
 		PrincipalThreadLocal.setName(user.getUserId());
 
 		return user;
+	}
+
+	private void _assertBoundedObjectEntries(Tree tree, boolean success)
+		throws Exception {
+
+		AtomicLong size = new AtomicLong();
+
+		PermissionThreadLocal.setPermissionChecker(
+			PermissionCheckerFactoryUtil.create(_user));
+
+		PrincipalThreadLocal.setName(_user.getUserId());
+
+		_assertNodeObjectDefinitions(
+			tree,
+			objectDefinition -> {
+				if (objectDefinition.isRootNode()) {
+					Page<ObjectEntry> page =
+						_defaultObjectEntryManager.getObjectEntries(
+							companyId, objectDefinition, null, null,
+							new DefaultDTOConverterContext(
+								false, Collections.emptyMap(),
+								dtoConverterRegistry, null,
+								LocaleUtil.getDefault(), null, _user),
+							StringPool.BLANK, null, null, null);
+
+					Collection<ObjectEntry> objectEntries = page.getItems();
+
+					if (success) {
+						size.set(1);
+					}
+
+					Assert.assertEquals(
+						objectEntries.toString(), size.get(),
+						objectEntries.size());
+				}
+				else {
+					Page<ObjectEntry> page =
+						_defaultObjectEntryManager.getObjectEntries(
+							companyId, objectDefinition, null, null,
+							new DefaultDTOConverterContext(
+								false, Collections.emptyMap(),
+								dtoConverterRegistry, null,
+								LocaleUtil.getDefault(), null, _user),
+							StringPool.BLANK, null, null, null);
+
+					Collection<ObjectEntry> objectEntries = page.getItems();
+
+					if (success) {
+						size.set(1);
+					}
+
+					Assert.assertEquals(
+						objectEntries.toString(), size.get(),
+						objectEntries.size());
+				}
+			});
 	}
 
 	private void _assertCountAggregationObjectFieldValue(
