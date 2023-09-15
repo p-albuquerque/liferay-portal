@@ -494,6 +494,8 @@ public class DefaultObjectEntryManagerImplTest
 	public void tearDown() throws Exception {
 		NestedFieldsContextThreadLocal.setNestedFieldsContext(
 			_originalNestedFieldsContext);
+
+		_deleteObjectDefinitionHierarchy();
 	}
 
 	@Test
@@ -980,7 +982,7 @@ public class DefaultObjectEntryManagerImplTest
 				accountEntry2.getAccountEntryId()),
 			() -> _addObjectEntry(accountEntry2));
 
-		Tree tree = _createTreeAndPublishObjectDefinitions(false);
+		Tree tree = _createTreeAndPublishObjectDefinitions(false, false);
 
 		AtomicInteger index = new AtomicInteger();
 
@@ -1004,7 +1006,7 @@ public class DefaultObjectEntryManagerImplTest
 
 		_deleteObjectDefinitionHierarchy();
 
-		tree = _createTreeAndPublishObjectDefinitions(true);
+		tree = _createTreeAndPublishObjectDefinitions(true, false);
 
 		index = new AtomicInteger();
 
@@ -1445,6 +1447,172 @@ public class DefaultObjectEntryManagerImplTest
 					_objectDefinition3.getClassName(), StringPool.SPACE,
 					objectEntry2.getId()));
 		}
+
+		PermissionThreadLocal.setPermissionChecker(
+			PermissionCheckerFactoryUtil.create(adminUser));
+
+		PrincipalThreadLocal.setName(adminUser.getUserId());
+
+		AtomicInteger index = new AtomicInteger();
+		Tree tree = _createTreeAndPublishObjectDefinitions(false, true);
+
+		AtomicInteger finalIndex1 = index;
+		Tree finalTree1 = tree;
+
+		Map<String, ObjectEntry> objectEntries1 = new HashMap<>();
+		Map<String, ObjectEntry> objectEntries2 = new HashMap<>();
+
+		_assertNodeObjectDefinitions(
+			tree,
+			objectDefinition -> {
+				if (objectDefinition.isRootNode()) {
+					objectEntries1.put(
+						objectDefinition.getName(),
+						_addObjectEntry(
+							accountEntry1, finalIndex1.get(), objectDefinition,
+							0, null));
+
+					objectEntries2.put(
+						objectDefinition.getName(),
+						_addObjectEntry(
+							accountEntry2, finalIndex1.getAndIncrement(),
+							objectDefinition, 0, null));
+				}
+				else {
+					Node node = finalTree1.getNode(
+						objectDefinition.getObjectDefinitionId());
+
+					ObjectRelationship edgeObjectRelationship =
+						_objectRelationshipLocalService.getObjectRelationship(
+							node.getEdge(
+							).getObjectRelationshipId());
+
+					ObjectDefinition parentObjectDefinition =
+						objectDefinitionLocalService.getObjectDefinition(
+							edgeObjectRelationship.getObjectDefinitionId1());
+
+					ObjectEntry parentObjectEntry1 = objectEntries1.get(
+						parentObjectDefinition.getName());
+
+					ObjectEntry parentObjectEntry2 = objectEntries2.get(
+						parentObjectDefinition.getName());
+
+					ObjectField objectField =
+						objectFieldLocalService.getObjectField(
+							edgeObjectRelationship.getObjectFieldId2());
+
+					objectEntries1.put(
+						objectDefinition.getName(),
+						_addObjectEntry(
+							_addAccountEntry(), finalIndex1.get(),
+							objectDefinition, parentObjectEntry1.getId(),
+							objectField.getName()));
+
+					objectEntries2.put(
+						objectDefinition.getName(),
+						_addObjectEntry(
+							_addAccountEntry(), finalIndex1.get(),
+							objectDefinition, parentObjectEntry2.getId(),
+							objectField.getName()));
+				}
+			});
+
+		PermissionThreadLocal.setPermissionChecker(
+			PermissionCheckerFactoryUtil.create(_user));
+
+		PrincipalThreadLocal.setName(_user.getUserId());
+
+		_assertDeleteBoundedObjectEntries(objectEntries1, tree, false);
+
+		_assertDeleteBoundedObjectEntries(objectEntries2, tree, false);
+
+		PermissionThreadLocal.setPermissionChecker(
+			PermissionCheckerFactoryUtil.create(adminUser));
+
+		PrincipalThreadLocal.setName(adminUser.getUserId());
+
+		index = new AtomicInteger();
+
+		_deleteObjectDefinitionHierarchy();
+
+		tree = _createTreeAndPublishObjectDefinitions(true, true);
+
+		AtomicInteger finalIndex2 = index;
+		Tree finalTree2 = tree;
+
+		Map<String, ObjectEntry> objectEntries3 = new HashMap<>();
+		Map<String, ObjectEntry> objectEntries4 = new HashMap<>();
+
+		_assertNodeObjectDefinitions(
+			tree,
+			objectDefinition -> {
+				if (objectDefinition.isRootNode()) {
+					objectEntries3.put(
+						objectDefinition.getName(),
+						_addObjectEntry(
+							accountEntry1, finalIndex2.get(), objectDefinition,
+							0, null));
+
+					objectEntries4.put(
+						objectDefinition.getName(),
+						_addObjectEntry(
+							accountEntry2, finalIndex2.getAndIncrement(),
+							objectDefinition, 0, null));
+				}
+				else {
+					Node node = finalTree2.getNode(
+						objectDefinition.getObjectDefinitionId());
+
+					ObjectRelationship edgeObjectRelationship =
+						_objectRelationshipLocalService.getObjectRelationship(
+							node.getEdge(
+							).getObjectRelationshipId());
+
+					ObjectDefinition parentObjectDefinition =
+						objectDefinitionLocalService.getObjectDefinition(
+							edgeObjectRelationship.getObjectDefinitionId1());
+
+					ObjectEntry parentObjectEntry1 = objectEntries3.get(
+						parentObjectDefinition.getName());
+
+					ObjectEntry parentObjectEntry2 = objectEntries4.get(
+						parentObjectDefinition.getName());
+
+					ObjectField objectField =
+						objectFieldLocalService.getObjectField(
+							edgeObjectRelationship.getObjectFieldId2());
+
+					objectEntries3.put(
+						objectDefinition.getName(),
+						_addObjectEntry(
+							_addAccountEntry(), finalIndex2.get(),
+							objectDefinition, parentObjectEntry1.getId(),
+							objectField.getName()));
+
+					objectEntries4.put(
+						objectDefinition.getName(),
+						_addObjectEntry(
+							_addAccountEntry(), finalIndex2.getAndIncrement(),
+							objectDefinition, parentObjectEntry2.getId(),
+							objectField.getName()));
+				}
+			});
+
+		PermissionThreadLocal.setPermissionChecker(
+			PermissionCheckerFactoryUtil.create(_user));
+
+		PrincipalThreadLocal.setName(_user.getUserId());
+
+		_assertDeleteBoundedObjectEntries(objectEntries3, tree, true);
+
+		_assertDeleteBoundedObjectEntries(objectEntries4, tree, false);
+
+		PermissionThreadLocal.setPermissionChecker(
+			PermissionCheckerFactoryUtil.create(adminUser));
+
+		PrincipalThreadLocal.setName(adminUser.getUserId());
+
+		_deleteObjectDefinitionHierarchy();
 
 		// Organization scope
 
@@ -2993,6 +3161,66 @@ public class DefaultObjectEntryManagerImplTest
 			});
 	}
 
+	private void _assertDeleteBoundedObjectEntries(
+			Map<String, ObjectEntry> objectEntries, Tree tree, boolean success)
+		throws Exception {
+
+		ObjectDefinition rootObjectDefinition =
+			objectDefinitionLocalService.fetchObjectDefinition(
+				TestPropsValues.getCompanyId(), "C_A");
+
+		ObjectEntry rootObjectEntry = objectEntries.get(
+			rootObjectDefinition.getName());
+
+		for (int depth = 2; depth > 1; depth--) {
+			int finalDepth = depth;
+
+			_assertNodeObjectDefinitions(
+				tree,
+				objectDefinition -> {
+					Node node = tree.getNode(
+						objectDefinition.getObjectDefinitionId());
+
+					if (node.getDepth() == finalDepth) {
+						ObjectEntry objectEntry = objectEntries.get(
+							objectDefinition.getName());
+
+						if (success) {
+							_defaultObjectEntryManager.deleteObjectEntry(
+								objectDefinition, objectEntry.getId());
+						}
+						else {
+							try {
+								_defaultObjectEntryManager.deleteObjectEntry(
+									objectDefinition, objectEntry.getId());
+
+								Assert.fail();
+							}
+							catch (Exception exception) {
+								String actionId = ActionKeys.VIEW;
+
+								if (rootObjectDefinition.
+										isAccountEntryRestricted()) {
+
+									actionId = ActionKeys.DELETE;
+								}
+
+								Assert.assertEquals(
+									exception.getMessage(),
+									StringBundler.concat(
+										"User ", _user.getUserId(),
+										" must have ", actionId,
+										" permission for ",
+										rootObjectDefinition.getClassName(),
+										StringPool.SPACE,
+										rootObjectEntry.getId()));
+							}
+						}
+					}
+				});
+		}
+	}
+
 	private void _assertLocalizedValues(
 			Map<String, Object> expectedLocalizedValues, String languageId,
 			long objectEntryId)
@@ -3198,7 +3426,7 @@ public class DefaultObjectEntryManagerImplTest
 	}
 
 	private Tree _createTreeAndPublishObjectDefinitions(
-			boolean rootAccountRestricted)
+			boolean rootAccountRestricted, boolean deleteOrUpdate)
 		throws Exception {
 
 		Tree tree = TreeTestUtil.createTree(
@@ -3251,6 +3479,25 @@ public class DefaultObjectEntryManagerImplTest
 			companyId, rootObjectDefinition.getResourceName(),
 			ResourceConstants.SCOPE_GROUP_TEMPLATE, "0", _buyerRole.getRoleId(),
 			ObjectActionKeys.ADD_OBJECT_ENTRY);
+
+		if (deleteOrUpdate) {
+			_resourcePermissionLocalService.addResourcePermission(
+				companyId, rootObjectDefinition.getClassName(),
+				ResourceConstants.SCOPE_GROUP_TEMPLATE, "0",
+				_accountAdministratorRole.getRoleId(), ActionKeys.DELETE);
+			_resourcePermissionLocalService.addResourcePermission(
+				companyId, rootObjectDefinition.getClassName(),
+				ResourceConstants.SCOPE_GROUP_TEMPLATE, "0",
+				_accountAdministratorRole.getRoleId(), ActionKeys.UPDATE);
+			_resourcePermissionLocalService.addResourcePermission(
+				companyId, rootObjectDefinition.getClassName(),
+				ResourceConstants.SCOPE_GROUP_TEMPLATE, "0",
+				_accountAdministratorRole.getRoleId(), ActionKeys.VIEW);
+			_resourcePermissionLocalService.addResourcePermission(
+				companyId, rootObjectDefinition.getClassName(),
+				ResourceConstants.SCOPE_GROUP_TEMPLATE, "0",
+				_buyerRole.getRoleId(), ActionKeys.VIEW);
+		}
 
 		return tree;
 	}
