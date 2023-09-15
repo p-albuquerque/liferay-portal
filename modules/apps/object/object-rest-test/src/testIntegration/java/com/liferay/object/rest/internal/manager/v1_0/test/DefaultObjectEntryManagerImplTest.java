@@ -29,6 +29,9 @@ import com.liferay.object.constants.ObjectFieldSettingConstants;
 import com.liferay.object.constants.ObjectFieldValidationConstants;
 import com.liferay.object.constants.ObjectFilterConstants;
 import com.liferay.object.constants.ObjectRelationshipConstants;
+import com.liferay.object.definition.tree.Node;
+import com.liferay.object.definition.tree.Tree;
+import com.liferay.object.definition.tree.TreeFactory;
 import com.liferay.object.exception.NoSuchObjectEntryException;
 import com.liferay.object.exception.ObjectDefinitionAccountEntryRestrictedException;
 import com.liferay.object.exception.ObjectRelationshipDeletionTypeException;
@@ -62,6 +65,9 @@ import com.liferay.object.service.ObjectFieldService;
 import com.liferay.object.service.ObjectFieldSettingLocalService;
 import com.liferay.object.service.ObjectFilterLocalService;
 import com.liferay.object.service.ObjectRelationshipLocalService;
+import com.liferay.object.test.util.TreeTestUtil;
+import com.liferay.petra.function.UnsafeConsumer;
+import com.liferay.petra.function.UnsafeRunnable;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.model.Group;
@@ -138,9 +144,11 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.hamcrest.CoreMatchers;
 
@@ -157,7 +165,7 @@ import org.junit.runner.RunWith;
 /**
  * @author Feliphe Marinho
  */
-@FeatureFlags({"LPS-164801", "LPS-172017"})
+@FeatureFlags({"LPS-164801", "LPS-172017", "LPS-187142"})
 @RunWith(Arquillian.class)
 public class DefaultObjectEntryManagerImplTest
 	extends BaseObjectEntryManagerImplTestCase {
@@ -972,6 +980,106 @@ public class DefaultObjectEntryManagerImplTest
 				accountEntry2.getAccountEntryId()),
 			() -> _addObjectEntry(accountEntry2));
 
+		Tree tree = _createTreeAndPublishObjectDefinitions(false);
+
+		AtomicInteger index = new AtomicInteger();
+
+		AtomicInteger finalIndex1 = index;
+
+		_assertNodeObjectDefinitions(
+			tree,
+			objectDefinition -> {
+				_assertPrincipalException(
+					ObjectActionKeys.ADD_OBJECT_ENTRY,
+					() -> _addObjectEntry(
+						accountEntry1, finalIndex1.get(), objectDefinition, 0,
+						null));
+
+				_assertPrincipalException(
+					ObjectActionKeys.ADD_OBJECT_ENTRY,
+					() -> _addObjectEntry(
+						accountEntry2, finalIndex1.getAndIncrement(),
+						objectDefinition, 0, null));
+			});
+
+		_deleteObjectDefinitionHierarchy();
+
+		tree = _createTreeAndPublishObjectDefinitions(true);
+
+		index = new AtomicInteger();
+
+		ObjectDefinition rootObjectDefinition =
+			objectDefinitionLocalService.fetchObjectDefinition(
+				TestPropsValues.getCompanyId(), "C_A");
+
+		AtomicInteger finalIndex2 = index;
+
+		AssertUtils.assertFailure(
+			ObjectDefinitionAccountEntryRestrictedException.class,
+			StringBundler.concat(
+				"User ", _user.getUserId(),
+				" does not have access to account entry ",
+				accountEntry2.getAccountEntryId()),
+			() -> _addObjectEntry(
+				accountEntry2, finalIndex2.get(), rootObjectDefinition, 0,
+				null));
+
+		Map<String, ObjectEntry> objectEntries = HashMapBuilder.put(
+			rootObjectDefinition.getName(),
+			_addObjectEntry(
+				accountEntry1, index.getAndIncrement(), rootObjectDefinition, 0,
+				null)
+		).build();
+
+		Assert.assertNotNull(objectEntries.get(rootObjectDefinition.getName()));
+
+		AtomicInteger finalIndex3 = index;
+
+		Tree finalTree = tree;
+
+		_assertNodeObjectDefinitions(
+			tree,
+			objectDefinition -> {
+				if (objectDefinition.isRootDescendantNode()) {
+					Node node = finalTree.getNode(
+						objectDefinition.getObjectDefinitionId());
+
+					ObjectRelationship edgeObjectRelationship =
+						_objectRelationshipLocalService.getObjectRelationship(
+							node.getEdge(
+							).getObjectRelationshipId());
+
+					ObjectField objectField =
+						objectFieldLocalService.getObjectField(
+							edgeObjectRelationship.getObjectFieldId2());
+
+					ObjectDefinition parentObjectDefinition =
+						objectDefinitionLocalService.getObjectDefinition(
+							edgeObjectRelationship.getObjectDefinitionId1());
+
+					ObjectEntry objectEntry = objectEntries.get(
+						parentObjectDefinition.getName());
+
+					objectEntries.put(
+						objectDefinition.getName(),
+						_addObjectEntry(
+							_addAccountEntry(), finalIndex3.get(),
+							objectDefinition, objectEntry.getId(),
+							objectField.getName()));
+
+					Assert.assertNotNull(
+						objectEntries.get(objectDefinition.getName()));
+
+					Assert.assertNotNull(
+						_addObjectEntry(
+							_addAccountEntry(), finalIndex3.getAndIncrement(),
+							objectDefinition, objectEntry.getId(),
+							objectField.getName()));
+				}
+			});
+
+		_deleteObjectDefinitionHierarchy();
+
 		// Account entry restricted with organization scope
 
 		Organization organization1 = OrganizationTestUtil.addOrganization();
@@ -1339,11 +1447,6 @@ public class DefaultObjectEntryManagerImplTest
 		}
 
 		// Organization scope
-
-		PermissionThreadLocal.setPermissionChecker(
-			PermissionCheckerFactoryUtil.create(adminUser));
-
-		PrincipalThreadLocal.setName(adminUser.getUserId());
 
 		objectEntry1 = _addObjectEntry(accountEntry1);
 
@@ -2750,6 +2853,44 @@ public class DefaultObjectEntryManagerImplTest
 			ObjectDefinitionConstants.SCOPE_COMPANY);
 	}
 
+	private ObjectEntry _addObjectEntry(
+			AccountEntry accountEntry, int index,
+			ObjectDefinition objectDefinition, long objectEntryId,
+			String objectFieldName)
+		throws Exception {
+
+		String relationshipObjectFieldName =
+			"r_oneToManyRelationshipName" + index + "_accountEntryId";
+
+		if ((objectEntryId == 0) && (objectFieldName == null)) {
+			return _defaultObjectEntryManager.addObjectEntry(
+				_simpleDTOConverterContext, objectDefinition,
+				new ObjectEntry() {
+					{
+						properties = HashMapBuilder.<String, Object>put(
+							relationshipObjectFieldName,
+							accountEntry.getAccountEntryId()
+						).build();
+					}
+				},
+				ObjectDefinitionConstants.SCOPE_COMPANY);
+		}
+
+		return _defaultObjectEntryManager.addObjectEntry(
+			_simpleDTOConverterContext, objectDefinition,
+			new ObjectEntry() {
+				{
+					properties = HashMapBuilder.<String, Object>put(
+						objectFieldName, objectEntryId
+					).put(
+						relationshipObjectFieldName,
+						accountEntry.getAccountEntryId()
+					).build();
+				}
+			},
+			ObjectDefinitionConstants.SCOPE_COMPANY);
+	}
+
 	private void _addRelatedObjectEntries(
 			ObjectDefinition objectDefinition1,
 			ObjectDefinition objectDefinition2,
@@ -2874,6 +3015,22 @@ public class DefaultObjectEntryManagerImplTest
 			});
 	}
 
+	private void _assertNodeObjectDefinitions(
+			Tree tree,
+			UnsafeConsumer<ObjectDefinition, Exception> unsafeConsumer)
+		throws Exception {
+
+		Iterator<Node> iterator = tree.iterator();
+
+		while (iterator.hasNext()) {
+			Node node = iterator.next();
+
+			unsafeConsumer.accept(
+				objectDefinitionLocalService.getObjectDefinition(
+					node.getObjectDefinitionId()));
+		}
+	}
+
 	private void _assertObjectEntriesSize(long size) throws Exception {
 		Page<ObjectEntry> page = _defaultObjectEntryManager.getObjectEntries(
 			companyId, _objectDefinition3, null, null,
@@ -2910,6 +3067,28 @@ public class DefaultObjectEntryManagerImplTest
 					).build();
 				}
 			});
+	}
+
+	private void _assertPrincipalException(
+		String action, UnsafeRunnable<Exception> unsafeRunnable) {
+
+		PermissionChecker permissionChecker =
+			PermissionThreadLocal.getPermissionChecker();
+
+		try {
+			unsafeRunnable.run();
+
+			Assert.fail();
+		}
+		catch (Exception exception) {
+			String message = exception.getMessage();
+
+			Assert.assertTrue(
+				message.contains(
+					StringBundler.concat(
+						"User ", permissionChecker.getUserId(), " must have ",
+						action, " permission for")));
+		}
 	}
 
 	private void _assignAccountEntryRole(
@@ -3018,6 +3197,64 @@ public class DefaultObjectEntryManagerImplTest
 		return objectFieldSetting;
 	}
 
+	private Tree _createTreeAndPublishObjectDefinitions(
+			boolean rootAccountRestricted)
+		throws Exception {
+
+		Tree tree = TreeTestUtil.createTree(
+			objectDefinitionLocalService, _objectRelationshipLocalService,
+			_treeFactory);
+
+		AtomicInteger index = new AtomicInteger();
+
+		_assertNodeObjectDefinitions(
+			tree,
+			objectDefinition -> {
+				ObjectDefinition accountEntryObjectDefinition =
+					objectDefinitionLocalService.fetchObjectDefinition(
+						companyId, "AccountEntry");
+
+				ObjectRelationship objectRelationship =
+					_objectRelationshipLocalService.addObjectRelationship(
+						adminUser.getUserId(),
+						accountEntryObjectDefinition.getObjectDefinitionId(),
+						objectDefinition.getObjectDefinitionId(), 0,
+						ObjectRelationshipConstants.DELETION_TYPE_CASCADE,
+						LocalizedMapUtil.getLocalizedMap(
+							RandomTestUtil.randomString()),
+						"oneToManyRelationshipName" + index.getAndIncrement(),
+						ObjectRelationshipConstants.TYPE_ONE_TO_MANY);
+
+				if (objectDefinition.isRootDescendantNode() ||
+					rootAccountRestricted) {
+
+					objectDefinition.setAccountEntryRestrictedObjectFieldId(
+						objectRelationship.getObjectFieldId2());
+
+					objectDefinition.setAccountEntryRestricted(true);
+
+					objectDefinitionLocalService.updateObjectDefinition(
+						objectDefinition);
+				}
+			});
+
+		ObjectDefinition rootObjectDefinition =
+			objectDefinitionLocalService.fetchObjectDefinition(
+				TestPropsValues.getCompanyId(), "C_A");
+
+		rootObjectDefinition =
+			objectDefinitionLocalService.publishCustomObjectDefinition(
+				adminUser.getUserId(),
+				rootObjectDefinition.getObjectDefinitionId());
+
+		_resourcePermissionLocalService.addResourcePermission(
+			companyId, rootObjectDefinition.getResourceName(),
+			ResourceConstants.SCOPE_GROUP_TEMPLATE, "0", _buyerRole.getRoleId(),
+			ObjectActionKeys.ADD_OBJECT_ENTRY);
+
+		return tree;
+	}
+
 	private void _deleteAccountEntryOrganizationRel(
 			AccountEntry accountEntry, Organization organization)
 		throws Exception {
@@ -3026,6 +3263,28 @@ public class DefaultObjectEntryManagerImplTest
 			deleteAccountEntryOrganizationRel(
 				accountEntry.getAccountEntryId(),
 				organization.getOrganizationId());
+	}
+
+	private void _deleteObjectDefinitionHierarchy() throws Exception {
+		for (String objectDefinitionName :
+				new String[] {"C_AAA", "C_AAB", "C_AA", "C_AB", "C_A"}) {
+
+			ObjectDefinition objectDefinition =
+				objectDefinitionLocalService.fetchObjectDefinition(
+					TestPropsValues.getCompanyId(), objectDefinitionName);
+
+			if (objectDefinition == null) {
+				continue;
+			}
+
+			if (objectDefinition.getRootObjectDefinitionId() != 0) {
+				TreeTestUtil.unbind(
+					objectDefinitionLocalService, objectDefinitionName);
+			}
+
+			objectDefinitionLocalService.deleteObjectDefinition(
+				objectDefinition.getObjectDefinitionId());
+		}
 	}
 
 	private Long _getAttachmentObjectFieldValue() throws Exception {
@@ -3188,6 +3447,9 @@ public class DefaultObjectEntryManagerImplTest
 
 	@Inject
 	private RoleLocalService _roleLocalService;
+
+	@Inject
+	private TreeFactory _treeFactory;
 
 	@DeleteAfterTestRun
 	private User _user;
