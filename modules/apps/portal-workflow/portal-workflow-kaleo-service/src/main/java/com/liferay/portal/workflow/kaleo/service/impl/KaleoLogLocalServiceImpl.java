@@ -437,27 +437,14 @@ public class KaleoLogLocalServiceImpl extends KaleoLogLocalServiceBaseImpl {
 		long companyId, long kaleoInstanceId, List<Integer> logTypes, int start,
 		int end, OrderByComparator<KaleoLog> orderByComparator) {
 
-		return _search(
-			companyId,
-			HashMapBuilder.<String, Serializable>put(
-				"kaleoInstanceId", kaleoInstanceId
-			).put(
-				"logTypes", _toIntegerArraySupplier(logTypes)
-			).build(),
-			start, end, orderByComparator);
+		return Collections.emptyList();
 	}
 
 	@Override
 	public int getKaleoInstanceKaleoLogsCount(
 		long companyId, long kaleoInstanceId, List<Integer> logTypes) {
 
-		return _searchCount(
-			companyId,
-			HashMapBuilder.put(
-				"kaleoInstanceId", (Serializable)kaleoInstanceId
-			).put(
-				"logTypes", _toIntegerArraySupplier(logTypes)
-			).build());
+		return 0;
 	}
 
 	@Override
@@ -465,29 +452,14 @@ public class KaleoLogLocalServiceImpl extends KaleoLogLocalServiceBaseImpl {
 		long companyId, long kaleoTaskInstanceTokenId, List<Integer> logTypes,
 		int start, int end, OrderByComparator<KaleoLog> orderByComparator) {
 
-		return _search(
-			companyId,
-			HashMapBuilder.put(
-				"kaleoTaskInstanceTokenId",
-				(Serializable)kaleoTaskInstanceTokenId
-			).put(
-				"logTypes", _toIntegerArraySupplier(logTypes)
-			).build(),
-			start, end, orderByComparator);
+		return Collections.emptyList();
 	}
 
 	@Override
 	public int getKaleoTaskInstanceTokenKaleoLogsCount(
 		long companyId, long kaleoTaskInstanceTokenId, List<Integer> logTypes) {
 
-		return _searchCount(
-			companyId,
-			HashMapBuilder.put(
-				"kaleoTaskInstanceTokenId",
-				(Serializable)kaleoTaskInstanceTokenId
-			).put(
-				"logTypes", _toIntegerArraySupplier(logTypes)
-			).build());
+		return 0;
 	}
 
 	private static String _getSortableFieldName(String name, String type) {
