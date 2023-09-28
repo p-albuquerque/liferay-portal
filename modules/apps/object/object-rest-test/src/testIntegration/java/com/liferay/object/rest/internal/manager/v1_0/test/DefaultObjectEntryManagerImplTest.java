@@ -32,6 +32,7 @@ import com.liferay.object.constants.ObjectRelationshipConstants;
 import com.liferay.object.definition.tree.Node;
 import com.liferay.object.definition.tree.Tree;
 import com.liferay.object.definition.tree.TreeFactory;
+import com.liferay.object.definition.tree.constants.TreeConstants;
 import com.liferay.object.exception.NoSuchObjectEntryException;
 import com.liferay.object.exception.ObjectDefinitionAccountEntryRestrictedException;
 import com.liferay.object.exception.ObjectRelationshipDeletionTypeException;
@@ -1282,6 +1283,75 @@ public class DefaultObjectEntryManagerImplTest
 			objectDefinition1.getObjectDefinitionId());
 		objectDefinitionLocalService.deleteObjectDefinition(
 			objectDefinition2.getObjectDefinitionId());
+	}
+
+	@Test
+	public void testDeleteObjectEntryHierarchyWithAccountEntryRestricted()
+		throws Exception {
+
+		// Root account entry restricted must be inherited
+
+		AccountEntry accountEntry1 = _addAccountEntry();
+
+		_publishTree(true, _rootObjectDefinition);
+
+		Map<Long, ObjectEntry> objectEntries1 =
+			_addObjectEntryHierarchyWithAccountEntry(accountEntry1, _tree);
+
+		AccountEntry accountEntry2 = _addAccountEntry();
+
+		Map<Long, ObjectEntry> objectEntries2 =
+			_addObjectEntryHierarchyWithAccountEntry(accountEntry2, _tree);
+
+		_addResourcePermission(
+			_rootObjectDefinition, ActionKeys.DELETE,
+			_accountAdministratorRole);
+		_addResourcePermission(
+			_rootObjectDefinition, ActionKeys.VIEW, _accountAdministratorRole);
+
+		_user = _addUser();
+
+		_assignAccountEntryRole(
+			accountEntry1, _accountAdministratorRole, _user);
+
+		_addResourcePermission(
+			_rootObjectDefinition, ActionKeys.VIEW, _buyerRole);
+
+		_assignAccountEntryRole(accountEntry2, _buyerRole, _user);
+
+		Map<Long, ObjectEntry> finalObjectEntries1 = objectEntries1;
+		TreeTestUtil.forEachNodeObjectDefinition(
+			_tree.iterator(TreeConstants.ITERATOR_TYPE_POST_ORDER),
+			objectDefinitionLocalService,
+			objectDefinition -> {
+				ObjectEntry objectEntry = finalObjectEntries1.get(
+					objectDefinition.getObjectDefinitionId());
+
+				_defaultObjectEntryManager.deleteObjectEntry(
+					objectDefinition, objectEntry.getId());
+			});
+
+		ObjectEntry contextObjectEntry = objectEntries2.get(
+			_rootObjectDefinition.getObjectDefinitionId());
+
+		ObjectEntry finalContextObjectEntry1 = contextObjectEntry;
+		TreeTestUtil.forEachNodeObjectDefinition(
+			_tree.iterator(TreeConstants.ITERATOR_TYPE_POST_ORDER),
+			objectDefinitionLocalService,
+			objectDefinition -> {
+				ObjectEntry objectEntry = objectEntries2.get(
+					objectDefinition.getObjectDefinitionId());
+
+				AssertUtils.assertFailure(
+					PrincipalException.MustHavePermission.class,
+					StringBundler.concat(
+						"User ", _user.getUserId(),
+						" must have DELETE permission for ",
+						_rootObjectDefinition.getClassName(), StringPool.SPACE,
+						finalContextObjectEntry1.getId()),
+					() -> _defaultObjectEntryManager.deleteObjectEntry(
+						objectDefinition, objectEntry.getId()));
+			});
 	}
 
 	@Test
