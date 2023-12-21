@@ -240,13 +240,6 @@ public class ObjectDefinitionResourceImpl
 			throw new UnsupportedOperationException();
 		}
 
-		if (Validator.isNotNull(
-				objectDefinition.getObjectFolderExternalReferenceCode()) &&
-			!FeatureFlagManagerUtil.isEnabled("LPS-148856")) {
-
-			throw new UnsupportedOperationException();
-		}
-
 		if (!Validator.isBlank(objectDefinition.getStorageType()) &&
 			!FeatureFlagManagerUtil.isEnabled("LPS-135430")) {
 
@@ -433,13 +426,6 @@ public class ObjectDefinitionResourceImpl
 
 		if (Validator.isNotNull(objectDefinition.getEnableObjectEntryDraft()) &&
 			!FeatureFlagManagerUtil.isEnabled("LPS-181663")) {
-
-			throw new UnsupportedOperationException();
-		}
-
-		if (Validator.isNotNull(
-				objectDefinition.getObjectFolderExternalReferenceCode()) &&
-			!FeatureFlagManagerUtil.isEnabled("LPS-148856")) {
 
 			throw new UnsupportedOperationException();
 		}
@@ -1125,18 +1111,10 @@ public class ObjectDefinitionResourceImpl
 					}
 				).put(
 					"update",
-					() -> {
-						if (!FeatureFlagManagerUtil.isEnabled("LPS-148856") &&
-							objectDefinition.isUnmodifiableSystemObject()) {
-
-							return null;
-						}
-
-						return addAction(
-							ActionKeys.UPDATE, "putObjectDefinition",
-							permissionName,
-							objectDefinition.getObjectDefinitionId());
-					}
+					addAction(
+						ActionKeys.UPDATE, "putObjectDefinition",
+						permissionName,
+						objectDefinition.getObjectDefinitionId())
 				).build();
 				active = objectDefinition.isActive();
 				dateCreated = objectDefinition.getCreateDate();
@@ -1176,6 +1154,8 @@ public class ObjectDefinitionResourceImpl
 							null),
 						objectField),
 					ObjectField.class);
+				objectFolderExternalReferenceCode =
+					objectDefinition.getObjectFolderExternalReferenceCode();
 				objectLayouts = transformToArray(
 					_objectLayoutLocalService.getObjectLayouts(
 						objectDefinition.getObjectDefinitionId()),
@@ -1259,15 +1239,6 @@ public class ObjectDefinitionResourceImpl
 						}
 
 						return objectDefinition.isEnableObjectEntryDraft();
-					});
-				setObjectFolderExternalReferenceCode(
-					() -> {
-						if (!FeatureFlagManagerUtil.isEnabled("LPS-148856")) {
-							return null;
-						}
-
-						return objectDefinition.
-							getObjectFolderExternalReferenceCode();
 					});
 				setRootObjectDefinitionExternalReferenceCode(
 					() -> {

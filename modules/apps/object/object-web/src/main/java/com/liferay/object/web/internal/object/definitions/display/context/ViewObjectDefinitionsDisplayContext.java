@@ -13,7 +13,6 @@ import com.liferay.object.rest.manager.v1_0.ObjectEntryManagerRegistry;
 import com.liferay.object.service.ObjectFolderLocalService;
 import com.liferay.object.web.internal.display.context.helper.ObjectRequestHelper;
 import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
 import com.liferay.portal.kernel.json.JSONArray;
 import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.language.LanguageUtil;
@@ -122,7 +121,7 @@ public class ViewObjectDefinitionsDisplayContext {
 		int count = _objectFolderLocalService.getObjectFoldersCount(
 			_objectRequestHelper.getCompanyId());
 
-		if ((count > 1) && FeatureFlagManagerUtil.isEnabled("LPS-148856")) {
+		if (count > 1) {
 			fdsActionDropdownItems.add(
 				new FDSActionDropdownItem(
 					null, "move-folder", "moveObjectDefinition",
