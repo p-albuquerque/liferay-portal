@@ -104,7 +104,7 @@ export default function ModalImport({
 			return;
 		});
 
-		if (Liferay.FeatureFlags['LPS-148856'] && importExtendedInfo) {
+		if (importExtendedInfo) {
 			formDataObject[importExtendedInfo.key] = importExtendedInfo.value;
 		}
 

@@ -59,7 +59,6 @@ interface ViewObjectDefinitionsProps extends IFDSTableProps {
 	learnResourceContext: any;
 	modelBuilderURL: string;
 	nameMaxLength: string;
-	objectDefinitionsAPIURL: any;
 	objectDefinitionsCreationMenu: {
 		primaryItems?: any[];
 		secondaryItems?: any[];
@@ -79,7 +78,6 @@ export default function ViewObjectDefinitions({
 	learnResourceContext,
 	modelBuilderURL,
 	nameMaxLength,
-	objectDefinitionsAPIURL,
 	objectDefinitionsCreationMenu,
 	objectDefinitionsFDSActionDropdownItems,
 	objectDefinitionsFDSName,
@@ -195,9 +193,7 @@ export default function ViewObjectDefinitions({
 
 	const dataSetProps = {
 		...defaultDataSetProps,
-		apiURL: Liferay.FeatureFlags['LPS-148856']
-			? getURL()
-			: objectDefinitionsAPIURL,
+		apiURL: getURL(),
 		creationMenu: objectDefinitionsCreationMenu,
 		customDataRenderers: {
 			objectDefinitionLabelDataRenderer,
@@ -327,21 +323,19 @@ export default function ViewObjectDefinitions({
 	};
 
 	useEffect(() => {
-		if (Liferay.FeatureFlags['LPS-148856']) {
-			const makeFetch = async () => {
-				API.getAllObjectFolders().then((response) => {
-					setObjectFoldersRequestInfo(response);
-					setSelectedObjectFolder(response.items[0]);
-					setLoading(false);
-				});
+		const makeFetch = async () => {
+			API.getAllObjectFolders().then((response) => {
+				setObjectFoldersRequestInfo(response);
+				setSelectedObjectFolder(response.items[0]);
+				setLoading(false);
+			});
 
-				const objectDefinitions = await API.getAllObjectDefinitions();
+			const objectDefinitions = await API.getAllObjectDefinitions();
 
-				setObjectDefinitionActions(objectDefinitions.actions);
-			};
+			setObjectDefinitionActions(objectDefinitions.actions);
+		};
 
-			makeFetch();
-		}
+		makeFetch();
 
 		Liferay.on('addObjectDefinition', () =>
 			setShowModal((previousState: ViewObjectDefinitionsModals) => ({
@@ -363,90 +357,68 @@ export default function ViewObjectDefinitions({
 
 	return (
 		<>
-			{Liferay.FeatureFlags['LPS-148856'] ? (
-				<div className="lfr__object-web-view-object-definitions">
-					{loading ? (
-						<ClayLoadingIndicator
-							displayType="secondary"
-							size="sm"
+			<div className="lfr__object-web-view-object-definitions">
+				{loading ? (
+					<ClayLoadingIndicator displayType="secondary" size="sm" />
+				) : (
+					<>
+						<ObjectFoldersSideBar
+							baseResourceURL={baseResourceURL}
+							importObjectFolderURL={importObjectFolderURL}
+							objectDefinitionsActions={
+								objectDefinitionsActions as Actions
+							}
+							objectFoldersRequestInfo={objectFoldersRequestInfo}
+							portletNamespace={portletNamespace}
+							selectedObjectFolder={
+								selectedObjectFolder as ObjectFolder
+							}
+							setModalImportProperties={setModalImportProperties}
+							setSelectedObjectFolder={setSelectedObjectFolder}
+							setShowModal={setShowModal}
 						/>
-					) : (
-						<>
-							<ObjectFoldersSideBar
-								baseResourceURL={baseResourceURL}
-								importObjectFolderURL={importObjectFolderURL}
-								objectDefinitionsActions={
-									objectDefinitionsActions as Actions
-								}
-								objectFoldersRequestInfo={
-									objectFoldersRequestInfo
-								}
-								portletNamespace={portletNamespace}
-								selectedObjectFolder={
-									selectedObjectFolder as ObjectFolder
-								}
-								setModalImportProperties={
-									setModalImportProperties
-								}
-								setSelectedObjectFolder={
-									setSelectedObjectFolder
-								}
-								setShowModal={setShowModal}
-							/>
-							<Card
-								className="lfr__object-web-view-object-definitions-card"
-								customHeader={
-									<ObjectFolderCardHeader
-										externalReferenceCode={
-											selectedObjectFolder.externalReferenceCode
-										}
-										items={
-											getObjectFolderActions({
-												actions: {
-													objectDefinitionActions: objectDefinitionsActions as Actions,
-													objectFolderActions: selectedObjectFolder.actions as Actions,
-												},
-												baseResourceURL,
-												importObjectDefinitionURL,
-												objectFolderExternalReferenceCode: selectedObjectFolder.externalReferenceCode as string,
-												objectFolderId: selectedObjectFolder.id as number,
-												objectFolderPermissionsURL,
-												portletNamespace,
-												setModalImportProperties,
-												setShowModal,
-											}) as IItem[]
-										}
-										label={selectedObjectFolder.label}
-										modelBuilderURL={modelBuilderURL}
-										name={selectedObjectFolder.name}
-									/>
-								}
-								viewMode="no-header-border"
-							>
-								{reloadFDS ? (
-									<ClayLoadingIndicator
-										displayType="secondary"
-										size="sm"
-									/>
-								) : (
-									<FrontendDataSet {...dataSetProps} />
-								)}
-							</Card>
-						</>
-					)}
-				</div>
-			) : (
-				<div>
-					{reloadFDS ? (
-						<ClayLoadingIndicator
-							displayType="secondary"
-							size="sm"
-						/>
-					) : (
-						<FrontendDataSet {...dataSetProps} />
-					)}
-				</div>
-			)}
+						<Card
+							className="lfr__object-web-view-object-definitions-card"
+							customHeader={
+								<ObjectFolderCardHeader
+									externalReferenceCode={
+										selectedObjectFolder.externalReferenceCode
+									}
+									items={
+										getObjectFolderActions({
+											actions: {
+												objectDefinitionActions: objectDefinitionsActions as Actions,
+												objectFolderActions: selectedObjectFolder.actions as Actions,
+											},
+											baseResourceURL,
+											importObjectDefinitionURL,
+											objectFolderExternalReferenceCode: selectedObjectFolder.externalReferenceCode as string,
+											objectFolderId: selectedObjectFolder.id as number,
+											objectFolderPermissionsURL,
+											portletNamespace,
+											setModalImportProperties,
+											setShowModal,
+										}) as IItem[]
+									}
+									label={selectedObjectFolder.label}
+									modelBuilderURL={modelBuilderURL}
+									name={selectedObjectFolder.name}
+								/>
+							}
+							viewMode="no-header-border"
+						>
+							{reloadFDS ? (
+								<ClayLoadingIndicator
+									displayType="secondary"
+									size="sm"
+								/>
+							) : (
+								<FrontendDataSet {...dataSetProps} />
+							)}
+						</Card>
+					</>
+				)}
+			</div>
 
 			{showModal.addObjectDefinition && (
 				<ModalAddObjectDefinition
