@@ -82,9 +82,7 @@ export class ModelBuilderPage {
 		await this.newObjectRelationshipLabel.fill(objectRelationshipLabel);
 		await this.newObjectRelationshipType.click();
 		await this.page.getByRole('option', {name: type}).click();
-		const responsePromise = this.page.waitForResponse(
-			'**/object-relationships'
-		);
+		const responsePromise = this.page.waitForResponse('**/object-relationships');
 		await this.saveNewObjectRelationshipButton.click();
 		const response = await responsePromise;
 
