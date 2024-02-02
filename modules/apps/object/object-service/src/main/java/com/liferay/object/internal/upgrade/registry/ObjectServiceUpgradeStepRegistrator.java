@@ -420,6 +420,11 @@ public class ObjectServiceUpgradeStepRegistrator
 			"9.0.1", "9.0.2",
 			new com.liferay.object.internal.upgrade.v9_0_2.
 				ObjectFolderUpgradeProcess());
+
+		registry.register(
+			"9.0.2", "9.0.3",
+			new com.liferay.object.internal.upgrade.v9_0_3.
+				ObjectFieldUpgradeProcess());
 	}
 
 	@Reference
