@@ -4,7 +4,7 @@
 			"DBType": "String",
 			"businessType": "Aggregation",
 			"externalReferenceCode": "TESTOBJECTFIELD2",
-			"indexed": true,
+			"indexed": false,
 			"indexedAsKeyword": false,
 			"label": {
 				"en_US": "integerTestField"
@@ -32,7 +32,7 @@
 			"DBType": "String",
 			"businessType": "Aggregation",
 			"externalReferenceCode": "TESTOBJECTFIELD1",
-			"indexed": true,
+			"indexed": false,
 			"indexedAsKeyword": false,
 			"indexedLanguageId": "en_US",
 			"label": {
