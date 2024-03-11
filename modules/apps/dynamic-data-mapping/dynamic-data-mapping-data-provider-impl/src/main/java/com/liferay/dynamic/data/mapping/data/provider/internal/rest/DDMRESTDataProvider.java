@@ -29,6 +29,7 @@ import com.liferay.portal.json.web.service.client.JSONWebServiceClientFactory;
 import com.liferay.portal.json.web.service.client.JSONWebServiceException;
 import com.liferay.portal.kernel.cache.MultiVMPool;
 import com.liferay.portal.kernel.cache.PortalCache;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.ArrayUtil;
@@ -53,11 +54,14 @@ import java.security.KeyStore;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.TreeMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import net.minidev.json.JSONArray;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.input.BOMInputStream;
@@ -203,6 +207,10 @@ public class DDMRESTDataProvider implements DDMDataProvider {
 				String[] paths = StringUtil.split(path, CharPool.SEMICOLON);
 
 				String normalizedValuePath = _normalizePath(paths[0]);
+
+				_translateDocumentValues(
+					documentContext.json(), normalizedValuePath,
+					ddmDataProviderRequest.getLocale());
 
 				List<?> values = documentContext.read(
 					normalizedValuePath, List.class);
@@ -590,6 +598,22 @@ public class DDMRESTDataProvider implements DDMDataProvider {
 		return StringPool.PERIOD.concat(path);
 	}
 
+	private void _translateDocumentValues(
+		JSONArray jsonArray, String normalizedValuePath, Locale locale) {
+
+		List<Map<String, Object>> documentList = new ArrayList<>();
+
+		for (Object entry : jsonArray) {
+			Map<String, Object> entryMap = (Map<String, Object>)entry;
+
+			entryMap.put(
+				normalizedValuePath.replaceAll("[^a-zA-Z0-9]", ""),
+				_language.get(locale, "country." + entryMap.get("name")));
+
+			documentList.add(entryMap);
+		}
+	}
+
 	private static final Log _log = LogFactoryUtil.getLog(
 		DDMRESTDataProvider.class);
 
@@ -609,6 +633,9 @@ public class DDMRESTDataProvider implements DDMDataProvider {
 
 	@Reference
 	private JSONWebServiceClientFactory _jsonWebServiceClientFactory;
+
+	@Reference
+	private Language _language;
 
 	@Reference
 	private MultiVMPool _multiVMPool;
