@@ -1036,7 +1036,7 @@ public class DDMFormDisplayContext {
 		Set<Locale> availableLocales = ddmForm.getAvailableLocales();
 
 		Locale locale = LocaleUtil.fromLanguageId(
-			LanguageUtil.getLanguageId(httpServletRequest));
+			ParamUtil.getString(httpServletRequest, "languageId"));
 
 		if (availableLocales.contains(locale)) {
 			return locale;
