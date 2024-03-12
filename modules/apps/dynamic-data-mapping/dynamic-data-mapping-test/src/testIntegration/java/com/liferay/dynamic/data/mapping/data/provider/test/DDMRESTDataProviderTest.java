@@ -49,6 +49,7 @@ import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 
 import java.util.List;
+import java.util.Locale;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -115,7 +116,7 @@ public class DDMRESTDataProviderTest {
 		DDMDataProviderResponse ddmDataProviderResponse =
 			_ddmDataProvider.getData(
 				_createDDMDataProviderRequest(
-					ddmDataProviderId, null, null, null, null, null));
+					ddmDataProviderId, null, null, null, null, null, null));
 
 		List<KeyValuePair> keyValuePairs = ddmDataProviderResponse.getOutput(
 			outputParameterId, List.class);
@@ -142,7 +143,7 @@ public class DDMRESTDataProviderTest {
 
 		DDMDataProviderRequest ddmDataProviderRequest =
 			_createDDMDataProviderRequest(
-				ddmDataProviderId, null, "name", "brazil", null, null);
+				ddmDataProviderId, null, null, "name", "brazil", null, null);
 
 		_ddmDataProvider.getData(ddmDataProviderRequest);
 
@@ -177,7 +178,7 @@ public class DDMRESTDataProviderTest {
 		DDMDataProviderResponse ddmDataProviderResponse =
 			_ddmDataProvider.getData(
 				_createDDMDataProviderRequest(
-					ddmDataProviderId, "brazil", null, null, null, null));
+					ddmDataProviderId, "brazil", null, null, null, null, null));
 
 		List<KeyValuePair> keyValuePairs = ddmDataProviderResponse.getOutput(
 			outputParameterId, List.class);
@@ -206,7 +207,8 @@ public class DDMRESTDataProviderTest {
 		DDMDataProviderResponse ddmDataProviderResponse =
 			_ddmDataProvider.getData(
 				_createDDMDataProviderRequest(
-					ddmDataProviderId, null, "name", "brazil", null, null));
+					ddmDataProviderId, null, null, "name", "brazil", null,
+					null));
 
 		List<KeyValuePair> keyValuePairs = ddmDataProviderResponse.getOutput(
 			outputParameterId, List.class);
@@ -235,7 +237,8 @@ public class DDMRESTDataProviderTest {
 		DDMDataProviderResponse ddmDataProviderResponse =
 			_ddmDataProvider.getData(
 				_createDDMDataProviderRequest(
-					ddmDataProviderId, null, "name", "brazil", null, null));
+					ddmDataProviderId, null, null, "name", "brazil", null,
+					null));
 
 		List<KeyValuePair> keyValuePairs = ddmDataProviderResponse.getOutput(
 			outputParameterId, List.class);
@@ -263,7 +266,7 @@ public class DDMRESTDataProviderTest {
 		DDMDataProviderResponse ddmDataProviderResponse =
 			_ddmDataProvider.getData(
 				_createDDMDataProviderRequest(
-					ddmDataProviderId, null, null, null, null, null));
+					ddmDataProviderId, null, null, null, null, null, null));
 
 		Assert.assertEquals(
 			_countryLocalService.getCompanyCountriesCount(
@@ -303,7 +306,7 @@ public class DDMRESTDataProviderTest {
 		DDMDataProviderResponse ddmDataProviderResponse =
 			_ddmDataProvider.getData(
 				_createDDMDataProviderRequest(
-					ddmDataProviderId, null, null, null, null, null));
+					ddmDataProviderId, null, null, null, null, null, null));
 
 		Assert.assertEquals(
 			DDMDataProviderResponseStatus.OK,
@@ -328,7 +331,7 @@ public class DDMRESTDataProviderTest {
 
 		DDMDataProviderRequest ddmDataProviderRequest =
 			_createDDMDataProviderRequest(
-				ddmDataProviderId, null, null, null, null, null);
+				ddmDataProviderId, null, null, null, null, null, null);
 
 		_ddmDataProvider.getData(ddmDataProviderRequest);
 	}
@@ -348,7 +351,7 @@ public class DDMRESTDataProviderTest {
 		DDMDataProviderResponse ddmDataProviderResponse =
 			_ddmDataProvider.getData(
 				_createDDMDataProviderRequest(
-					ddmDataProviderId, null, null, null, "7", "2"));
+					ddmDataProviderId, null, null, null, null, "7", "2"));
 
 		Assert.assertEquals(
 			DDMDataProviderResponseStatus.OK,
@@ -376,7 +379,8 @@ public class DDMRESTDataProviderTest {
 		DDMDataProviderResponse ddmDataProviderResponse =
 			_ddmDataProvider.getData(
 				_createDDMDataProviderRequest(
-					ddmDataProviderId, null, "name", "brazil", null, null));
+					ddmDataProviderId, null, null, "name", "brazil", null,
+					null));
 
 		Assert.assertNotNull(ddmDataProviderResponse);
 
@@ -401,7 +405,7 @@ public class DDMRESTDataProviderTest {
 		DDMDataProviderResponse ddmDataProviderResponse =
 			_ddmDataProvider.getData(
 				_createDDMDataProviderRequest(
-					ddmDataProviderId, "canada", null, null, null, null));
+					ddmDataProviderId, "canada", null, null, null, null, null));
 
 		Assert.assertNotNull(ddmDataProviderResponse);
 
@@ -432,7 +436,7 @@ public class DDMRESTDataProviderTest {
 		DDMDataProviderResponse ddmDataProviderResponse =
 			_ddmDataProvider.getData(
 				_createDDMDataProviderRequest(
-					ddmDataProviderId, null, null, null, null, null));
+					ddmDataProviderId, null, null, null, null, null, null));
 
 		Assert.assertEquals(
 			DDMDataProviderResponseStatus.SERVICE_UNAVAILABLE,
@@ -570,7 +574,7 @@ public class DDMRESTDataProviderTest {
 	}
 
 	private DDMDataProviderRequest _createDDMDataProviderRequest(
-		long ddmDataProviderId, String filterParameterValue,
+		long ddmDataProviderId, String filterParameterValue, Locale locale,
 		String inputParameterName, String inputParameterValue,
 		String paginationEnd, String paginationStart) {
 
@@ -581,6 +585,10 @@ public class DDMRESTDataProviderTest {
 
 		if (filterParameterValue != null) {
 			builder.withParameter("filterParameterValue", filterParameterValue);
+		}
+
+		if (locale != null) {
+			builder.withLocale(locale);
 		}
 
 		if (Validator.isNotNull(inputParameterName)) {
