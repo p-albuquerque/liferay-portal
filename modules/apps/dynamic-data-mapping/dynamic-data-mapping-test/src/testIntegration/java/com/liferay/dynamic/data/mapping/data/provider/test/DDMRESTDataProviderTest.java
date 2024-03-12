@@ -24,6 +24,8 @@ import com.liferay.portal.configuration.test.util.ConfigurationTestUtil;
 import com.liferay.portal.kernel.cache.PortalCache;
 import com.liferay.portal.kernel.cache.PortalCacheHelperUtil;
 import com.liferay.portal.kernel.cache.PortalCacheManagerNames;
+import com.liferay.portal.kernel.language.Language;
+import com.liferay.portal.kernel.language.LanguageUtil;
 import com.liferay.portal.kernel.model.ResourceConstants;
 import com.liferay.portal.kernel.model.Role;
 import com.liferay.portal.kernel.model.User;
@@ -390,6 +392,27 @@ public class DDMRESTDataProviderTest {
 	}
 
 	@Test
+	public void testGetDataWithTranslation() throws Exception {
+		_setUserPermissionChecker(false);
+
+		String outputParameterId = StringUtil.randomString();
+
+		long ddmDataProviderId = _addDDMDataProviderInstance(
+			_createDDMDataProviderDDMFormValues(
+				false, false, StringPool.BLANK, null, outputParameterId,
+				"nameCurrentValue;name", "list", null, null,
+				_GET_COUNTRIES_URL),
+			false);
+
+		_testGetDataWithTranslation(
+			ddmDataProviderId, LocaleUtil.ENGLISH, outputParameterId);
+		_testGetDataWithTranslation(
+			ddmDataProviderId, LocaleUtil.FRENCH, outputParameterId);
+		_testGetDataWithTranslation(
+			ddmDataProviderId, LocaleUtil.GERMAN, outputParameterId);
+	}
+
+	@Test
 	public void testGetDataWithViewDataProviderPermission() throws Exception {
 		_setUserPermissionChecker(true);
 
@@ -623,6 +646,27 @@ public class DDMRESTDataProviderTest {
 			PermissionCheckerFactoryUtil.create(user));
 	}
 
+	private void _testGetDataWithTranslation(
+			long ddmDataProviderId, Locale locale, String outputParameterId)
+		throws Exception {
+
+		DDMDataProviderRequest ddmDataProviderRequest =
+			_createDDMDataProviderRequest(
+				ddmDataProviderId, null, locale, null, null, null, null);
+
+		DDMDataProviderResponse ddmDataProviderResponse =
+			_ddmDataProvider.getData(ddmDataProviderRequest);
+
+		List<KeyValuePair> keyValuePairs = ddmDataProviderResponse.getOutput(
+			outputParameterId, List.class);
+
+		for (KeyValuePair keyValuePair : keyValuePairs) {
+			Assert.assertEquals(
+				LanguageUtil.get(locale, "country." + keyValuePair.getKey()),
+				keyValuePair.getValue());
+		}
+	}
+
 	private static final String _GET_COUNTRIES_URL =
 		"http://localhost:8080/api/jsonws/country/get-countries";
 
@@ -640,6 +684,9 @@ public class DDMRESTDataProviderTest {
 	@Inject(type = DDMDataProviderInstanceLocalService.class)
 	private DDMDataProviderInstanceLocalService
 		_ddmDataProviderInstanceLocalService;
+
+	@Inject
+	private Language _language;
 
 	private PermissionChecker _originalPermissionChecker;
 
