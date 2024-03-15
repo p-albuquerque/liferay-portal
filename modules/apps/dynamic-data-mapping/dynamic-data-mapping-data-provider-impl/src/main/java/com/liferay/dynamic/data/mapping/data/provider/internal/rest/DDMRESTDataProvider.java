@@ -289,6 +289,12 @@ public class DDMRESTDataProvider implements DDMDataProvider {
 			allParametersMap.put(key, String.valueOf(entry.getValue()));
 		}
 
+		if (!Objects.isNull(ddmDataProviderRequest.getLocale())) {
+			allParametersMap.put(
+				"ddm.locale",
+				String.valueOf(ddmDataProviderRequest.getLocale()));
+		}
+
 		if (ddmRESTDataProviderSettings.filterable()) {
 			String filterParameterValue = ddmDataProviderRequest.getParameter(
 				"filterParameterValue", String.class);
