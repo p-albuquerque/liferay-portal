@@ -9,6 +9,7 @@ import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.jsonwebservice.JSONWebServiceActionsManager;
 import com.liferay.portal.kernel.servlet.ServletContextPool;
 import com.liferay.portal.kernel.util.LocaleThreadLocal;
+import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.remote.json.web.service.web.internal.JSONWebServiceServiceAction;
@@ -70,9 +71,16 @@ public class JSONWebServiceServlet extends JSONServlet {
 			 !path.equals(StringPool.SLASH)) ||
 			(httpServletRequest.getParameter("discover") != null)) {
 
-			LocaleThreadLocal.setThemeDisplayLocale(
-				_portal.getLocale(
-					httpServletRequest, httpServletResponse, true));
+			if (httpServletRequest.getParameter("ddm.locale") != null) {
+				LocaleThreadLocal.setThemeDisplayLocale(
+					LocaleUtil.fromLanguageId(
+						httpServletRequest.getParameter("ddm.locale")));
+			}
+			else {
+				LocaleThreadLocal.setThemeDisplayLocale(
+					_portal.getLocale(
+						httpServletRequest, httpServletResponse, true));
+			}
 
 			super.service(httpServletRequest, httpServletResponse);
 
