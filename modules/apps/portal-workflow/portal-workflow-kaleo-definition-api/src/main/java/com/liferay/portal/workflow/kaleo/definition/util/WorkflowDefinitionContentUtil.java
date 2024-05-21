@@ -18,10 +18,18 @@ import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.workflow.WorkflowException;
 
 import java.io.StringReader;
+import java.io.StringWriter;
+import java.util.Iterator;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.stream.XMLInputFactory;
+import javax.xml.stream.XMLOutputFactory;
+import javax.xml.stream.XMLStreamConstants;
+import javax.xml.stream.XMLStreamReader;
+import javax.xml.stream.XMLStreamWriter;
 
+import com.liferay.portal.kernel.xml.SAXReaderUtil;
 import org.w3c.dom.CDATASection;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -51,10 +59,53 @@ public class WorkflowDefinitionContentUtil {
 			DocumentBuilder documentBuilder =
 				documentBuilderFactory.newDocumentBuilder();
 
-			content = StringUtil.replace(content, '&', "&amp;");
+			XMLInputFactory xmlInputFactory = XMLInputFactory.newInstance();
+
+			XMLStreamReader reader = xmlInputFactory.createXMLStreamReader(new StringReader(content));
+
+			StringWriter stringWriter = new StringWriter();
+
+			XMLOutputFactory xmlOutputFactory = XMLOutputFactory.newInstance();
+
+			XMLStreamWriter writer = xmlOutputFactory.createXMLStreamWriter(stringWriter);
+
+			while (reader.hasNext()) {
+				int event = reader.next();
+
+				switch (event) {
+					case XMLStreamConstants.START_ELEMENT:
+						String localName = reader.getLocalName();
+						writer.writeStartElement(localName);
+
+						// Write attributes
+						for (int i = 0; i < reader.getAttributeCount(); i++) {
+							writer.writeAttribute(reader.getAttributeLocalName(i), reader.getAttributeValue(i));
+						}
+						break;
+					case XMLStreamConstants.CHARACTERS:
+						writer.writeCharacters(reader.getText());
+						break;
+					case XMLStreamConstants.END_ELEMENT:
+						writer.writeEndElement();
+						break;
+					case XMLStreamConstants.START_DOCUMENT:
+						writer.writeStartDocument();
+						break;
+					case XMLStreamConstants.END_DOCUMENT:
+						writer.writeEndDocument();
+						break;
+				}
+			}
+//
+//			XMLStreamWriter xmlStreamWriter =
+//				xmlOutputFactory.createXMLStreamWriter(stringWriter);
+//
+//			xmlStreamWriter.write(content);
+//			xmlStreamWriter.writeEndDocument();
+//			xmlStreamWriter.close();
 
 			Document document = documentBuilder.parse(
-				new InputSource(new StringReader(content)));
+				new InputSource(new StringReader(stringWriter.toString())));
 
 			JSONObject jsonObject = _toJSONObject(
 				document.getDocumentElement());

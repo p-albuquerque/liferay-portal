@@ -12,6 +12,7 @@ import com.liferay.portal.kernel.json.JSONFactoryUtil;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.security.xml.SecureXMLFactoryProviderUtil;
 import com.liferay.portal.kernel.util.StringUtil;
+import com.liferay.portal.kernel.xml.SAXReaderUtil;
 import com.liferay.portal.security.xml.SecureXMLFactoryProviderImpl;
 import com.liferay.portal.test.rule.LiferayUnitTestRule;
 
@@ -20,6 +21,7 @@ import java.io.StringReader;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
+import com.liferay.portal.xml.SAXReaderImpl;
 import org.apache.commons.lang3.StringUtils;
 
 import org.junit.Assert;
@@ -52,6 +54,10 @@ public class WorkflowDefinitionContentUtilTest {
 		JSONFactoryUtil jsonFactoryUtil = new JSONFactoryUtil();
 
 		jsonFactoryUtil.setJSONFactory(new JSONFactoryImpl());
+
+		SAXReaderUtil saxReaderUtil = new SAXReaderUtil();
+
+		saxReaderUtil.setSAXReader(new SAXReaderImpl());
 
 		SecureXMLFactoryProviderUtil secureXMLFactoryProviderUtil =
 			new SecureXMLFactoryProviderUtil();
@@ -238,7 +244,7 @@ public class WorkflowDefinitionContentUtilTest {
 
 	@Test
 	public void testValueWithAmpersandToJSON() throws Exception {
-		JSONObject jsonObject = _toJSONObject("value-with-ampersand.xml");
+		JSONObject jsonObject = _toJSONObject("single-approver.xml");
 
 		Assert.assertEquals("test", jsonObject.getString("#tag-name"));
 		Assert.assertEquals("Value &", jsonObject.getString("#value"));
