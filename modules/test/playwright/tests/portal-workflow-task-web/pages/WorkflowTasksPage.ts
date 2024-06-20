@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
-import {Locator, Page} from '@playwright/test';
+import {expect, Locator, Page} from '@playwright/test';
 
 import {clickAndExpectToBeVisible} from '../../../utils/clickAndExpectToBeVisible';
 import {PORTLET_URLS} from '../../../utils/portletUrls';
@@ -78,6 +78,26 @@ export class WorkflowTasksPage {
 		await waitForSuccessAlert(this.page);
 	}
 
+	async openTaskCommentsSection(assetTitle: string) {
+		await this.page.getByRole('link', { name: assetTitle}).click();
+
+		await this.page.getByRole('button', { name: 'Comments'}).click();
+
+		await expect(
+			this.page.getByRole('button', { name: 'Comments', exact: true })
+		).toBeVisible();
+	}
+
+	async subscribeToTaskComments(assetTitle: string) {
+		await this.openTaskCommentsSection(assetTitle);
+
+		await this.page.getByLabel('Subscribe to Comments').click();
+
+		await expect(
+			this.page.getByText('Success:Your request completed successfully.')
+		).toBeVisible();
+	}
+
 	async reject(articleTitle: string) {
 		const row = await this.page
 			.getByRole('row')
@@ -116,5 +136,13 @@ export class WorkflowTasksPage {
 		await this.page.getByRole('button', {name: 'Done'}).click();
 
 		await waitForSuccessAlert(this.page);
+	}
+
+	async writeTaskComment(assetTitle: string, comment: string) {
+		await this.openTaskCommentsSection(assetTitle);
+
+		await this.page.frameLocator('iframe').getByRole('textbox').fill(comment);
+
+		await this.page.getByRole('button', { name: 'Reply' }).click();
 	}
 }
