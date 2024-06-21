@@ -3,7 +3,15 @@
  * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
+<<<<<<< Updated upstream
+import {expect, Locator, Page} from '@playwright/test';
+=======
+<<<<<<< Updated upstream
 import {Locator, Page} from '@playwright/test';
+=======
+import {Locator, Page, expect} from '@playwright/test';
+>>>>>>> Stashed changes
+>>>>>>> Stashed changes
 
 import {clickAndExpectToBeVisible} from '../../../utils/clickAndExpectToBeVisible';
 import {PORTLET_URLS} from '../../../utils/portletUrls';
@@ -78,6 +86,42 @@ export class WorkflowTasksPage {
 		await waitForSuccessAlert(this.page);
 	}
 
+<<<<<<< Updated upstream
+	async openTaskCommentsSection(assetTitle: string) {
+		await this.page.getByRole('link', { name: assetTitle}).click();
+
+		await this.page.getByRole('button', { name: 'Comments'}).click();
+
+		await expect(
+			this.page.getByRole('button', { name: 'Comments', exact: true })
+=======
+<<<<<<< Updated upstream
+=======
+	async openTaskCommentsSection(assetTitle: string) {
+		await this.page.getByRole('link', {name: assetTitle}).click();
+
+		await this.page.getByRole('button', {name: 'Comments'}).click();
+
+		await expect(
+			this.page.getByRole('button', {name: 'Comments', exact: true})
+>>>>>>> Stashed changes
+		).toBeVisible();
+	}
+
+	async subscribeToTaskComments(assetTitle: string) {
+		await this.openTaskCommentsSection(assetTitle);
+
+		await this.page.getByLabel('Subscribe to Comments').click();
+
+		await expect(
+			this.page.getByText('Success:Your request completed successfully.')
+		).toBeVisible();
+	}
+
+<<<<<<< Updated upstream
+=======
+>>>>>>> Stashed changes
+>>>>>>> Stashed changes
 	async reject(articleTitle: string) {
 		const row = await this.page
 			.getByRole('row')
@@ -117,4 +161,28 @@ export class WorkflowTasksPage {
 
 		await waitForSuccessAlert(this.page);
 	}
+<<<<<<< Updated upstream
+=======
+<<<<<<< Updated upstream
+=======
+>>>>>>> Stashed changes
+
+	async writeTaskComment(assetTitle: string, comment: string) {
+		await this.openTaskCommentsSection(assetTitle);
+
+<<<<<<< Updated upstream
+		await this.page.frameLocator('iframe').getByRole('textbox').fill(comment);
+
+		await this.page.getByRole('button', { name: 'Reply' }).click();
+	}
+=======
+		await this.page
+			.frameLocator('iframe')
+			.getByRole('textbox')
+			.fill(comment);
+
+		await this.page.getByRole('button', {name: 'Reply'}).click();
+	}
+>>>>>>> Stashed changes
+>>>>>>> Stashed changes
 }
