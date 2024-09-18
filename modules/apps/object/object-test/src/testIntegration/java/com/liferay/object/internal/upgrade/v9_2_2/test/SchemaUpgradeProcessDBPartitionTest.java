@@ -45,7 +45,7 @@ import org.junit.runner.RunWith;
  * @author Paulo Albuquerque
  */
 @RunWith(Arquillian.class)
-public class SchemaUpgradeProcessTest extends BaseDBPartitionTestCase {
+public class SchemaUpgradeProcessDBPartitionTest extends BaseDBPartitionTestCase {
 
 	@BeforeClass
 	public static void setUpClass() throws Exception {
