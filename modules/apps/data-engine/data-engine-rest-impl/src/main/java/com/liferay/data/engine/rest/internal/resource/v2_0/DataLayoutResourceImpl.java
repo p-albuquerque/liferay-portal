@@ -63,6 +63,7 @@ import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.LocaleThreadLocal;
+import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.OrderByComparator;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.StringUtil;
@@ -78,6 +79,7 @@ import java.util.Map;
 
 import javax.servlet.http.HttpServletResponse;
 
+import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 
@@ -239,8 +241,12 @@ public class DataLayoutResourceImpl extends BaseDataLayoutResourceImpl {
 			contextHttpServletRequest);
 		ddmFormRenderingContext.setHttpServletResponse(
 			contextHttpServletResponse);
+
 		ddmFormRenderingContext.setLocale(
-			contextAcceptLanguage.getPreferredLocale());
+			LocaleUtil.fromLanguageId(
+				contextHttpServletRequest.getHeader(
+					HttpHeaders.ACCEPT_LANGUAGE)));
+
 		ddmFormRenderingContext.setPortletNamespace(
 			dataLayoutRenderingContext.getNamespace());
 		ddmFormRenderingContext.setReadOnly(
