@@ -1,90 +1,77 @@
 /**
- * SPDX-FileCopyrightText: (c) 2025 Liferay, Inc. https://liferay.com
+ * SPDX-FileCopyrightText: (c) 2024 Liferay, Inc. https://liferay.com
  * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.dynamic.data.mapping.form.web.internal.upgrade.v1_1_0;
 
+import com.liferay.dynamic.data.mapping.constants.DDMPortletKeys;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
-import com.liferay.portal.dao.orm.common.SQLTransformer;
-import com.liferay.portal.kernel.dao.jdbc.AutoBatchPreparedStatementUtil;
-import com.liferay.portal.kernel.upgrade.UpgradeProcess;
+import com.liferay.portal.kernel.portlet.PortletPreferencesFactoryUtil;
+import com.liferay.portal.kernel.upgrade.BasePortletPreferencesUpgradeProcess;
+import com.liferay.portal.kernel.util.GetterUtil;
+import com.liferay.portal.kernel.util.Validator;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 
+import javax.portlet.PortletPreferences;
+
 /**
  * @author Paulo Albuquerque
  */
-public class DDMFormPortletPreferencesUpgradeProcess extends UpgradeProcess {
+public class DDMFormPortletPreferencesUpgradeProcess
+	extends BasePortletPreferencesUpgradeProcess {
 
 	@Override
-	protected void doUpgrade() throws Exception {
-		try (PreparedStatement preparedStatement1 = connection.prepareStatement(
-			SQLTransformer.transform(_getPreparedStatement()));
-
-			 PreparedStatement insertPreparedStatement =
-				 AutoBatchPreparedStatementUtil.concurrentAutoBatch(
-					 connection,
-					 StringBundler.concat(
-						 "insert into PortletPreferenceValue (",
-						 "mvccVersion, ctCollectionId, companyId, ",
-						 "portletPreferencesId, index_, largeValue, name, ",
-						 "readOnly, smallValue)",
-						 "values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"));
-			 ResultSet resultSet = preparedStatement1.executeQuery()) {
-
-			while (resultSet.next()) {
-				long companyId = resultSet.getLong(1);
-				long portletPreferencesId = resultSet.getLong(2);
-
-				_addBatch(
-					companyId, portletPreferencesId,
-					"ddmStructureExternalReferenceCode", resultSet.getString(6),
-					insertPreparedStatement);
-
-				_addBatch(
-					companyId, portletPreferencesId,
-					"groupExternalReferenceCode", resultSet.getString(8),
-					insertPreparedStatement);
-			}
-
-			insertPreparedStatement.executeBatch();
-		}
+	protected String[] getPortletIds() {
+		return new String[] {
+			DDMPortletKeys.DYNAMIC_DATA_MAPPING_FORM + "_INSTANCE_%"
+		};
 	}
 
-	private void _addBatch(
-			long companyId, long portletPreferencesId, String name,
-			String smallValue, PreparedStatement preparedStatement)
+	@Override
+	protected String upgradePreferences(
+			long companyId, long ownerId, int ownerType, long plid,
+			String portletId, String xml)
 		throws Exception {
 
-		preparedStatement.setLong(1, 0);
-		preparedStatement.setLong(2, 0);
-		preparedStatement.setLong(3, companyId);
-		preparedStatement.setLong(4, portletPreferencesId);
-		preparedStatement.setLong(5, 0);
-		preparedStatement.setString(6, StringPool.BLANK);
-		preparedStatement.setString(7, name);
-		preparedStatement.setLong(8, 0);
-		preparedStatement.setString(9, smallValue);
+		PortletPreferences portletPreferences =
+			PortletPreferencesFactoryUtil.fromXML(
+				companyId, ownerId, ownerType, plid, portletId, xml);
 
-		preparedStatement.addBatch();
-	}
+		String formInstanceId = portletPreferences.getValue(
+			"formInstanceId", StringPool.BLANK);
 
-	private String _getPreparedStatement() {
-		return StringBundler.concat(
-			"select PortletPreferenceValue.companyId, ",
-			"PortletPreferenceValue.portletPreferencesId, ",
-			"PortletPreferenceValue.name, PortletPreferenceValue.smallValue, ",
-			"DDMFormInstance.structureId, DDMStructure.externalReferenceCode, ",
-			"DDMStructure.groupId, Group_.externalReferenceCode from ",
-			"PortletPreferenceValue inner join DDMFormInstance on ",
-			"PortletPreferenceValue.smallValue = ",
-			"DDMFormInstance.formInstanceId inner join DDMStructure on ",
-			"DDMFormInstance.structureId = DDMStructure.structureId inner ",
-			"join Group_ on DDMStructure.groupId = Group_.groupId where ",
-			"PortletPreferenceValue like \"formInstanceId\"");
+		if (Validator.isNotNull(formInstanceId)) {
+			try (PreparedStatement preparedStatement =
+					connection.prepareStatement(
+						StringBundler.concat(
+							"Select DDMStructure.externalReferenceCode, ",
+							"Group_.externalReferenceCode from ",
+							"DDMStructure inner join DDMFormInstance on ",
+							"DDMStructure.structureId = ",
+							"DDMFormInstance.structureId inner join Group_ on ",
+							"DDMStructure.groupId = Group_.groupId where ",
+							"DDMFormInstance.formInstanceId = ?"))) {
+
+				preparedStatement.setLong(
+					1, GetterUtil.getLong(formInstanceId));
+
+				ResultSet resultSet = preparedStatement.executeQuery();
+
+				while (resultSet.next()) {
+					portletPreferences.setValue(
+						"ddmStructureExternalReferenceCode",
+						resultSet.getString(1));
+					portletPreferences.setValue(
+						"groupExternalReferenceCode", resultSet.getString(2));
+				}
+			}
+		}
+
+		return PortletPreferencesFactoryUtil.toXML(portletPreferences);
 	}
 
 }
