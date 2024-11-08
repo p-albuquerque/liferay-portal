@@ -8,6 +8,7 @@ package com.liferay.dynamic.data.mapping.form.web.internal.upgrade.registry;
 import com.liferay.dynamic.data.mapping.form.web.internal.upgrade.v1_0_0.UpgradeDDMFormAdminPortletId;
 import com.liferay.dynamic.data.mapping.form.web.internal.upgrade.v1_0_0.UpgradeDDMFormPortletId;
 import com.liferay.dynamic.data.mapping.form.web.internal.upgrade.v1_0_0.UpgradeDDMFormPortletPreferences;
+import com.liferay.dynamic.data.mapping.form.web.internal.upgrade.v1_1_0.DDMFormPortletPreferencesUpgradeProcess;
 import com.liferay.portal.upgrade.registry.UpgradeStepRegistrator;
 
 import org.osgi.service.component.annotations.Component;
@@ -27,6 +28,9 @@ public class DDMFormWebUpgradeStepRegistrator
 			"0.0.1", "1.0.0", new UpgradeDDMFormAdminPortletId(),
 			new UpgradeDDMFormPortletId(),
 			new UpgradeDDMFormPortletPreferences());
+
+		registry.register(
+			"1.0.0", "1.1.0", new DDMFormPortletPreferencesUpgradeProcess());
 	}
 
 }
